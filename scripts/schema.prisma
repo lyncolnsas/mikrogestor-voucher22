@@ -131,6 +131,7 @@ model WhatsappInstance {
   profilePicUrl String?
   libraryGroupJid   String?       // JID do grupo de biblioteca vinculado (ex: 120363xxx@g.us)
   libraryGroupName  String?       // Nome amigável do grupo salvo
+  groupJoinError    String?       // Último erro de ingresso automático no grupo (null = OK)
   createdAt     DateTime      @default(now())
   routings      LeadRouting[]
 }
@@ -210,4 +211,28 @@ model MediaLibrary {
   instanceId   String?            // ID da instância que capturou (opcional)
   createdAt    DateTime @default(now())
 }
+
+/// OTP de 2 Fatores para autenticação do administrador do painel.
+/// Gerado na primeira etapa do login, entregue via WhatsApp, expirado em 5 min.
+model AdminOtp {
+  id        String   @id @default(uuid())
+  code      String             // 6 dígitos numéricos
+  expiresAt DateTime           // Gerado com +5 minutos
+  used      Boolean  @default(false)
+  clientIp  String?            // IP que gerou o OTP (auditoria)
+  createdAt DateTime @default(now())
+}
+
+/// Tokens de Emergência Offline para autenticação caso o atacante desconecte todos os WhatsApps.
+/// Pré-gerados pelo admin, guardados no grupo de WhatsApp de mídias/backup, de uso único.
+model EmergencyToken {
+  id        String    @id @default(uuid())
+  codeHash  String    // Hash seguro scrypt do token
+  tokenHint String    // Primeiros 3 e últimos 2 caracteres para identificação (ex: "EMG-***-42")
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  clientIp  String?
+  createdAt DateTime  @default(now())
+}
+
 
