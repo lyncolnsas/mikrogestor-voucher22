@@ -1,12 +1,19 @@
 import { SignJWT, jwtVerify, CompactEncrypt, compactDecrypt } from 'jose';
+import crypto from 'crypto';
+
+// Fallback seguro: gerado uma vez por processo se JWT_SECRET não estiver definido.
+// Cada restart invalida todas as sessões — comportamento intencional que força o operador a configurar a variável.
+const _runtimeFallbackSecret = crypto.randomBytes(32).toString('hex');
 
 const getJwtSecretKey = () => {
   const secret = process.env.JWT_SECRET;
-  // [SECURITY FIX MED-01] Falha rápida se JWT_SECRET não estiver configurado corretamente
   if (!secret || secret.length < 32) {
-    const msg = '[FATAL] JWT_SECRET não definido ou muito curto (mínimo 32 caracteres). Configure a variável de ambiente antes de iniciar o servidor.';
-    console.error(msg);
-    throw new Error(msg);
+    console.error(
+      '\n🚨 [SEGURANÇA CRÍTICA] JWT_SECRET não definido ou muito curto (mínimo 32 chars).' +
+      '\n   Configure JWT_SECRET nas variáveis de ambiente do Coolify/Docker.' +
+      '\n   Usando chave temporária de sessão — TODAS AS SESSÕES EXPIRAM A CADA RESTART.\n'
+    );
+    return _runtimeFallbackSecret;
   }
   return secret;
 };
