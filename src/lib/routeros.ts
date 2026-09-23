@@ -49,8 +49,20 @@ export class MikrotikAPI {
     try {
       this.client = await this.connection.connect();
       return true;
-    } catch (err) {
-      console.error('Mikrotik Connection Error:', err);
+    } catch (err: any) {
+      // errno -113 = EHOSTUNREACH: roteador VPN ainda não se conectou (script pendente no MikroTik)
+      // errno -111 = ECONNREFUSED: porta 8728 não está escutando
+      // Esses são estados esperados — não logar como erro crítico para não poluir os logs
+      const isExpectedVpnState = err?.errno === -113 || err?.errno === -111;
+      if (isExpectedVpnState) {
+        // Silencioso — o NetworkSync já trata o caso de VPN pendente
+        // Para depuração, use DEBUG_MIKROTIK=true nas variáveis de ambiente
+        if (process.env.DEBUG_MIKROTIK === 'true') {
+          console.warn(`[MikrotikAPI] Host ${host} inacessível (errno ${err?.errno}). VPN pendente ou serviço API desativado.`);
+        }
+      } else {
+        console.error(`[MikrotikAPI] Erro de conexão com ${host}:`, err);
+      }
       return false;
     }
   }

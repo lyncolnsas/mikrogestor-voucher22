@@ -77,7 +77,19 @@ export async function GET() {
           }
         }
 
-        const status = isConnected ? "connected" : "disconnected";
+        // CORREÇÃO: Não sobrescreve 'pending' com 'disconnected'
+        // 'pending' significa que o script ainda não foi executado no MikroTik.
+        // Só muda para 'connected' quando o peer fizer handshake.
+        // Quando conectado pela primeira vez, muda de 'pending' para 'connected'.
+        const currentDbStatus = router.vpnStatus;
+        let status: string;
+        if (isConnected) {
+          status = "connected";
+        } else if (currentDbStatus === "pending") {
+          status = "pending"; // Preserva o estado pendente até o script ser executado
+        } else {
+          status = "disconnected";
+        }
 
         if (status !== router.vpnStatus || (lastSeen && lastSeen !== router.vpnLastSeen)) {
           updates.push(

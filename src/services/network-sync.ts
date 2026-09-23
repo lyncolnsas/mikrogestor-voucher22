@@ -30,6 +30,15 @@ export class NetworkSyncService {
       const router = await prisma.router.findFirst({ where: { active: true } });
       if (!router || !router.host) return;
 
+      // ── CORREÇÃO BUG: Não tenta conectar em roteadores com VPN pendente ────────
+      // Se o roteador tem VPN habilitada mas vpnStatus ainda é 'pending', significa
+      // que o script WireGuard ainda não foi executado no MikroTik. Tentar conectar
+      // nesse estado causa EHOSTUNREACH (errno: -113) repetido nos logs.
+      if (router.vpnEnabled && (router as any).vpnStatus === 'pending') {
+        console.log(`[NetworkSync] Roteador "${router.name}" aguardando execução do script WireGuard. Sincronização adiada até o túnel ser estabelecido.`);
+        return;
+      }
+
       const interfaces = os.networkInterfaces();
       const routerPrefix = router.host.split('.').slice(0, 3).join('.');
       let currentIp = '127.0.0.1';
