@@ -19,7 +19,13 @@ export default function Users() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Unified Active Tab State
-  const [activeTab, setActiveTab] = useState<'list' | 'batch' | 'single'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'batch' | 'single' | 'orders'>('list');
+
+  // Pending Orders State
+  const [pendingPix, setPendingPix] = useState<any[]>([]);
+  const [pendingMp, setPendingMp] = useState<any[]>([]);
+  const [pendingCounts, setPendingCounts] = useState({ total: 0, manual: 0, mercadopago: 0 });
+  const [refreshingOrders, setRefreshingOrders] = useState(false);
 
   // Common Form States (Profiles & Servers Options)
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -208,16 +214,66 @@ export default function Users() {
     }
   };
 
+  const fetchPendingOrders = async (showSpinner = false) => {
+    if (showSpinner) setRefreshingOrders(true);
+    try {
+      const res = await fetch('/api/portal/admin/pending-pix');
+      const data = await res.json();
+      if (data.success) {
+        const grouped = data.grouped || {};
+        setPendingPix(grouped.manual || []);
+        setPendingMp(grouped.mercadopago || []);
+        setPendingCounts(data.counts || { total: 0, manual: 0, mercadopago: 0 });
+      }
+    } catch (_e) {}
+    finally { if (showSpinner) setRefreshingOrders(false); }
+  };
+
+  const handleApprovePix = async (paymentId: string) => {
+    if (!confirm('Tem certeza que recebeu o pagamento e deseja aprovar este pedido?')) return;
+    try {
+      const res = await fetch('/api/portal/admin/approve-pix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentId, action: 'approve' })
+      });
+      const json = await res.json();
+      alert(json.message);
+      fetchPendingOrders();
+    } catch { alert('Erro ao aprovar pagamento.'); }
+  };
+
+  const handleRejectPix = async (paymentId: string) => {
+    if (!confirm('Tem certeza que deseja REJEITAR este pagamento? O cliente será bloqueado.')) return;
+    try {
+      const res = await fetch('/api/portal/admin/approve-pix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentId, action: 'reject' })
+      });
+      const json = await res.json();
+      alert(json.message);
+      fetchPendingOrders();
+    } catch { alert('Erro ao rejeitar pagamento.'); }
+  };
+
+  const formatBRL = (val: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
   useEffect(() => {
     fetchUsers();
     fetchOptions();
+    fetchPendingOrders();
+    // Auto-refresh pedidos a cada 30s
+    const interval = setInterval(() => fetchPendingOrders(), 30000);
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab');
-      if (tabParam === 'batch' || tabParam === 'single' || tabParam === 'list') {
-        setActiveTab(tabParam as 'list' | 'batch' | 'single');
+      if (tabParam === 'batch' || tabParam === 'single' || tabParam === 'list' || tabParam === 'orders') {
+        setActiveTab(tabParam as 'list' | 'batch' | 'single' | 'orders');
       }
     }
+    return () => clearInterval(interval);
   }, []);
 
   const handleDeleteUser = async (id: string, name: string) => {
@@ -365,7 +421,7 @@ export default function Users() {
           </p>
         </div>
         
-        <div className="flex items-center bg-slate-200/80 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 shrink-0 gap-1">
+        <div className="flex items-center flex-wrap bg-slate-200/80 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 shrink-0 gap-1">
           <button 
             onClick={() => { setActiveTab('list'); setError(''); }}
             className={`text-xs font-black py-2 px-3.5 rounded-lg transition-all cursor-pointer ${
@@ -395,6 +451,21 @@ export default function Users() {
             }`}
           >
             👤 Criar Avulso
+          </button>
+          <button 
+            onClick={() => { setActiveTab('orders'); fetchPendingOrders(true); }}
+            className={`relative text-xs font-black py-2 px-3.5 rounded-lg transition-all cursor-pointer ${
+              activeTab === 'orders'
+                ? 'bg-amber-500 text-white shadow-sm'
+                : 'text-slate-800 dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
+            }`}
+          >
+            📦 Pedidos
+            {pendingCounts.total > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-black bg-rose-500 text-white rounded-full px-1 shadow">
+                {pendingCounts.total}
+              </span>
+            )}
           </button>
         </div>
       </header>
@@ -713,7 +784,7 @@ export default function Users() {
             )}
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'single' ? (
         /* ==================== TAB 3: SINGLE CREATION ==================== */
         <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm max-w-3xl overflow-hidden animate-fade-in">
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#111726]">
@@ -829,7 +900,137 @@ export default function Users() {
             )}
           </div>
         </div>
-      )}
+      ) : activeTab === 'orders' ? (
+        /* ==================== TAB 4: PENDING ORDERS ==================== */
+        <div className="space-y-5 animate-fade-in">
+
+          {/* Header da aba */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
+                📦 {pendingCounts.total} Pedido{pendingCounts.total !== 1 ? 's' : ''} Pendente{pendingCounts.total !== 1 ? 's' : ''}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {pendingCounts.manual > 0 && <span className="text-amber-700 dark:text-amber-400 font-semibold">{pendingCounts.manual} aguardam aprovação manual</span>}
+                {pendingCounts.manual > 0 && pendingCounts.mercadopago > 0 && <span className="mx-1">·</span>}
+                {pendingCounts.mercadopago > 0 && <span className="text-blue-600 dark:text-blue-400 font-semibold">{pendingCounts.mercadopago} aguardam webhook MP</span>}
+                {pendingCounts.total === 0 && <span className="text-emerald-600 font-semibold">Nenhum pedido pendente ✓</span>}
+              </p>
+            </div>
+            <button
+              onClick={() => fetchPendingOrders(true)}
+              disabled={refreshingOrders}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm disabled:opacity-50"
+            >
+              <svg className={`w-3.5 h-3.5 ${refreshingOrders ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Atualizar
+            </button>
+          </div>
+
+          {pendingCounts.total === 0 && (
+            <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center shadow-sm">
+              <div className="text-5xl mb-3">✅</div>
+              <p className="font-extrabold text-slate-900 dark:text-white text-lg">Tudo em dia!</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Não há pedidos pendentes de aprovação ou pagamento.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">Esta lista atualiza automaticamente a cada 30 segundos.</p>
+            </div>
+          )}
+
+          {/* Grupo 1: PIX Manual */}
+          {pendingPix.length > 0 && (
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800/60 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="inline-flex items-center gap-1.5 text-xs font-black text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-700 px-2.5 py-1 rounded-full">
+                  ✋ PIX MANUAL — AGUARDA APROVAÇÃO
+                </span>
+                <span className="text-xs text-amber-700 dark:text-amber-400 font-medium">Confirme o recebimento no seu banco antes de aprovar</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {pendingPix.map((p) => (
+                  <div key={p.id} className="bg-white dark:bg-[#111726] border border-amber-200 dark:border-amber-800/40 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-black text-slate-900 dark:text-white text-sm leading-tight">{p.clientName || p.username}</p>
+                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">@{p.username}</p>
+                        {p.clientPhone && <p className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5">📱 {p.clientPhone}</p>}
+                        {p.clientCpf && <p className="text-[11px] text-slate-400 mt-0.5">CPF: {p.clientCpf}</p>}
+                      </div>
+                      <span className="text-[10px] text-slate-500 whitespace-nowrap font-medium shrink-0">{p.formattedDate}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">🎟️ {p.plan}</span>
+                      {p.isVoucher && <span className="text-[11px] font-bold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-lg border border-purple-200 dark:border-purple-800/40">Voucher</span>}
+                      {p.giftTo && <span className="text-[11px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-lg border border-blue-200 dark:border-blue-800/40">🎁 Para: {p.giftTo}</span>}
+                    </div>
+                    <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 rounded-lg px-3 py-2">
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Valor a receber:</span>
+                      <span className="text-lg font-black text-emerald-700 dark:text-emerald-400">{formatBRL(p.amount)}</span>
+                    </div>
+                    {p.pixPayload && (
+                      <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-wide mb-1">Chave PIX enviada ao cliente:</p>
+                        <div className="flex items-center gap-2">
+                          <code className="text-[11px] text-slate-800 dark:text-slate-200 font-mono break-all flex-1">{p.pixPayload}</code>
+                          <button onClick={() => navigator.clipboard?.writeText(p.pixPayload)} className="text-slate-400 hover:text-blue-600 shrink-0 p-1 rounded" title="Copiar">📋</button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex gap-2 mt-auto pt-1">
+                      <button onClick={() => handleRejectPix(p.id)} className="flex-1 py-2 text-xs font-bold rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 hover:bg-rose-100 transition-colors border border-rose-200 dark:border-rose-800/40">✕ Rejeitar</button>
+                      <button onClick={() => handleApprovePix(p.id)} className="flex-1 py-2 text-xs font-black rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm">✓ Aprovar e Liberar</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Grupo 2: Mercado Pago */}
+          {pendingMp.length > 0 && (
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="inline-flex items-center gap-1.5 text-xs font-black text-blue-800 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-700 px-2.5 py-1 rounded-full">
+                  🤖 MERCADO PAGO — AGUARDANDO CONFIRMAÇÃO AUTOMÁTICA
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {pendingMp.map((p) => (
+                  <div key={p.id} className="bg-white dark:bg-[#111726] border border-blue-200 dark:border-blue-800/40 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-black text-slate-900 dark:text-white text-sm leading-tight">{p.clientName || p.username}</p>
+                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">@{p.username}</p>
+                        {p.clientPhone && <p className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5">📱 {p.clientPhone}</p>}
+                      </div>
+                      <span className="text-[10px] text-slate-500 whitespace-nowrap font-medium shrink-0">{p.formattedDate}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">🎟️ {p.plan}</span>
+                      {p.isVoucher && <span className="text-[11px] font-bold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-lg border border-purple-200 dark:border-purple-800/40">Voucher</span>}
+                      {p.giftTo && <span className="text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 px-2 py-0.5 rounded-lg border border-indigo-200 dark:border-indigo-800/40">🎁 Para: {p.giftTo}</span>}
+                    </div>
+                    <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40 rounded-lg px-3 py-2">
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Valor esperado:</span>
+                      <span className="text-lg font-black text-blue-700 dark:text-blue-400">{formatBRL(p.amount)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2">
+                      <span className="inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse shrink-0"></span>
+                      <span className="text-[11px] text-slate-600 dark:text-slate-400">MP ID: <code className="font-mono text-slate-800 dark:text-slate-200">{p.pixId}</code></span>
+                    </div>
+                    <div className="flex gap-2 mt-auto pt-1">
+                      <button onClick={() => handleRejectPix(p.id)} className="flex-1 py-1.5 text-xs font-bold rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 hover:bg-rose-100 border border-rose-200 dark:border-rose-800/40">✕ Cancelar</button>
+                      <button onClick={() => handleApprovePix(p.id)} className="flex-1 py-1.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 shadow-sm" title="Aprovar manualmente caso o webhook não tenha chegado">⚡ Forçar Aprovação</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+        </div>
+      ) : null}
 
       {/* Floating Sticky Print Bar */}
       {selectedIds.length > 0 && activeTab === 'list' && (
