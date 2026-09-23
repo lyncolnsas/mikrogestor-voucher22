@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
       subdomain,
       routerId:       updatedRouter.id,
       slug,
+      user:           updatedRouter.user || "admin",
     });
 
     return NextResponse.json({

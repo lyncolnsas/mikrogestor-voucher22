@@ -51,6 +51,7 @@ export interface RouterOSScriptParams {
   subdomain?: string;
   routerId?: string;
   slug?: string;
+  user?: string;
 }
 
 // ─── Constantes ─────────────────────────────────────────────────────────────
@@ -375,6 +376,7 @@ PersistentKeepalive = 25
       subdomain,
       routerId,
       slug,
+      user = "admin",
     } = params;
 
     if (!vpsPublicKey || vpsPublicKey.trim() === "") {
@@ -461,6 +463,12 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
 :do {
   :local ruleHs [/ip firewall filter find comment="MikroGestor: block hotspot thru VPN"]
   :if ([:len $ruleHs] = 0) do={ /ip firewall filter add chain=forward in-interface=bridge-hotspot out-interface=wg-mikrogestor action=drop comment="MikroGestor: block hotspot thru VPN" }
+} on-error={}
+
+# --- 5.1 PERMISSAO FULL PARA O USUARIO DA API ---
+:do {
+  :local u [/user find where name="${user}"]
+  :if ([:len $u] > 0) do={ /user set $u group=full }
 } on-error={}
 
 # --- 5. WALLED GARDEN IDEMPOTENTE (ACESSO SISTEMA & GATEWAYS) ---

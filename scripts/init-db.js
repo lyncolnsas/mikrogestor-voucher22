@@ -33,6 +33,15 @@ async function main() {
       }
     }
 
+    if (tableNames.includes('WhatsappInstance')) {
+      const waCols = await prisma.$queryRawUnsafe('PRAGMA table_info(WhatsappInstance);');
+      const colNames = waCols.map(c => c.name);
+      if (!colNames.includes('groupJoinError')) {
+        console.log('[MikroGestor] Migrando: adicionando WhatsappInstance.groupJoinError...');
+        await prisma.$executeRawUnsafe('ALTER TABLE WhatsappInstance ADD COLUMN groupJoinError TEXT;');
+      }
+    }
+
     if (!tableNames.includes('BlockedClient')) {
       console.log('[MikroGestor] Criando tabela BlockedClient...');
       await prisma.$executeRawUnsafe(`

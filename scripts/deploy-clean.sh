@@ -57,6 +57,9 @@ add_col_if_missing() {
 
 if [ -f "$PRISMA_DIR/dev.db" ]; then
   add_col_if_missing "WhatsappInstance" "groupJoinError" "TEXT"
+  docker run --rm -v "$PRISMA_DIR":/db alpine sh -c \
+    "apk add -q sqlite 2>/dev/null; sqlite3 /db/dev.db 'CREATE TABLE IF NOT EXISTS EmergencyToken (id TEXT PRIMARY KEY, token TEXT UNIQUE NOT NULL, description TEXT, isActive BOOLEAN NOT NULL DEFAULT 1, expiresAt DATETIME, createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP);'" \
+    2>/dev/null && ok "Tabela EmergencyToken verificada" || warn "Aviso ao verificar EmergencyToken"
 fi
 
 # 4. Limpeza de containers antigos e liberacao de disco

@@ -37,6 +37,7 @@ export async function GET(
       subdomain: router.subdomain ?? undefined,
       routerId: router.id,
       slug,
+      user: router.user || "admin",
     });
 
     const filename = ("mikrogestor-vpn-" + router.name.replace(/\s+/g, "-").toLowerCase() + ".rsc");
