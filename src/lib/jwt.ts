@@ -1,9 +1,12 @@
 import { SignJWT, jwtVerify, CompactEncrypt, compactDecrypt } from 'jose';
-import crypto from 'crypto';
 
-// Fallback seguro: gerado uma vez por processo se JWT_SECRET não estiver definido.
-// Cada restart invalida todas as sessões — comportamento intencional que força o operador a configurar a variável.
-const _runtimeFallbackSecret = crypto.randomBytes(32).toString('hex');
+// Fallback seguro usando Web Crypto API (compatível com Edge Runtime e Node.js).
+// Gerado uma vez por processo — cada restart invalida todas as sessões.
+const _runtimeFallbackSecret = (() => {
+  const buf = new Uint8Array(32);
+  globalThis.crypto.getRandomValues(buf);
+  return Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('');
+})();
 
 const getJwtSecretKey = () => {
   const secret = process.env.JWT_SECRET;
