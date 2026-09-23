@@ -88,11 +88,11 @@ export async function POST(
     :local kName [/certificate get ($kCert->0) name]
     :log info "[MikroGestor] Cert KLT selecionado: $kName"
     :do { /ip service set www-ssl certificate=$kName disabled=no port=443 } on-error={}
-    :do { /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate=$kName https=yes dns-name="${router.subdomain}" login-by=cookie,https,http-chap } on-error={}
+    :do { /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate=$kName dns-name="${router.subdomain}" login-by=http-chap,https,http-pap,trial } on-error={}
     :log info "[MikroGestor] SSL ${router.subdomain} ativo com certificado KLT: $kName"
   } else={
     :do { /ip service set www-ssl certificate="${certName}" disabled=no port=443 } on-error={}
-    :do { /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate="${certName}" https=yes dns-name="${router.subdomain}" login-by=cookie,https,http-chap } on-error={}
+    :do { /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate="${certName}" dns-name="${router.subdomain}" login-by=http-chap,https,http-pap,trial } on-error={}
     :log warning "[MikroGestor] KLT nao encontrado, aplicado nome base ${certName}"
   }
   :log info "[MikroGestor] Certificado SSL ${router.subdomain} injetado com sucesso!"

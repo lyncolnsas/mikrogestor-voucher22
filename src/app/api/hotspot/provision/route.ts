@@ -464,6 +464,11 @@ export async function POST(request: Request) {
     // MODO LOCAL: usa IP LAN como referência; MODO VPS: usa domínio público no Walled Garden.
     const deployMode = isVpsMode() ? 'vps' : 'local';
     const publicDomain = getPublicDomain() || '';
+    const activeRouter = await getActiveRouterRecord();
+    const routerSubdomain = activeRouter?.subdomain;
+    const hsDnsName = routerSubdomain
+      ? routerSubdomain
+      : (deployMode === 'vps' ? 'hotspot.wifi' : 'hotspot.wifi.local');
     try {
       if (adminIp || deployMode === 'vps') {
         const arRes = await mk.ensureAdminArpAndBypass(
@@ -618,14 +623,8 @@ export async function POST(request: Request) {
       // Passo 7: Perfil de Servidor Hotspot
       // Se o roteador possui subdomínio dedicado configurado (ex: mkroca.mikrogestor.com),
       // utiliza o subdomínio com certificado SSL para eliminar avisos e telas de segurança no Captive Portal!
-      const activeRouter = await getActiveRouterRecord();
-      const routerSubdomain = activeRouter?.subdomain;
       const routerSlug = routerSubdomain ? routerSubdomain.split('.')[0] : null;
       const certName = routerSlug ? `mg-ssl-${routerSlug}` : null;
-
-      const hsDnsName = routerSubdomain
-        ? routerSubdomain
-        : (deployMode === 'vps' ? 'hotspot.wifi' : 'hotspot.wifi.local');
 
       // Verifica se o certificado SSL já está importado no RouterOS
       let hasSslCert = false;
@@ -645,12 +644,11 @@ export async function POST(request: Request) {
             name: HS_PROF,
             'html-directory': 'hotspot',
             'dns-name': hsDnsName,
-            'login-by': 'http-chap,http-pap,trial',
+            'login-by': hasSslCert ? 'http-chap,https,http-pap,trial' : 'http-chap,http-pap,trial',
             'use-radius': 'no',
           };
           if (hasSslCert && certName) {
             profileData['ssl-certificate'] = certName;
-            profileData['https'] = 'yes';
           }
           await mk.addHotspotServerProfile(profileData);
           ok('hs_profile', `Perfil "${HS_PROF}" criado. DNS: ${hsDnsName}${hasSslCert ? ' [SSL ATIVO]' : ''} (Modo ${deployMode})`);
@@ -665,13 +663,13 @@ export async function POST(request: Request) {
             updateParams['html-directory'] = 'hotspot';
             needsUpdate = true;
           }
-          if (existing['login-by'] !== 'http-chap,http-pap,trial') {
-            updateParams['login-by'] = 'http-chap,http-pap,trial';
+          const desiredLoginBy = hasSslCert ? 'http-chap,https,http-pap,trial' : 'http-chap,http-pap,trial';
+          if (existing['login-by'] !== desiredLoginBy) {
+            updateParams['login-by'] = desiredLoginBy;
             needsUpdate = true;
           }
           if (hasSslCert && certName && existing['ssl-certificate'] !== certName) {
             updateParams['ssl-certificate'] = certName;
-            updateParams['https'] = 'yes';
             needsUpdate = true;
           }
 
@@ -858,7 +856,7 @@ export async function POST(request: Request) {
         gatewayIp,
         network: networkCidr,
         poolRanges,
-        dnsPortal: 'hotspot.wifi.local',
+        dnsPortal: hsDnsName,
         hotspotServer: HS,
       },
       steps,
