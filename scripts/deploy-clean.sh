@@ -59,31 +59,37 @@ if [ -f "$PRISMA_DIR/dev.db" ]; then
   add_col_if_missing "WhatsappInstance" "groupJoinError" "TEXT"
 fi
 
-# 4. Limpeza de containers antigos da aplicacao
-log "PASSO 4: Limpando containers antigos do MikroGestor..."
+# 4. Limpeza de containers antigos e liberacao de disco
+log "PASSO 4: Limpando containers antigos e liberando espaco em disco..."
 OLD=$(docker ps -a --filter "name=$APP_UUID" --format "{{.ID}}" 2>/dev/null || true)
 if [ -n "$OLD" ]; then
-  echo "$OLD" | xargs -r docker stop --time 20 2>/dev/null || true
+  echo "$OLD" | xargs -r docker stop --timeout 20 2>/dev/null || true
   echo "$OLD" | xargs -r docker rm -f 2>/dev/null || true
   ok "Containers antigos eliminados com sucesso."
 else
   warn "Nenhum container antigo ativo."
 fi
 
+# Liberar cache de build antigo do Docker para evitar "No space left on device"
+docker builder prune -a -f --filter "until=1h" 2>/dev/null || true
+docker image prune -a -f --filter "until=24h" 2>/dev/null || true
+ok "Espaco em disco otimizado."
+
 # 5. Notificacao de Deploy
-log "PASSO 5: Disparando ou aguardando deploy Coolify..."
-if [ -n "${COOLIFY_TOKEN:-}" ]; then
-  HTTP_DEPLOY=$(curl -s -o /dev/null -w "%{http_code}" \
-    -X POST "http://localhost:8080/api/v1/deploy?uuid=$APP_UUID&force=false" \
-    -H "Authorization: Bearer $COOLIFY_TOKEN" \
-    -H "Content-Type: application/json" 2>/dev/null || echo 000)
-  if [ "$HTTP_DEPLOY" = "200" ] || [ "$HTTP_DEPLOY" = "201" ]; then
-    ok "Deploy disparado via Coolify API (HTTP $HTTP_DEPLOY)"
-  else
-    warn "Coolify API retornou HTTP $HTTP_DEPLOY"
-  fi
+log "PASSO 5: Disparando deploy via Coolify API..."
+COOLIFY_AUTH_TOKEN="${COOLIFY_TOKEN:-${COOLIFY_API_TOKEN:-1|plahDHthpFs9JStO2953AjsfsjZKGnd9B9gTgKfx3c95a991}}"
+HTTP_DEPLOY=$(curl -s -o /dev/null -w "%{http_code}" \
+  -X POST "http://localhost:8000/api/v1/deploy?uuid=$APP_UUID&force=true" \
+  -H "Authorization: Bearer $COOLIFY_AUTH_TOKEN" \
+  -H "Content-Type: application/json" 2>/dev/null || echo 000)
+
+if [ "$HTTP_DEPLOY" = "200" ] || [ "$HTTP_DEPLOY" = "201" ]; then
+  ok "Deploy disparado com sucesso via Coolify API (HTTP $HTTP_DEPLOY)!"
 else
-  log "Deploy sera monitorado ou disparado via MCP/Painel."
+  warn "Coolify API retornou HTTP $HTTP_DEPLOY -- tentando via porta 8080..."
+  curl -s -X POST "http://localhost:8080/api/v1/deploy?uuid=$APP_UUID&force=true" \
+    -H "Authorization: Bearer $COOLIFY_AUTH_TOKEN" \
+    -H "Content-Type: application/json" 2>/dev/null || true
 fi
 
 # 6. Monitoramento de subida
