@@ -106,6 +106,27 @@ O Walled Garden define o que o cliente pode acessar **antes** de pagar/se autent
 
 ---
 
+## Hardening da VPS & Firewall UFW
+
+A infraestrutura do servidor VPS opera sob política estrita de negação (`default deny incoming`), minimizando a superfície de ataque e garantindo que serviços internos nunca fiquem expostos à internet:
+
+### Política e Portas Liberadas
+| Porta / Interface | Protocolo | Origem Permitida | Finalidade / Serviço |
+|---|---|---|---|
+| **22** | TCP | `0.0.0.0/0` | Acesso remoto administrativo SSH |
+| **80** | TCP | `0.0.0.0/0` | Traefik Proxy (HTTP / Desafio Let's Encrypt) |
+| **443** | TCP & UDP | `0.0.0.0/0` | Traefik Proxy (HTTPS e HTTP/3) |
+| **8000** | TCP | `0.0.0.0/0` | Painel Administrativo Coolify |
+| **6001** | TCP | `0.0.0.0/0` | Coolify Realtime WebSockets |
+| **51820** | UDP | `0.0.0.0/0` | Túnel WireGuard (MikroTiks e Operadores) |
+| **wg0** | Qualquer | `10.8.0.0/24` | Tráfego interno de controle WireGuard |
+| **51821** | TCP | `172.16.0.0/12`, `127.0.0.1` | Daemon interno de controle WireGuard (`wg-manager`) |
+
+> [!IMPORTANT]
+> A porta de controle **51821** (`wg-manager`) é estritamente restrita à rede Docker interna e localhost. Tentativas de conexão a partir da internet pública são bloqueadas pelo firewall. Além disso, as rotas exigem autenticação via cabeçalho `X-WG-Secret`.
+
+---
+
 ## Controle de Acesso Administrativo
 
 O painel administrativo possui:

@@ -88,6 +88,32 @@ Para que todo roteador conectado responda em um subdomínio próprio (ex: `mkroc
 2. **Desativação de IPv6 Obrigatória**: O provisionamento executa obrigatoriamente `/ipv6 settings set disable-ipv6=yes`.
 3. **Desativação de FastTrack Obrigatória**: Regras de FastTrack (`action=fasttrack-connection`) desviam o tráfego do kernel de inspeção e das filas do Hotspot. O provisionamento desativa automaticamente qualquer regra com FastTrack ativo no IPv4.
 
+### 1.10 Hardening do Firewall UFW na VPS (Política Default Deny)
+1. **Política Estrita e Roteamento VPN**:
+   ```bash
+   ufw default deny incoming
+   ufw default allow outgoing
+   ufw default allow routed
+   ```
+2. **Portas Públicas Liberadas**:
+   ```bash
+   ufw allow 22/tcp comment "SSH Remote Access"
+   ufw allow 80/tcp comment "HTTP Traefik Proxy"
+   ufw allow 443/tcp comment "HTTPS Traefik Proxy"
+   ufw allow 443/udp comment "HTTP3 Traefik Proxy"
+   ufw allow 8000/tcp comment "Coolify Web UI"
+   ufw allow 6001/tcp comment "Coolify Realtime WebSockets"
+   ufw allow 51820/udp comment "WireGuard VPN Tunnel"
+   ufw allow in on wg0 comment "WireGuard Internal Traffic"
+   ufw route allow in on wg0 out on wg0 comment "WireGuard Inter-Peer Routing"
+   ```
+3. **Isolamento da Porta de Controle (51821)**:
+   ```bash
+   ufw allow from 172.16.0.0/12 to any port 51821 proto tcp comment "Docker to WG-Manager"
+   ufw allow from 127.0.0.1 to any port 51821 proto tcp comment "Localhost to WG-Manager"
+   ufw --force enable
+   ```
+
 ---
 
 ## 2. Deploy em Nova VPS do Zero (Checklist Rápido)

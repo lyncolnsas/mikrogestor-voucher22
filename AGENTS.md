@@ -64,3 +64,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
       `/ipv6 settings set disable-ipv6=yes`
     - **Desativação Obrigatória de FastTrack**: A regra padrão `action=fasttrack-connection` contorna a inspeção de pacotes e cadeias do Hotspot. É OBRIGATÓRIO desativar o FastTrack no firewall IPv4:
       `/ip firewall filter disable [find action=fasttrack-connection]`
+18. **HARDENING DO FIREWALL UFW NA VPS (POLÍTICA DEFAULT DENY)**:
+    - O firewall da VPS deve operar sob política estrita de negação (`ufw default deny incoming`, `ufw default allow outgoing`, `ufw default allow routed`).
+    - Portas públicas liberadas: `22/tcp` (SSH), `80/tcp` (HTTP Traefik), `443/tcp e udp` (HTTPS/HTTP3 Traefik), `8000/tcp` (Coolify UI), `6001/tcp` (Coolify Realtime WebSockets), `51820/udp` (Túnel WireGuard).
+    - Portas internas restritas: A porta `51821/tcp` (`wg-manager`) NUNCA deve ser aberta para a internet pública (`0.0.0.0/0`), apenas para as subredes Docker (`172.16.0.0/12`) e localhost (`127.0.0.1`).
+    - Roteamento entre peers WireGuard: O tráfego na interface `wg0` deve ser explicitamente aceito (`ufw allow in on wg0` e `ufw route allow in on wg0 out on wg0`) para permitir que operadores e técnicos via Winbox comuniquem-se diretamente com os MikroTiks.

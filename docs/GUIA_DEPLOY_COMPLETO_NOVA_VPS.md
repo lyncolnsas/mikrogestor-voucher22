@@ -108,7 +108,22 @@ bash <(curl -sSL https://raw.githubusercontent.com/lyncolnsas/mikrogestor-vouche
 4. Cria `/etc/wireguard/wg0.conf` com **NAT Masquerade ativo** e sobe a interface `wg0` em `10.8.0.1/24`.
 5. **Cria `/data/mikrogestor/prisma` com `chmod 777`** para persistência do banco SQLite.
 6. Instala o daemon de gerenciamento seguro `mikrogestor-wg-manager` (porta 51821) gerenciado pelo systemd.
-7. Ajusta o UFW permitindo SSH, HTTP, HTTPS, Coolify, WireGuard UDP e tráfego Docker interno.
+7. Configura o UFW em modo **Default Deny** com isolamento da porta 51821:
+   ```bash
+   ufw default deny incoming && ufw default allow outgoing && ufw default allow routed
+   ufw allow 22/tcp comment "SSH Remote Access"
+   ufw allow 80/tcp comment "HTTP Traefik Proxy"
+   ufw allow 443/tcp comment "HTTPS Traefik Proxy"
+   ufw allow 443/udp comment "HTTP3 Traefik Proxy"
+   ufw allow 8000/tcp comment "Coolify Web UI"
+   ufw allow 6001/tcp comment "Coolify Realtime WebSockets"
+   ufw allow 51820/udp comment "WireGuard VPN Tunnel"
+   ufw allow in on wg0 comment "WireGuard Internal Traffic"
+   ufw route allow in on wg0 out on wg0 comment "WireGuard Inter-Peer Routing"
+   ufw allow from 172.16.0.0/12 to any port 51821 proto tcp comment "Docker to WG-Manager"
+   ufw allow from 127.0.0.1 to any port 51821 proto tcp comment "Localhost to WG-Manager"
+   ufw --force enable
+   ```
 8. **Imprime na tela o bloco completo de variáveis para copiar e colar no Coolify!**
 
 ---
