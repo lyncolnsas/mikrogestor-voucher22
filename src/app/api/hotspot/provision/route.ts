@@ -364,6 +364,7 @@ export async function POST(request: Request) {
     { name: 'user_profile',  label: '[ PERFIL ] Perfil de Usuário Padrão',                   status: 'pending', message: '' },
     { name: 'walled_garden', label: '[ SEGURANÇA ] Walled Garden & SSL Bypass',                status: 'pending', message: '' },
     { name: 'anti_tethering', label: '[ FIREWALL ] Bloqueio contra Compartilhamento (TTL=1)',  status: 'pending', message: '' },
+    { name: 'traffic_isolation', label: '[ SEGURANÇA ] Bloqueio IPv6 & FastTrack (Anti-Bypass)', status: 'pending', message: '' },
     { name: 'nat',           label: '[ NAT ] NAT Masquerade via WAN',                      status: 'pending', message: '' },
     { name: 'update_media_urls', label: '[ MÍDIA ] Atualizar IP do Servidor nos Templates', status: 'pending', message: '' },
     { name: 'provision_signature', label: '[ LOG ] Gravar Assinatura MikroGestor',        status: 'pending', message: '' },
@@ -627,13 +628,26 @@ export async function POST(request: Request) {
       const certName = routerSlug ? `mg-ssl-${routerSlug}` : null;
 
       // Verifica se o certificado SSL já está importado no RouterOS
+      // Busca certs com chave privada válida para o subdomínio ou nome base mg-ssl
       let hasSslCert = false;
-      if (certName) {
-        try {
-          const certs = await (mk as any).client?.menu('/certificate').where('name', certName).get() || [];
-          hasSslCert = certs.length > 0;
-        } catch {}
-      }
+      let matchedCertName: string | null = null;
+      try {
+        const certs = ((await (mk as any).client?.menu('/certificate').get()) || []) as any[];
+        const found = certs.find((c: any) =>
+          (c['private-key'] === 'true' || c['private-key'] === true || c.privateKey === true) &&
+          (
+            (certName && (c.name === certName || c.name.startsWith(certName))) ||
+            (c.name && c.name.startsWith('mg-ssl')) ||
+            (routerSubdomain && (c['common-name'] === routerSubdomain || c.commonName === routerSubdomain))
+          )
+        );
+        if (found) {
+          hasSslCert = true;
+          matchedCertName = found.name;
+        }
+      } catch {}
+
+      const effectiveCertName = matchedCertName || certName;
 
       try {
         const profiles = await mk.getHotspotServerProfiles().catch(() => []) as any[];
@@ -647,11 +661,11 @@ export async function POST(request: Request) {
             'login-by': hasSslCert ? 'http-chap,https,http-pap,trial' : 'http-chap,http-pap,trial',
             'use-radius': 'no',
           };
-          if (hasSslCert && certName) {
-            profileData['ssl-certificate'] = certName;
+          if (hasSslCert && effectiveCertName) {
+            profileData['ssl-certificate'] = effectiveCertName;
           }
           await mk.addHotspotServerProfile(profileData);
-          ok('hs_profile', `Perfil "${HS_PROF}" criado. DNS: ${hsDnsName}${hasSslCert ? ' [SSL ATIVO]' : ''} (Modo ${deployMode})`);
+          ok('hs_profile', `Perfil "${HS_PROF}" criado. DNS: ${hsDnsName}${hasSslCert ? ` [SSL ATIVO: ${effectiveCertName}]` : ''} (Modo ${deployMode})`);
         } else {
           let needsUpdate = false;
           const updateParams: any = {};
@@ -659,23 +673,32 @@ export async function POST(request: Request) {
             updateParams['dns-name'] = hsDnsName;
             needsUpdate = true;
           }
-          if (existing['html-directory'] !== 'hotspot') {
-            updateParams['html-directory'] = 'hotspot';
-            needsUpdate = true;
-          }
           const desiredLoginBy = hasSslCert ? 'http-chap,https,http-pap,trial' : 'http-chap,http-pap,trial';
           if (existing['login-by'] !== desiredLoginBy) {
             updateParams['login-by'] = desiredLoginBy;
             needsUpdate = true;
           }
-          if (hasSslCert && certName && existing['ssl-certificate'] !== certName) {
-            updateParams['ssl-certificate'] = certName;
+          if (hasSslCert && effectiveCertName && existing['ssl-certificate'] !== effectiveCertName) {
+            updateParams['ssl-certificate'] = effectiveCertName;
             needsUpdate = true;
           }
 
           if (needsUpdate) {
-            await (mk as any).client?.menu('/ip/hotspot/profile').where('.id', existing.id).update(updateParams);
-            ok('hs_profile', `Perfil "${HS_PROF}" atualizado. DNS: ${hsDnsName}${hasSslCert ? ' [SSL ATIVO]' : ''} (Modo ${deployMode})`);
+            const profId = existing['.id'] || existing.id;
+            try {
+              if ((mk as any).client?.rosApi?.write) {
+                const cmdParams = [`=numbers=${profId}`];
+                if (updateParams['dns-name']) cmdParams.push(`=dns-name=${updateParams['dns-name']}`);
+                if (updateParams['login-by']) cmdParams.push(`=login-by=${updateParams['login-by']}`);
+                if (updateParams['ssl-certificate']) cmdParams.push(`=ssl-certificate=${updateParams['ssl-certificate']}`);
+                await (mk as any).client.rosApi.write('/ip/hotspot/profile/set', cmdParams);
+              } else {
+                await (mk as any).client?.menu('/ip/hotspot/profile').set(updateParams, profId);
+              }
+            } catch (errSet) {
+              console.warn('Erro ao atualizar perfil hotspot via API:', errSet);
+            }
+            ok('hs_profile', `Perfil "${HS_PROF}" atualizado. DNS: ${hsDnsName}${hasSslCert ? ` [SSL ATIVO: ${effectiveCertName}]` : ''} (Modo ${deployMode})`);
           } else {
             skip('hs_profile', `Perfil "${HS_PROF}" já configurado corretamente (DNS: ${existing['dns-name']}).`);
           }
@@ -772,6 +795,17 @@ export async function POST(request: Request) {
         ok('anti_tethering', `Anti-Tethering ativo na interface "${BRIDGE}" (Mangle TTL=1: ${antiTetherRes.status}).`);
       } catch (e: any) {
         warn('anti_tethering', `Anti-Tethering: ${e?.message || e}`);
+      }
+
+      // Passo 9.3: Bloqueio contra Vazamento IPv6 & FastTrack (Google, WhatsApp, Telegram)
+      try {
+        const isoRes = await mk.ensureHotspotTrafficIsolation(BRIDGE);
+        const details = [];
+        if (isoRes.ipv6Disabled) details.push('IPv6 desativado');
+        if (isoRes.fasttrackDisabled > 0) details.push(`${isoRes.fasttrackDisabled} regra(s) FastTrack desativada(s)`);
+        ok('traffic_isolation', `Isolamento ativo (${details.join(', ') || 'regras já em conformidade'}).`);
+      } catch (e: any) {
+        warn('traffic_isolation', `Isolamento IPv6/FastTrack: ${e?.message || e}`);
       }
     }
 

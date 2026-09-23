@@ -83,6 +83,11 @@ Para que todo roteador conectado responda em um subdomínio próprio (ex: `mkroc
 3. **Encaminhamento Nativo de Mídias**: Mídias enviadas no grupo da biblioteca são catalogadas e reencaminhadas (`relayMessage` + `generateForwardMessageContent`) aos clientes sem re-upload, poupando CPU/banda e reduzindo riscos de banimento.
 4. **Round-Robin com Failover**: O sistema alterna disparos entre todos os números saudáveis e executa fallback automático caso uma instância falhe.
 
+### 1.9 Isolamento de Tráfego Hotspot: IPv6 & FastTrack (Bloqueio Anti-Bypass)
+1. **IPv6 Bypass**: O Hotspot do RouterOS é 100% IPv4. Serviços como Google, YouTube, WhatsApp e Telegram utilizam IPv6 prioritariamente (*Happy Eyeballs* RFC 8305). Se o IPv6 estiver ativo no roteador, esses pacotes contornam o Hotspot completamente.
+2. **Desativação de IPv6 Obrigatória**: O provisionamento executa obrigatoriamente `/ipv6 settings set disable-ipv6=yes`.
+3. **Desativação de FastTrack Obrigatória**: Regras de FastTrack (`action=fasttrack-connection`) desviam o tráfego do kernel de inspeção e das filas do Hotspot. O provisionamento desativa automaticamente qualquer regra com FastTrack ativo no IPv4.
+
 ---
 
 ## 2. Deploy em Nova VPS do Zero (Checklist Rápido)

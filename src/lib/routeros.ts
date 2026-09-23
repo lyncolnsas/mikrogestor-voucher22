@@ -558,10 +558,29 @@ export class MikrotikAPI {
         await this.addWalledGardenIp('accept', `www.${publicDomain}`, 'WWW Dominio Publico (HTTPS)');
       }
 
-      // 2. Subdomínio dedicado do roteador (se atribuído)
+      // 2. Subdomínio dedicado do roteador (NÃO deve ser adicionado ao Walled Garden!
+      // O subdomain é o dns-name do próprio Hotspot (192.168.88.1). Se for adicionado
+      // em walled-garden/ip, o RouterOS cria uma regra de bypass para o IP local do roteador,
+      // fazendo com que requisições HTTPS caiam no WebFig em vez do servlet do Hotspot,
+      // resultando em erro 404. O Hotspot gerencia seu próprio dns-name nativamente).
       if (subdomain) {
-        await this.addWalledGarden('allow', subdomain, 'Subdominio Roteador');
-        await this.addWalledGardenIp('accept', subdomain, 'Subdominio Roteador (HTTPS)');
+        // Limpeza preventiva de qualquer entrada legada do subdomínio local no Walled Garden
+        try {
+          const wgIpMenu = this.client.menu('/ip/hotspot/walled-garden/ip');
+          const legacyIp = (await wgIpMenu.where('dst-host', subdomain).get()) as any[];
+          for (const item of legacyIp) {
+            const iid = item['.id'] || item.id;
+            if (iid) await wgIpMenu.remove(iid).catch(() => null);
+          }
+          const wgMenu = this.client.menu('/ip/hotspot/walled-garden');
+          const legacyWg = (await wgMenu.get()) as any[];
+          for (const item of legacyWg) {
+            if (item['dst-host'] && item['dst-host'].includes(subdomain)) {
+              const iid = item['.id'] || item.id;
+              if (iid) await wgMenu.remove(iid).catch(() => null);
+            }
+          }
+        } catch {}
       }
 
       // 3. IP público da VPS (para requisições diretas / APIs)
@@ -624,6 +643,83 @@ export class MikrotikAPI {
       console.warn('[Anti-Tethering] Erro ao configurar regra Mangle:', err);
       throw err;
     }
+  }
+
+  // --- ISOLAMENTO TOTAL DE TRÁFEGO HOTSPOT (IPV6 & FASTTRACK) --- //
+
+  /**
+   * Desativa o IPv6 e o FastTrack no RouterOS para garantir isolamento absoluto do Hotspot.
+   * O Hotspot do RouterOS é estritamente IPv4. Aplicativos modernos (Google, WhatsApp, Telegram)
+   * utilizam IPv6 por padrão (Happy Eyeballs RFC 8305). Se o IPv6 estiver ativo, esses serviços
+   * contornam o Captive Portal completamente. Da mesma forma, o FastTrack (action=fasttrack-connection)
+   * faz com que pacotes estabelecidos contornem as cadeias do firewall e o Hotspot.
+   */
+  async ensureHotspotTrafficIsolation(bridgeName: string = 'bridge'): Promise<{
+    ipv6Disabled: boolean;
+    fasttrackDisabled: number;
+  }> {
+    if (!this.client) throw new Error('Not connected');
+
+    let ipv6Disabled = false;
+    let fasttrackDisabled = 0;
+
+    // 1. Desativa FastTrack no Firewall IPv4
+    try {
+      const filterMenu = this.client.menu('/ip/firewall/filter');
+      const allFilters = ((await filterMenu.get()) as any[]) || [];
+      const ftRules = allFilters.filter(
+        (r: any) =>
+          r.action === 'fasttrack-connection' &&
+          r.disabled !== true &&
+          r.disabled !== 'true' &&
+          r.disabled !== 'yes'
+      );
+
+      for (const r of ftRules) {
+        const rid = r['.id'] || r.id;
+        if (rid) {
+          if ((this.client as any).rosApi?.write) {
+            await (this.client as any).rosApi.write('/ip/firewall/filter/set', [`=.id=${rid}`, '=disabled=yes']);
+          } else {
+            await filterMenu.where('.id', rid).update({ disabled: 'yes' });
+          }
+          fasttrackDisabled++;
+        }
+      }
+    } catch (err) {
+      console.warn('[Hotspot Isolation] Erro ao desativar FastTrack:', err);
+    }
+
+    // 2. Desativa IPv6 globalmente no RouterOS
+    try {
+      if ((this.client as any).rosApi?.write) {
+        await (this.client as any).rosApi.write('/ipv6/settings/set', ['=disable-ipv6=yes']);
+      } else {
+        await this.client.menu('/ipv6/settings').update({ 'disable-ipv6': 'yes' });
+      }
+      ipv6Disabled = true;
+    } catch (err) {
+      // Fallback: se o pacote IPv6 não suportar disable-ipv6 diretamente, tenta adicionar drop no forward
+      try {
+        const v6Fw = this.client.menu('/ipv6/firewall/filter');
+        const v6Rules = ((await v6Fw.get()) as any[]) || [];
+        const hasDrop = v6Rules.some(
+          (r: any) => r.chain === 'forward' && r.action === 'drop' && r.comment?.includes('MikroGestor')
+        );
+        if (!hasDrop) {
+          await v6Fw.add({
+            chain: 'forward',
+            action: 'drop',
+            comment: 'MikroGestor: Bloqueio IPv6 para Hotspot',
+          });
+        }
+        ipv6Disabled = true;
+      } catch (eFw) {
+        console.warn('[Hotspot Isolation] IPv6 já desabilitado ou não disponível:', eFw);
+      }
+    }
+
+    return { ipv6Disabled, fasttrackDisabled };
   }
 
   // --- BLOQUEIO DE CAMADA 2 (IP BINDING BLOCKED) --- //

@@ -402,7 +402,7 @@ PersistentKeepalive = 25
     // 3. Seleciona APENAS o que tem private-key=yes (flag K = KLT) → sem ambiguidade
     // 4. Aplica em www-ssl e hsprof_hotspot
     // ─────────────────────────────────────────────────────────────────────────
-    const syncSource = `:do { :log info "[MikroGestor] Iniciando sync SSL para ${subdomain}..."; :foreach c in=[/certificate find where name~"${certName}"] do={ :do { /certificate remove \\$c } on-error={} }; :delay 1s; /tool fetch url="https://${certHost}/api/vpn/router/${routerId}/cert-file?type=cert" dst-path="mg-cert.pem" check-certificate=no; :delay 3s; /certificate import file-name=mg-cert.pem passphrase="" name="${certName}"; :delay 2s; /tool fetch url="https://${certHost}/api/vpn/router/${routerId}/cert-file?type=key" dst-path="mg-key.pem" check-certificate=no; :delay 3s; /certificate import file-name=mg-key.pem passphrase="" name="${certName}"; :delay 2s; :do { /file remove [find name="mg-cert.pem"] } on-error={}; :do { /file remove [find name="mg-key.pem"] } on-error={}; :local kCert [/certificate find where name~"${certName}" and private-key=yes]; :if ([:len \\$kCert] > 0) do={ :local kName [/certificate get (\\$kCert->0) name]; :log info ("[MikroGestor] Cert KLT: " . \\$kName); :do { /ip service set www-ssl certificate=\\$kName disabled=no port=443 } on-error={}; :do { /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate=\\$kName dns-name="${subdomain}" login-by=http-chap,https,http-pap,trial } on-error={}; :log info ("[MikroGestor] SSL ativo com KLT: " . \\$kName); } else={ :do { /ip service set www-ssl certificate="${certName}" disabled=no port=443 } on-error={}; :do { /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate="${certName}" dns-name="${subdomain}" login-by=http-chap,https,http-pap,trial } on-error={}; :log warning "[MikroGestor] KLT nao encontrado"; }; } on-error={ :log warning "[MikroGestor] Falha SSL sync para ${subdomain}"; }`;
+    const syncSource = `:do { :log info "[MikroGestor] Iniciando sync SSL para ${subdomain}..."; :do { /certificate remove [find where name~"${certName}"] } on-error={}; :delay 1s; /tool fetch url="https://${certHost}/api/vpn/router/${routerId}/cert-file?type=cert" dst-path="mg-cert.pem" check-certificate=no; :delay 3s; /certificate import file-name=mg-cert.pem passphrase="" name="${certName}"; :delay 2s; /tool fetch url="https://${certHost}/api/vpn/router/${routerId}/cert-file?type=key" dst-path="mg-key.pem" check-certificate=no; :delay 3s; /certificate import file-name=mg-key.pem passphrase="" name="${certName}"; :delay 2s; :do { /file remove [find name="mg-cert.pem"] } on-error={}; :do { /file remove [find name="mg-key.pem"] } on-error={}; /certificate set [find where name~"${certName}"] trusted=yes; /ip service set www-ssl certificate=[/certificate get [find where name~"${certName}" and private-key=yes] name] disabled=no port=443; /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate=[/certificate get [find where name~"${certName}" and private-key=yes] name] dns-name="${subdomain}" login-by=http-chap,https,http-pap,trial; :log info "[MikroGestor] SSL ativo com sucesso para ${subdomain}"; } on-error={ :log warning "[MikroGestor] Falha SSL sync para ${subdomain}"; }`;
 
     const sslBlock = subdomain && routerId
       ? `
@@ -465,6 +465,10 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
   :if ([:len $ruleHs] = 0) do={ /ip firewall filter add chain=forward in-interface=bridge-hotspot out-interface=wg-mikrogestor action=drop comment="MikroGestor: block hotspot thru VPN" }
 } on-error={}
 
+# Desativa FastTrack e IPv6 para garantir interceptacao total do Hotspot (evita bypass de Google, WhatsApp, Telegram)
+:do { /ip firewall filter disable [find action=fasttrack-connection] } on-error={}
+:do { /ipv6 settings set disable-ipv6=yes } on-error={}
+
 # --- 5.1 PERMISSAO FULL PARA O USUARIO DA API ---
 :do {
   :local u [/user find where name="${user}"]
@@ -472,15 +476,14 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
 } on-error={}
 
 # --- 5. WALLED GARDEN IDEMPOTENTE (ACESSO SISTEMA & GATEWAYS) ---
+# NOTA: O subdominio dedicado do roteador NUNCA deve ser adicionado ao Walled Garden IP,
+# pois o Hotspot gerencia seu proprio dns-name nativamente. Adiciona-lo causa bypass para WebFig (erro 404).
 :do {
   :if ([:len [/ip hotspot walled-garden find where dst-host="*mikrogestor.com*"]] = 0) do={ /ip hotspot walled-garden add action=allow dst-host="*mikrogestor.com*" comment="MikroGestor: Dominio Publico" }
   :if ([:len [/ip hotspot walled-garden ip find where dst-host="mikrogestor.com"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-host="mikrogestor.com" comment="MikroGestor: Dominio Publico (HTTPS)" }
   :if ([:len [/ip hotspot walled-garden ip find where dst-host="www.mikrogestor.com"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-host="www.mikrogestor.com" comment="MikroGestor: WWW Dominio Publico (HTTPS)" }
   :if ([:len [/ip hotspot walled-garden ip find where dst-address="${vpsIp}"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-address="${vpsIp}" comment="MikroGestor: VPS IP Publico (HTTPS)" }
   :if ([:len [/ip hotspot walled-garden ip find where dst-address="10.8.0.1"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-address="10.8.0.1" comment="MikroGestor: IP VPN Servidor" }
-${subdomain ? `  :if ([:len [/ip hotspot walled-garden find where dst-host="*${subdomain}*"]] = 0) do={ /ip hotspot walled-garden add action=allow dst-host="*${subdomain}*" comment="MikroGestor: Subdominio Roteador" }
-  :if ([:len [/ip hotspot walled-garden ip find where dst-host="${subdomain}"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-host="${subdomain}" comment="MikroGestor: Subdominio Roteador (HTTPS)" }
-` : ""}
 } on-error={}
 ${sslBlock}
 :log info "MikroGestor VPN: configuracao concluida (${vpnIp})"

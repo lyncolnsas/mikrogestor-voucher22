@@ -58,4 +58,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
     - **Auto-Inclusão Autônoma no Grupo**: Ao conectar qualquer aparelho (`connection === 'open'`), o sistema detecta se o número já é participante. Se não for, obtém o código de convite via Baileys (`groupInviteCode`) e ingressa automaticamente no grupo com `groupAcceptInvite`, dispensando intervenção manual.
     - **Reencaminhamento Humano (`relayMessage`)**: O reenvio de mídias cadastradas na biblioteca utiliza `generateForwardMessageContent` e `relayMessage`. Não faz upload repetido de arquivo (economia de 100% de banda do servidor e simulação de reencaminhamento humano).
     - **Envio de Gatilhos**: Todas as rotas de envio de mensagens devem consultar `getTriggerSendOptions(key)` em `src/services/whatsapp-custom-messages.ts` e repassar `{ media, forwardLibraryId }` para `whatsappService.sendWhatsAppMessage`.
-
+17. **ISOLAMENTO TOTAL DE TRÁFEGO HOTSPOT: DESATIVAÇÃO DE IPV6 E FASTTRACK**:
+    - **O Hotspot do RouterOS é Estritamente IPv4**: A MikroTik não implementa Captive Portal na pilha IPv6. Se o IPv6 estiver ativo no roteador, os clientes recebem IPs globais e aplicativos modernos (Google, YouTube, WhatsApp, Telegram) conectam-se prioritariamente via IPv6 (*Happy Eyeballs* RFC 8305), contornando o Hotspot completamente.
+    - **Desativação Obrigatória de IPv6**: Em todo provisionamento de Hotspot, é OBRIGATÓRIO desativar o IPv6:
+      `/ipv6 settings set disable-ipv6=yes`
+    - **Desativação Obrigatória de FastTrack**: A regra padrão `action=fasttrack-connection` contorna a inspeção de pacotes e cadeias do Hotspot. É OBRIGATÓRIO desativar o FastTrack no firewall IPv4:
+      `/ip firewall filter disable [find action=fasttrack-connection]`

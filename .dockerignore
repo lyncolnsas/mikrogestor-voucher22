@@ -1,0 +1,38 @@
+# Ignorar ferramentas locais de orquestração e MCP
+tools/
+tools/**
+
+# Ignorar controle de versão e configurações locais
+.git/
+.github/
+.agents/
+.agent/
+.gemini/
+
+# Ignorar dependências locais de desenvolvimento
+node_modules/
+.next/
+build/
+out/
+coverage/
+
+# Ignorar sessões do WhatsApp em disco e bancos temporários
+baileys_sessions/
+baileys_session/
+baileys_auth_info/
+*.wwebjs_auth
+whatsapp_states.json
+scratch/
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Ignorar arquivos de ambiente locais
+.env
+.env.local
+.env.development
+.env.test
+
+# Manter scripts necessários para o build
+!scripts/patch-routeros.js
+!scripts/ensure-schema.js

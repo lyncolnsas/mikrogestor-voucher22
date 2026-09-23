@@ -69,7 +69,7 @@ export async function POST(
     const syncCmds = `
 :do {
   :log info "[MikroGestor] Limpando certificados antigos para ${router.subdomain}..."
-  :foreach c in=[/certificate find where name~"${certName}"] do={ :do { /certificate remove $c } on-error={} }
+  :do { /certificate remove [find where name~"${certName}"] } on-error={}
   :delay 1s
   :log info "[MikroGestor] Baixando certificado (cert) para ${router.subdomain}..."
   /tool fetch url="https://www.mikrogestor.com/api/vpn/router/${router.id}/cert-file?type=cert" dst-path="mg-cert.pem" check-certificate=no
@@ -83,18 +83,9 @@ export async function POST(
   :delay 2s
   :do { /file remove [find name="mg-cert.pem"] } on-error={}
   :do { /file remove [find name="mg-key.pem"] } on-error={}
-  :local kCert [/certificate find where name~"${certName}" private-key=yes]
-  :if ([:len $kCert] > 0) do={
-    :local kName [/certificate get ($kCert->0) name]
-    :log info "[MikroGestor] Cert KLT selecionado: $kName"
-    :do { /ip service set www-ssl certificate=$kName disabled=no port=443 } on-error={}
-    :do { /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate=$kName dns-name="${router.subdomain}" login-by=http-chap,https,http-pap,trial } on-error={}
-    :log info "[MikroGestor] SSL ${router.subdomain} ativo com certificado KLT: $kName"
-  } else={
-    :do { /ip service set www-ssl certificate="${certName}" disabled=no port=443 } on-error={}
-    :do { /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate="${certName}" dns-name="${router.subdomain}" login-by=http-chap,https,http-pap,trial } on-error={}
-    :log warning "[MikroGestor] KLT nao encontrado, aplicado nome base ${certName}"
-  }
+  /certificate set [find where name~"${certName}"] trusted=yes
+  /ip service set www-ssl certificate=[/certificate get [find where name~"${certName}" and private-key=yes] name] disabled=no port=443
+  /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate=[/certificate get [find where name~"${certName}" and private-key=yes] name] dns-name="${router.subdomain}" login-by=http-chap,https,http-pap,trial
   :log info "[MikroGestor] Certificado SSL ${router.subdomain} injetado com sucesso!"
 } on-error={
   :log error "[MikroGestor] Erro ao sincronizar certificado SSL para ${router.subdomain}"

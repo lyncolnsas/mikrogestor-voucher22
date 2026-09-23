@@ -63,6 +63,16 @@ Quando o usuário adiciona o número manualmente ao grupo no WhatsApp e reinicia
 
 ---
 
+## v2.3 — Setembro 2026
+
+### 🛡️ Isolamento de Tráfego Hotspot (Anti-Bypass IPv6 & FastTrack)
+
+- **Desativação Global de IPv6 (`/ipv6 settings set disable-ipv6=yes`)**: O Hotspot do RouterOS é 100% IPv4. Serviços como Google, YouTube, WhatsApp e Telegram utilizam preferencialmente IPv6 (*Happy Eyeballs* RFC 8305). Ao desativar o IPv6 no roteador, elimina-se o bypass de tráfego, forçando 100% dos fluxos através do Captive Portal IPv4.
+- **Desativação de FastTrack (`action=fasttrack-connection`)**: Regras de FastTrack no IPv4 desviam pacotes de sessões estabelecidas do firewall e das regras do Hotspot. O provisionamento automatizado agora localiza e desativa todas as regras de FastTrack no roteador.
+- **Correção Walled Garden Subdomínio Local**: Remoção do subdomínio local de `walled-garden/ip` para evitar interceptação indevida de HTTPS pelo WebFig (porta 443) em vez do servlet do Hotspot.
+
+---
+
 ## v2.2 — Julho 2026
 
 ### 🔒 Segurança de Hotspot: Anti-Tethering & Bloqueio de Inadimplentes

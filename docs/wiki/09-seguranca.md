@@ -70,6 +70,25 @@ No perfil Hotspot do RouterOS, `shared-users=1` limita a 1 dispositivo simultân
 
 ---
 
+## Isolamento de Tráfego Hotspot (IPv6 & FastTrack)
+
+Para evitar que serviços populares como **Google, YouTube, WhatsApp e Telegram** escapem do Captive Portal antes da autenticação:
+
+### 1. Desativação Obrigatória de IPv6
+O Hotspot do MikroTik RouterOS opera **exclusivamente na pilha IPv4**. Dispositivos modernos priorizam IPv6 (*Happy Eyeballs*). Se o provedor/roteador entregar IPv6, esses apps saem diretamente pela WAN sem passar pelo Hotspot.
+O provisionamento desativa o IPv6 globalmente no MikroTik:
+```routeros
+/ipv6 settings set disable-ipv6=yes
+```
+
+### 2. Desativação Obrigatória de FastTrack
+Regras de FastTrack (`action=fasttrack-connection`) desviam pacotes de conexões ativas do kernel de firewall e das filas do Hotspot. O provisionamento desativa automaticamente o FastTrack no IPv4:
+```routeros
+/ip firewall filter disable [find action=fasttrack-connection]
+```
+
+---
+
 ## Walled Garden — Controle de Acesso Antes da Autenticação
 
 O Walled Garden define o que o cliente pode acessar **antes** de pagar/se autenticar:
