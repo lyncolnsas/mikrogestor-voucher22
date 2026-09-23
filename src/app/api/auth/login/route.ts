@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { signJwt } from '@/lib/jwt';
 import { hashPassword, verifyPassword, dummyVerifyPassword } from '@/lib/auth-crypto';
@@ -54,13 +55,20 @@ export async function POST(request: Request) {
     // 3. Salvaguarda contra lockout em ambiente novo (zero usuários no banco)
     const totalUsers = await prisma.user.count();
     if (totalUsers === 0) {
+      // [SECURITY FIX CRIT-01] Gera senha aleatória segura em vez de '123'
+      const tempPass = crypto.randomBytes(8).toString('hex'); // 16 chars hex (128 bits)
       console.warn(
-        '[SECURITY NOTICE] Banco de dados sem usuários registrados. Provisionando administrador padrão inicial (admin).'
+        `\n\n⚠️  ══════════════════════════════════════════════════════════` +
+        `\n⚠️   PRIMEIRO ACESSO — MikroGestor` +
+        `\n⚠️   Usuário:  admin` +
+        `\n⚠️   Senha:    ${tempPass}` +
+        `\n⚠️   TROQUE IMEDIATAMENTE em: Dashboard → Configurações → Segurança` +
+        `\n⚠️  ══════════════════════════════════════════════════════════\n`
       );
       await prisma.user.create({
         data: {
           username: 'admin',
-          password: hashPassword('123'),
+          password: hashPassword(tempPass),
           name: 'Administrador',
           role: 'ADMIN',
         },

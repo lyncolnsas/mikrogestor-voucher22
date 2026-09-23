@@ -53,12 +53,13 @@ export async function POST(request: Request) {
     if (user) {
       const { isValid } = verifyPassword(password, user.password);
       credentialsValid = isValid;
-      if (!isValid) {
+      if (process.env.NODE_ENV !== 'production') {
         console.warn(`[AUTH DEBUG] Password check failed for '${cleanUsername}'. Provided length: ${password.length}, Stored hash starts with: ${user.password.slice(0, 15)}`);
       }
     } else {
-      console.warn(`[AUTH DEBUG] User not found in DB: '${cleanUsername}'`);
-      // Timing attack mitigation
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`[AUTH DEBUG] User not found in DB: '${cleanUsername}'`);
+      }  // Timing attack mitigation
       dummyVerifyPassword(password);
     }
 

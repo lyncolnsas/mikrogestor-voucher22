@@ -57,6 +57,8 @@ next-env.d.ts
 
 # WhatsApp runtime state
 whatsapp_states.json
+*.wwebjs_auth
+
 
 # Scratch & diagnostic scripts
 scripts/check-*.js

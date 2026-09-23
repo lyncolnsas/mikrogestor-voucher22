@@ -1,9 +1,16 @@
 import { SignJWT, jwtVerify, CompactEncrypt, compactDecrypt } from 'jose';
 
 const getJwtSecretKey = () => {
-  const secret = process.env.JWT_SECRET || 'mikrogestor_super_secret_jwt_key_2026';
+  const secret = process.env.JWT_SECRET;
+  // [SECURITY FIX MED-01] Falha rápida se JWT_SECRET não estiver configurado corretamente
+  if (!secret || secret.length < 32) {
+    const msg = '[FATAL] JWT_SECRET não definido ou muito curto (mínimo 32 caracteres). Configure a variável de ambiente antes de iniciar o servidor.';
+    console.error(msg);
+    throw new Error(msg);
+  }
   return secret;
 };
+
 
 // Derivação criptograficamente uniforme de 32 bytes para JWE A256GCM usando Web Crypto (Edge + Node)
 const getJweSecretKey = async (): Promise<Uint8Array> => {

@@ -7,15 +7,19 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import crypto from 'crypto';
+
 
 const OTP_TTL_MINUTES = 5;
 const OTP_LENGTH = 6;
 
-/** Gera um código numérico de 6 dígitos com padding (000000–999999) */
+/** Gera um código numérico de 6 dígitos com CSPRNG (crypto.randomInt) */
 function generateNumericCode(): string {
-  const num = Math.floor(Math.random() * 10 ** OTP_LENGTH);
+  // [SECURITY FIX MED-02] Usa crypto.randomInt (CSPRNG) em vez de Math.random (PRNG fraco)
+  const num = crypto.randomInt(0, 10 ** OTP_LENGTH);
   return String(num).padStart(OTP_LENGTH, '0');
 }
+
 
 /** Cria um novo OTP no banco e retorna o código gerado */
 export async function createAdminOtp(clientIp?: string): Promise<string> {
