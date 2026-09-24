@@ -54,13 +54,14 @@ Para que todo roteador conectado responda em um subdomínio próprio (ex: `mkroc
    - **Nome / Host**: `*` (ou `*.mikrogestor.com`)
    - **Valor / IP**: IP público da VPS (`2.25.168.82`)
    *Sem este registro wildcard, o Let's Encrypt falha no desafio HTTP-01 e os subdomínios não resolvem para a VPS.*
-2. **Diretório Dinâmico do Traefik no Coolify**:
+2. **Diretório Dinâmico do Traefik no Coolify (Acesso Remoto WebFig)**:
    - `/data/coolify/proxy/dynamic/` no host VPS é monitorado pelo Traefik (`--providers.file.watch=true`).
-   - O daemon `wg-manager` cria arquivos `router-<slug>.yaml` nesse diretório automaticamente ao gerar uma nova VPN.
+   - O daemon `wg-manager` cria arquivos `router-<slug>.yaml` nesse diretório apontando para `http://<vpnIp>:80` (WebFig do MikroTik) através do túnel WireGuard `10.8.0.0/24`.
+   - Isso permite que o administrador clique no link do subdomínio no painel MikroGestor e abra a interface WebFig diretamente com certificado SSL Let's Encrypt válido.
 3. **Certificados Let's Encrypt (`acme.json`)**:
    - Traefik salva os certificados em `/data/coolify/proxy/acme.json`.
    - O daemon extrai certificado e chave em `/cert/extract?domain=<subdomain>`.
-   - O MikroTik baixa os arquivos via `/tool fetch` e renova a cada 15 dias via `/system scheduler`.
+   - O MikroTik recebe a Full Chain via API WireGuard (`10.8.0.2:8728`) e possui fallback agendado via `/system scheduler`.
 
 ### 1.5 Walled Garden: Regras Críticas no RouterOS v7
 1. **Sem asteriscos em `walled-garden/ip`**: No RouterOS v7, `dst-host` em `/ip/hotspot/walled-garden/ip` **NÃO ACEITA ASTERISCOS** (ex: `*mikrogestor.com*` se torna `invalid: true`). Deve ser sempre o domínio exato (`mikrogestor.com`, `www.mikrogestor.com`) ou IP do host (`dst-address`).
@@ -83,10 +84,16 @@ Para que todo roteador conectado responda em um subdomínio próprio (ex: `mkroc
 3. **Encaminhamento Nativo de Mídias**: Mídias enviadas no grupo da biblioteca são catalogadas e reencaminhadas (`relayMessage` + `generateForwardMessageContent`) aos clientes sem re-upload, poupando CPU/banda e reduzindo riscos de banimento.
 4. **Round-Robin com Failover**: O sistema alterna disparos entre todos os números saudáveis e executa fallback automático caso uma instância falhe.
 
-### 1.9 Isolamento de Tráfego Hotspot: IPv6 & FastTrack (Bloqueio Anti-Bypass)
-1. **IPv6 Bypass**: O Hotspot do RouterOS é 100% IPv4. Serviços como Google, YouTube, WhatsApp e Telegram utilizam IPv6 prioritariamente (*Happy Eyeballs* RFC 8305). Se o IPv6 estiver ativo no roteador, esses pacotes contornam o Hotspot completamente.
-2. **Desativação de IPv6 Obrigatória**: O provisionamento executa obrigatoriamente `/ipv6 settings set disable-ipv6=yes`.
-3. **Desativação de FastTrack Obrigatória**: Regras de FastTrack (`action=fasttrack-connection`) desviam o tráfego do kernel de inspeção e das filas do Hotspot. O provisionamento desativa automaticamente qualquer regra com FastTrack ativo no IPv4.
+### 1.9 Isolamento de Tráfego Hotspot: IPv6, FastTrack, Rejeição QUIC/DoT e Bypass HTTPS Externo
+1. **IPv6 Bypass**: O Hotspot do RouterOS é 100% IPv4. Serviços como Google, YouTube, WhatsApp e Telegram utilizam IPv6 prioritariamente (*Happy Eyeballs* RFC 8305). Se o IPv6 estiver ativo no roteador, esses pacotes contornam o Hotspot completamente. Desativação obrigatória: `/ipv6 settings set disable-ipv6=yes`.
+2. **Desativação de FastTrack Obrigatória**: Regras de FastTrack (`action=fasttrack-connection`) desviam o tráfego do kernel de inspeção e das filas do Hotspot. O provisionamento desativa automaticamente qualquer regra com FastTrack ativo no IPv4.
+3. **Rejeição QUIC/HTTP3 (NUNCA DROP)**: Navegadores Chrome/Chromium usam QUIC (UDP 443). Se a porta sofrer `action=drop`, o navegador trava por timeout exibindo `ERR_QUIC_PROTOCOL_ERROR`. Deve ser rejeitado com ICMP prohibited:
+   `/ip firewall filter add chain=forward action=reject reject-with=icmp-admin-prohibited protocol=udp dst-port=443 comment="MikroGestor: Reject QUIC/HTTP3 (Force TCP/HTTP)" place-before=1`
+4. **Rejeição DNS-over-TLS / Private DNS Android (NUNCA DROP)**: Dispositivos Android modernos usam DoT (TCP 853). Se pacotes sofrerem `action=drop`, o Android aguarda 15s antes de testar o portal, mantendo a conexão presa em 4G/5G. Deve ser rejeitado com TCP Reset:
+   `/ip firewall filter add chain=forward action=reject reject-with=tcp-reset protocol=tcp dst-port=853 comment="MikroGestor: Reject DNS-over-TLS (Force Port 53)" place-before=1`
+5. **Bypass de Interceptação HTTPS Externo no NAT (`chain=hs-unauth action=return`)**: A regra dinâmica nativa do MikroTik (`chain=hs-unauth protocol=tcp dst-port=443 action=redirect to-ports=64875`) redireciona acessos HTTPS externos para o proxy local do roteador, que responde com o certificado de `<slug>.mikrogestor.com`, gerando erro de certificado (`NET::ERR_CERT_COMMON_NAME_INVALID`) em vez de abrir o portal. Deve ser aplicada a regra prioritária no NAT:
+   `/ip firewall nat add chain=hs-unauth protocol=tcp dst-port=443 action=return place-before=0 comment="MikroGestor: Bypass foreign HTTPS interception"`
+   Com isso, conexões HTTPS externas recebem TCP RST do filtro, disparando imediatamente a sonda HTTP na porta 80 (`generate_204`), que é interceptada pelo Hotspot e redirecionada com sucesso para a página de login.
 
 ### 1.10 Hardening do Firewall UFW na VPS (Política Default Deny)
 1. **Política Estrita e Roteamento VPN**:
@@ -191,6 +198,19 @@ Para que todo roteador conectado responda em um subdomínio próprio (ex: `mkroc
 ### Banco de dados perdeu dados após deploy
 - **Causa**: Volume `/data/mikrogestor/prisma` não foi configurado no Coolify.
 - **Solução**: Configure o volume no Coolify e execute `docker exec <id> npx prisma db push`.
+
+### ERR_QUIC_PROTOCOL_ERROR ou Celular não abre o Captive Portal (permanece em 4G)
+- **Causa 1**: Regra de bloqueio QUIC (UDP 443) com `action=drop` no filter. O Chrome fica tentando até o timeout e acusa erro de protocolo.
+- **Causa 2**: Regra de bloqueio DoT (TCP 853) com `action=drop`. O Android Private DNS trava a verificação por 15s e não desvia para o Wi-Fi.
+- **Causa 3**: Falta do bypass de HTTPS no NAT `hs-unauth`. O roteador intercepta HTTPS externo e devolve certificado local com erro de domínio (`NET::ERR_CERT_COMMON_NAME_INVALID`).
+- **Solução**:
+  1. No filter, use `action=reject reject-with=icmp-admin-prohibited` para UDP 443 e `action=reject reject-with=tcp-reset` para TCP 853.
+  2. No NAT, garanta a regra prioritária:
+     `/ip firewall nat add chain=hs-unauth protocol=tcp dst-port=443 action=return place-before=0 comment="MikroGestor: Bypass foreign HTTPS interception"`
+
+### Link do Subdomínio no painel abre tela do MikroGestor em vez do MikroTik
+- **Causa**: Configuração dinâmica do Traefik em `/data/coolify/proxy/dynamic/router-<slug>.yaml` com backend apontando para o container Docker em vez da VPN WireGuard.
+- **Solução**: Verifique o arquivo dinâmico no host da VPS. O bloco `services` deve apontar estritamente para `http://<vpnIp>:80` (ex: `http://10.8.0.2:80`).
 
 ---
 

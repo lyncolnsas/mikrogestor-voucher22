@@ -330,7 +330,7 @@ O MikroGestor oferece a cada roteador cadastrado um subdomínio exclusivo (ex: `
 
 #### Como funciona o fluxo automatizado:
 1. **DNS Wildcard**: O apontamento DNS `* -> IP_VPS` direciona qualquer subdomínio para a VPS.
-2. **Proxy Reverso Traefik**: Ao provisionar o roteador, o daemon `wg-manager` cria um arquivo de roteamento dinâmico em `/data/coolify/proxy/dynamic/router-<slug>.yaml` apontando para o container MikroGestor.
+2. **Proxy Reverso Traefik (Acesso Remoto WebFig com SSL)**: Ao provisionar o roteador, o daemon `wg-manager` cria um arquivo de roteamento dinâmico em `/data/coolify/proxy/dynamic/router-<slug>.yaml` apontando para `http://<vpnIp>:80` (WebFig do MikroTik através do túnel WireGuard `10.8.0.0/24`). Ao clicar no link do subdomínio dentro do painel MikroGestor, o administrador acessa diretamente a interface WebFig com certificado SSL Let's Encrypt autêntico e válido.
 3. **Emissão SSL Automática**: O Traefik solicita e renova o certificado Let's Encrypt automaticamente salvando em `/data/coolify/proxy/acme.json`.
 4. **Cadeia Completa de Certificados (Full Chain)**:
    - A rota `/api/vpn/router/<id>/cert-file` entrega a cadeia de certificados completa: Folha + Intermediário Let's Encrypt (`YR2`) + Raiz (`ISRG Root X1`).
@@ -344,6 +344,10 @@ O MikroGestor oferece a cada roteador cadastrado um subdomínio exclusivo (ex: `
    - **Fluxo Dinâmico**: O Traefik gerencia o ciclo de vida e renova o certificado automaticamente nos últimos dias de validade.
    - Assim que o certificado é renovado ou provisionado, a própria plataforma MikroGestor conecta no MikroTik via API WireGuard (`10.8.0.2:8728`) e injeta a nova cadeia completa instantaneamente, eliminando loops desnecessários de download periódico no roteador.
    - O agendador no MikroTik atua apenas como fallback seguro em caso de indisponibilidade temporária de rede no momento da virada do certificado.
+8. **Regras de Rede para Redirecionamento Perfeito do Captive Portal**:
+   - **Rejeição QUIC (UDP 443)**: Rejeitado com `icmp-admin-prohibited` no filter (evita `ERR_QUIC_PROTOCOL_ERROR` no Chrome e força TCP em 0ms).
+   - **Rejeição DoT (TCP 853)**: Rejeitado com `tcp-reset` no filter (evita 15s de espera no Android Private DNS e força fallback para DNS 53).
+   - **Bypass de Interceptação HTTPS Externo no NAT**: Regra prioritária `chain=hs-unauth protocol=tcp dst-port=443 action=return place-before=0` no NAT (evita erro `NET::ERR_CERT_COMMON_NAME_INVALID` ao navegar em `google.com` e dispara o probe HTTP 80 que abre a tela de login do Hotspot).
 
 ---
 

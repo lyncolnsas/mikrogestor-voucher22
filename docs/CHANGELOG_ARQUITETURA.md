@@ -6,6 +6,24 @@
 
 ## v2.4 — Setembro 2026
 
+### 🌐 Redirecionamento Captive Portal Infalível & Acesso WebFig via Subdomínio
+
+- **Acesso Externo WebFig com SSL Automático (`http://<vpnIp>:80`)**:
+  - Correção na configuração dinâmica do Traefik gerada pelo daemon `wg-manager`: o subdomínio dedicado `<slug>.mikrogestor.com` agora faz proxy reverso diretamente para a porta 80 do MikroTik (`10.8.0.X:80`) através do túnel WireGuard `10.8.0.0/24`.
+  - Ao clicar no link do subdomínio no painel MikroGestor, o operador ou administrador acessa a interface WebFig do roteador com certificado Let's Encrypt autêntico e válido, sem a necessidade de IP público no cliente e sem expor portas inseguras.
+- **Rejeição com ICMP de QUIC/HTTP3 (Eliminação do `ERR_QUIC_PROTOCOL_ERROR`)**:
+  - A regra de bloqueio de QUIC (UDP porta 443) foi atualizada de `action=drop` para `action=reject reject-with=icmp-admin-prohibited`.
+  - O descarte silencioso (`drop`) causava congelamento no Google Chrome e navegadores Chromium, culminando em `ERR_QUIC_PROTOCOL_ERROR` e impedindo a detecção do portal cativo.
+  - Com a rejeição ICMP, o navegador recebe resposta em 0ms e chaveia instantaneamente para TCP sem alarmes.
+- **Rejeição com TCP-Reset do DoT / Private DNS Android (Eliminação do Delay de 15s)**:
+  - A regra para a porta TCP 853 foi atualizada de `action=drop` para `action=reject reject-with=tcp-reset`.
+  - Evita que o recurso de "DNS Privado" do Android congele a verificação de rede por 15 segundos mantendo o smartphone preso em dados móveis (4G/5G). O reset imediato força o Android a consultar o DNS local na porta 53 do MikroTik (`192.168.88.1`).
+- **Bypass de Interceptação HTTPS Externo no NAT (`chain=hs-unauth action=return`)**:
+  - Adicionada regra prioritária (`place-before=0`) na chain `hs-unauth` do NAT:
+    `/ip firewall nat add chain=hs-unauth protocol=tcp dst-port=443 action=return place-before=0 comment="MikroGestor: Bypass foreign HTTPS interception"`
+  - Elimina o erro de mismatch de SSL (`NET::ERR_CERT_COMMON_NAME_INVALID`) quando clientes tentavam navegar em sites externos (ex: `https://google.com`).
+  - Ao contornar a interceptação NAT externa, o filtro do Hotspot devolve TCP RST, disparando o teste HTTP na porta 80 (`http://clients3.google.com/generate_204`), que é interceptado pelo Hotspot com 100% de sucesso e redirecionado (HTTP 302) para `http://<slug>.mikrogestor.com/login`.
+
 ### 🔐 Segurança: Autenticação OTP via WhatsApp + Tokens de Emergência Offline
 
 - **OTP de 2 fatores obrigatório**: O login do painel exige código de 6 dígitos entregue via WhatsApp ao administrador. Sem WhatsApp ativo, o acesso é bloqueado automaticamente.
