@@ -725,24 +725,23 @@ export class MikrotikAPI {
     try {
       const filterMenu = this.client.menu('/ip/firewall/filter');
       const allFilters = ((await filterMenu.get()) as any[]) || [];
-      const hasQuicDrop = allFilters.some(
+      const hasQuicReject = allFilters.some(
         (r: any) =>
           r.chain === 'forward' &&
           r.protocol === 'udp' &&
           (r['dst-port'] === '443' || r.dstPort === '443') &&
-          r.action === 'drop'
+          r.action === 'reject'
       );
-      if (!hasQuicDrop) {
-        const firstId = allFilters[0]?.['.id'] || allFilters[0]?.id;
+      if (!hasQuicReject) {
         const addParams: any = {
           chain: 'forward',
           'in-interface': bridgeName,
           protocol: 'udp',
           'dst-port': '443',
-          action: 'drop',
-          comment: 'MikroGestor: Block QUIC (Force TCP for Hotspot Interception)',
+          action: 'reject',
+          'reject-with': 'icmp-admin-prohibited',
+          comment: 'MikroGestor: Reject QUIC (Forces Instant Fallback for Captive Portal)',
         };
-        if (firstId) addParams['place-before'] = firstId;
         await filterMenu.add(addParams);
         quicBlocked = true;
       } else {
@@ -770,50 +769,36 @@ export class MikrotikAPI {
       const existing = rules.find(
         (r: any) =>
           r.chain === 'hs-unauth' &&
-          r['dst-port'] === '443' &&
+          (r['dst-port'] === '443' || r.dstPort === '443') &&
           r.action === 'return' &&
           r.comment &&
           r.comment.includes('Bypass foreign HTTPS')
       );
 
-      // Encontra a regra dinâmica de redirect para 443
-      const redirectRule = rules.find(
-        (r: any) =>
-          r.chain === 'hs-unauth' &&
-          r['dst-port'] === '443' &&
-          r.action === 'redirect'
-      );
-
       if (existing) {
-        const existingIndex = rules.indexOf(existing);
-        const redirectIndex = redirectRule ? rules.indexOf(redirectRule) : -1;
-        if (redirectRule && existingIndex > redirectIndex) {
-          const eid = existing['.id'] || existing.id;
-          const rid = redirectRule['.id'] || redirectRule.id;
-          if ((this.client as any).rosApi?.write) {
-            await (this.client as any).rosApi.write('/ip/firewall/nat/move', [
-              `=numbers=${eid}`,
-              `=destination=${rid}`,
-            ]);
-          }
-          return { status: 'moved_before_redirect' };
-        }
         return { status: 'already_exists' };
       }
 
-      const addParams: any = {
-        chain: 'hs-unauth',
-        'dst-port': '443',
-        protocol: 'tcp',
-        action: 'return',
-        comment: 'MikroGestor: Bypass foreign HTTPS interception (prevents cert mismatch)',
-      };
-
-      if (redirectRule) {
-        addParams['place-before'] = redirectRule['.id'] || redirectRule.id;
+      if ((this.client as any).rosApi?.write) {
+        await (this.client as any).rosApi.write('/ip/firewall/nat/add', [
+          '=chain=hs-unauth',
+          '=protocol=tcp',
+          '=dst-port=443',
+          '=action=return',
+          '=comment=MikroGestor: Bypass foreign HTTPS interception (prevents cert mismatch)',
+          '=place-before=0',
+        ]);
+        return { status: 'created' };
       }
 
-      await natMenu.add(addParams);
+      await natMenu.add({
+        chain: 'hs-unauth',
+        protocol: 'tcp',
+        'dst-port': '443',
+        action: 'return',
+        comment: 'MikroGestor: Bypass foreign HTTPS interception (prevents cert mismatch)',
+        'place-before': '0',
+      });
       return { status: 'created' };
     } catch (err: any) {
       console.warn('[Hotspot HTTPS Bypass] Erro ao configurar bypass de HTTPS externo:', err);
@@ -824,30 +809,33 @@ export class MikrotikAPI {
   /**
    * Bloqueia DNS Privado (DoT - DNS over TLS porta 853) para impedir que smartphones
    * com Android Private DNS ativo ignorem o servidor DNS local e contornem o Captive Portal.
+   * Utiliza reject-with=tcp-reset para que o Android faça fallback instantâneo para DNS local (porta 53).
    */
   async ensureBlockDoT(): Promise<{ status: string }> {
     if (!this.client) throw new Error('Not connected');
     try {
       const filterMenu = this.client.menu('/ip/firewall/filter');
       const rules = ((await filterMenu.get()) as any[]) || [];
-      const hasInput = rules.some((r: any) => r.chain === 'input' && r['dst-port'] === '853' && r.action === 'drop');
+      const hasInput = rules.some((r: any) => r.chain === 'input' && (r['dst-port'] === '853' || r.dstPort === '853'));
       if (!hasInput) {
         await filterMenu.add({
           chain: 'input',
           protocol: 'tcp',
           'dst-port': '853',
-          action: 'drop',
-          comment: 'Block Private DNS (DoT)',
+          action: 'reject',
+          'reject-with': 'tcp-reset',
+          comment: 'MikroGestor: Block DoT',
         });
       }
-      const hasForward = rules.some((r: any) => r.chain === 'forward' && r['dst-port'] === '853' && r.action === 'drop');
+      const hasForward = rules.some((r: any) => r.chain === 'forward' && (r['dst-port'] === '853' || r.dstPort === '853'));
       if (!hasForward) {
         await filterMenu.add({
           chain: 'forward',
           protocol: 'tcp',
           'dst-port': '853',
-          action: 'drop',
-          comment: 'Block Private DNS (DoT)',
+          action: 'reject',
+          'reject-with': 'tcp-reset',
+          comment: 'MikroGestor: Block DoT',
         });
       }
       return { status: 'active' };

@@ -493,18 +493,25 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
 :do { /ip firewall filter disable [find action=fasttrack-connection] } on-error={}
 :do { /ipv6 settings set disable-ipv6=yes } on-error={}
 
-# Bloqueio de DoT (DNS over TLS porta 853) para evitar bypass do Hotspot por Private DNS do Android
+# Bloqueio de DoT (DNS over TLS porta 853) com reject tcp-reset para forcar fallback instantaneo ao DNS local
 :do {
   :if ([:len [/ip firewall filter find comment="Block Private DNS (DoT)"]] = 0) do={
-    /ip firewall filter add chain=input protocol=tcp dst-port=853 action=drop comment="Block Private DNS (DoT)"
-    /ip firewall filter add chain=forward protocol=tcp dst-port=853 action=drop comment="Block Private DNS (DoT)"
+    /ip firewall filter add chain=input protocol=tcp dst-port=853 action=reject reject-with=tcp-reset comment="Block Private DNS (DoT)"
+    /ip firewall filter add chain=forward protocol=tcp dst-port=853 action=reject reject-with=tcp-reset comment="Block Private DNS (DoT)"
   }
 } on-error={}
 
-# Bloqueio de QUIC (UDP 443) para impedir contorno de captive portal por apps Google, WhatsApp, Facebook
+# Bloqueio de QUIC (UDP 443) com reject icmp-admin-prohibited para impedir travamento ERR_QUIC_PROTOCOL_ERROR
 :do {
-  :if ([:len [/ip firewall filter find comment="MikroGestor: Block QUIC (Force TCP for Hotspot Interception)"]] = 0) do={
-    /ip firewall filter add chain=forward protocol=udp dst-port=443 action=drop comment="MikroGestor: Block QUIC (Force TCP for Hotspot Interception)" place-before=0
+  :if ([:len [/ip firewall filter find comment="MikroGestor: Reject QUIC (Forces Fallback to HTTP)"]] = 0) do={
+    /ip firewall filter add chain=forward protocol=udp dst-port=443 action=reject reject-with=icmp-admin-prohibited comment="MikroGestor: Reject QUIC (Forces Fallback to HTTP)" place-before=0
+  }
+} on-error={}
+
+# Bypass de HTTPS externo no NAT para forcar clientes a receberem TCP RST e dispararem Captive Portal HTTP 80
+:do {
+  :if ([:len [/ip firewall nat find comment="MikroGestor: Bypass foreign HTTPS interception"]] = 0) do={
+    /ip firewall nat add chain=hs-unauth protocol=tcp dst-port=443 action=return place-before=0 comment="MikroGestor: Bypass foreign HTTPS interception"
   }
 } on-error={}
 

@@ -814,6 +814,14 @@ export async function POST(request: Request) {
         warn('traffic_isolation', `Isolamento IPv6/FastTrack: ${e?.message || e}`);
       }
 
+      // Passo 9.3b: Bypass de HTTPS externo e Bloqueio DoT para forçar redirecionamento do Hotspot
+      try {
+        await mk.ensureBypassForeignHttpsInterception();
+        await mk.ensureBlockDoT();
+      } catch (e: any) {
+        console.warn('Bypass HTTPS externo / Bloqueio DoT:', e);
+      }
+
       // Passo 9.4: DNS Estático Local: subdomain -> IP LAN do roteador (Regra 9 AGENTS.md)
       if (deployMode === 'vps' && routerSubdomain) {
         try {
