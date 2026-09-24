@@ -330,9 +330,17 @@ O MikroGestor oferece a cada roteador cadastrado um subdomínio exclusivo (ex: `
 
 #### Como funciona o fluxo automatizado:
 1. **DNS Wildcard**: O apontamento DNS `* -> IP_VPS` direciona qualquer subdomínio para a VPS.
-2. **Proxy Reverso Traefik**: Ao provisionar o roteador, o daemon `wg-manager` cria um arquivo de roteamento dinâmico em `/data/coolify/proxy/dynamic/router-<slug>.yaml`.
+2. **Proxy Reverso Traefik**: Ao provisionar o roteador, o daemon `wg-manager` cria um arquivo de roteamento dinâmico em `/data/coolify/proxy/dynamic/router-<slug>.yaml` apontando para o container MikroGestor.
 3. **Emissão SSL Automática**: O Traefik solicita e renova o certificado Let's Encrypt automaticamente salvando em `/data/coolify/proxy/acme.json`.
-4. **Download e Auto-Renovação no MikroTik**: O script `.rsc` do roteador configura o script `/system script add name=mg-sync-ssl` e um agendador `/system scheduler add name=mg-renew-ssl interval=15d`. A cada 15 dias, o roteador baixa os certificados atualizados da API e vincula ao serviço `www-ssl` e ao perfil do Hotspot (`hsprof_hotspot`).
+4. **Cadeia Completa de Certificados (Full Chain)**:
+   - A rota `/api/vpn/router/<id>/cert-file` entrega a cadeia de certificados completa: Folha + Intermediário Let's Encrypt (`YR2`) + Raiz (`ISRG Root X1`).
+   - O MikroTik renomeia os certificados intermediários para manter o certificado folha com a chave privada (`PK: true`) amarrado ao serviço `www-ssl` e ao perfil do Hotspot (`hsprof_hotspot`), garantindo validação perfeita em Android, iOS e Windows sem alertas de autoridade desconhecida.
+5. **DNS Exclusivo no DHCP (Prevenção de Vazamento DNS)**:
+   - O servidor DHCP do Hotspot entrega estritamente o IP LAN do MikroTik (`192.168.88.1`) no campo `dns-server`, sem nenhum DNS público secundário (ex: `8.8.8.8`). Isso garante que todas as resoluções de nomes passem pelo roteador para interceptação precisa do captive portal.
+6. **`hotspot-address` Vinculado**:
+   - O perfil `/ip/hotspot/profile` tem o campo `hotspot-address` explicitamente configurado com o IP LAN do MikroTik (`192.168.88.1`), nunca `0.0.0.0`, permitindo que o RouterOS saiba exatamente onde receber o tráfego interceptado.
+7. **Download e Auto-Renovação no MikroTik**:
+   - O script `.rsc` do roteador configura o script `/system script add name=mg-sync-ssl` e um agendador `/system scheduler add name=mg-renew-ssl interval=15d`. A cada 15 dias, o roteador baixa os certificados atualizados da API e vincula ao serviço `www-ssl` e ao perfil do Hotspot (`hsprof_hotspot`).
 
 ---
 
