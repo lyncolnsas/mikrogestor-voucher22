@@ -448,6 +448,7 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
 # --- 2. INTERFACE E IP ---
 :do { /interface wireguard add name=wg-mikrogestor private-key="${mikrotikPrivKey}" listen-port=13231 comment="MikroGestor VPN - NAO MODIFICAR" } on-error={}
 :do { /ip address add address=${vpnIp}/24 interface=wg-mikrogestor network=10.8.0.0 comment="MikroGestor VPN IP" } on-error={}
+:do { /interface list member add list=LAN interface=wg-mikrogestor comment="MikroGestor: WG in LAN" } on-error={}
 
 # --- 3. PEER VPS ---
 :do { /interface wireguard peers add interface=wg-mikrogestor public-key="${vpsPublicKey}" endpoint-address=${vpsIp} endpoint-port=${vpsPort} allowed-address=10.8.0.0/24 persistent-keepalive=25 comment="MikroGestor VPS" } on-error={}
@@ -457,14 +458,18 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
 
 # --- 5. FIREWALL DE SEGURANÇA E SERVIÇOS ---
 :do { /ip service set [find name=ftp] disabled=no } on-error={}
+:do { /ip service enable api } on-error={}
 :do { /ip service set [find name=api] disabled=no port=8728 } on-error={}
 
 :do {
   :local ruleApi [/ip firewall filter find comment="MikroGestor: API access"]
   :if ([:len $ruleApi] = 0) do={
-    /ip firewall filter add chain=input in-interface=wg-mikrogestor src-address=10.8.0.0/24 dst-port=21,80,443,8291,8728,8729 protocol=tcp action=accept comment="MikroGestor: API access"
+    :do { /ip firewall filter add chain=input in-interface=wg-mikrogestor src-address=10.8.0.0/24 dst-port=21,80,443,8291,8728,8729 protocol=tcp action=accept place-before=0 comment="MikroGestor: API access" } on-error={
+      /ip firewall filter add chain=input in-interface=wg-mikrogestor src-address=10.8.0.0/24 dst-port=21,80,443,8291,8728,8729 protocol=tcp action=accept comment="MikroGestor: API access"
+    }
   } else={
     /ip firewall filter set $ruleApi in-interface=wg-mikrogestor src-address=10.8.0.0/24 dst-port=21,80,443,8291,8728,8729
+    :do { /ip firewall filter move $ruleApi 0 } on-error={}
   }
 } on-error={}
 
