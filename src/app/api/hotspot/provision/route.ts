@@ -557,18 +557,18 @@ export async function POST(request: Request) {
       const existingNet = nets.find((n: any) => n.address === networkCidr || n.address === network);
       if (existingNet) {
         const dnsServers = existingNet['dns-server'] || '';
-        if (existingNet.gateway !== gatewayIp || !dnsServers.includes(gatewayIp)) {
+        if (existingNet.gateway !== gatewayIp || dnsServers !== gatewayIp) {
           await (mk as any).client?.menu('/ip/dhcp-server/network').where('.id', existingNet.id).update({
             gateway: gatewayIp,
-            'dns-server': `${gatewayIp},8.8.8.8`
+            'dns-server': gatewayIp
           });
-          ok('dhcp_net', `Rede DHCP ${networkCidr} atualizada (Gateway: ${gatewayIp}, DNS: ${gatewayIp},8.8.8.8).`);
+          ok('dhcp_net', `Rede DHCP ${networkCidr} atualizada (Gateway: ${gatewayIp}, DNS exclusivo: ${gatewayIp}).`);
         } else {
           skip('dhcp_net', `Rede DHCP ${networkCidr} já configurada corretamente.`);
         }
       } else {
-        await mk.addDhcpServerNetwork(networkCidr, gatewayIp, `${gatewayIp},8.8.8.8`);
-        ok('dhcp_net', `Rede ${networkCidr} criada. Gateway: ${gatewayIp}. DNS: ${gatewayIp}, 8.8.8.8`);
+        await mk.addDhcpServerNetwork(networkCidr, gatewayIp, gatewayIp);
+        ok('dhcp_net', `Rede ${networkCidr} criada. Gateway: ${gatewayIp}. DNS: ${gatewayIp}`);
       }
     } catch (e) { fail('dhcp_net', e); }
 
@@ -656,6 +656,7 @@ export async function POST(request: Request) {
         if (!existing) {
           const profileData: any = {
             name: HS_PROF,
+            'hotspot-address': hsAddress,
             'html-directory': 'hotspot',
             'dns-name': hsDnsName,
             'login-by': hasSslCert ? 'http-chap,https,http-pap,trial' : 'http-chap,http-pap,trial',
@@ -669,6 +670,10 @@ export async function POST(request: Request) {
         } else {
           let needsUpdate = false;
           const updateParams: any = {};
+          if (existing['hotspot-address'] !== hsAddress) {
+            updateParams['hotspot-address'] = hsAddress;
+            needsUpdate = true;
+          }
           if (existing['dns-name'] !== hsDnsName) {
             updateParams['dns-name'] = hsDnsName;
             needsUpdate = true;

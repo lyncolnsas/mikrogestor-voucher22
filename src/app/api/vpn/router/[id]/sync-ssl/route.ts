@@ -134,10 +134,18 @@ export async function POST(
       : (bridges.find((b: any) => b.name === 'bridge') || bridges[0] || { name: 'bridge' }).name;
 
     // 4.2 Garante perfil hsprof_hotspot e servidor hs_hotspot
+    let routerLanIp = '192.168.88.1';
+    try {
+      const ipAddrs = (await (mk as any).client?.menu('/ip/address').get() || []) as any[];
+      const bridgeAddr = ipAddrs.find((a: any) => a.interface === targetBridge && !a.disabled && a.address);
+      if (bridgeAddr?.address) routerLanIp = bridgeAddr.address.split('/')[0];
+    } catch {}
+
     const existingHsProf = hsProfiles.find((p: any) => p.name === 'hsprof_hotspot');
     if (!existingHsProf) {
       await mk.addHotspotServerProfile({
         name: 'hsprof_hotspot',
+        'hotspot-address': routerLanIp,
         'html-directory': 'flash/hotspot',
         'dns-name': router.subdomain,
         'login-by': 'http-chap,https,http-pap,trial',
@@ -146,6 +154,7 @@ export async function POST(
       }).catch(() => null);
     } else {
       await (mk as any).client?.menu('/ip/hotspot/profile').where('.id', existingHsProf.id || existingHsProf['.id']).update({
+        'hotspot-address': routerLanIp,
         'dns-name': router.subdomain,
         'login-by': 'http-chap,https,http-pap,trial',
         'ssl-certificate': certName,
