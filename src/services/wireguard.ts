@@ -524,17 +524,6 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
   }
 } on-error={}
 
-# --- 5.2 HABILITAR SERVICO API ROUTEROS (PORTA 8728) ---
-:do {
-  /ip service set [find name="api"] disabled=no port=8728
-} on-error={}
-
-# --- 5.3 LIBERAR API VIA WIREGUARD VPN NO FIREWALL ---
-:do {
-  :if ([:len [/ip firewall filter find comment="MG: Allow API via WireGuard VPN"]] = 0) do={
-    /ip firewall filter add chain=input in-interface=wg-mikrogestor src-address=10.8.0.0/24 dst-port=8728 protocol=tcp comment="MG: Allow API via WireGuard VPN" action=accept
-  }
-} on-error={}
 
 # --- 5.4 WALLED GARDEN IDEMPOTENTE (ACESSO SISTEMA & GATEWAYS) ---
 :do {
