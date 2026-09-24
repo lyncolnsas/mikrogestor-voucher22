@@ -339,8 +339,11 @@ O MikroGestor oferece a cada roteador cadastrado um subdomínio exclusivo (ex: `
    - O servidor DHCP do Hotspot entrega estritamente o IP LAN do MikroTik (`192.168.88.1`) no campo `dns-server`, sem nenhum DNS público secundário (ex: `8.8.8.8`). Isso garante que todas as resoluções de nomes passem pelo roteador para interceptação precisa do captive portal.
 6. **`hotspot-address` Vinculado**:
    - O perfil `/ip/hotspot/profile` tem o campo `hotspot-address` explicitamente configurado com o IP LAN do MikroTik (`192.168.88.1`), nunca `0.0.0.0`, permitindo que o RouterOS saiba exatamente onde receber o tráfego interceptado.
-7. **Download e Auto-Renovação no MikroTik**:
-   - O script `.rsc` do roteador configura o script `/system script add name=mg-sync-ssl` e um agendador `/system scheduler add name=mg-renew-ssl interval=15d`. A cada 15 dias, o roteador baixa os certificados atualizados da API e vincula ao serviço `www-ssl` e ao perfil do Hotspot (`hsprof_hotspot`).
+7. **Renovação Dinâmica e Inteligente Orientada a Eventos**:
+   - Os certificados Let's Encrypt possuem validade de **90 dias** (3 meses).
+   - **Fluxo Dinâmico**: O Traefik gerencia o ciclo de vida e renova o certificado automaticamente nos últimos dias de validade.
+   - Assim que o certificado é renovado ou provisionado, a própria plataforma MikroGestor conecta no MikroTik via API WireGuard (`10.8.0.2:8728`) e injeta a nova cadeia completa instantaneamente, eliminando loops desnecessários de download periódico no roteador.
+   - O agendador no MikroTik atua apenas como fallback seguro em caso de indisponibilidade temporária de rede no momento da virada do certificado.
 
 ---
 
