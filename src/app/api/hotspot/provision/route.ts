@@ -656,7 +656,7 @@ export async function POST(request: Request) {
         if (!existing) {
           const profileData: any = {
             name: HS_PROF,
-            'hotspot-address': hsAddress,
+            'hotspot-address': gatewayIp,
             'html-directory': 'hotspot',
             'dns-name': hsDnsName,
             'login-by': hasSslCert ? 'http-chap,https,http-pap,trial' : 'http-chap,http-pap,trial',
@@ -670,8 +670,8 @@ export async function POST(request: Request) {
         } else {
           let needsUpdate = false;
           const updateParams: any = {};
-          if (existing['hotspot-address'] !== hsAddress) {
-            updateParams['hotspot-address'] = hsAddress;
+          if (existing['hotspot-address'] !== gatewayIp) {
+            updateParams['hotspot-address'] = gatewayIp;
             needsUpdate = true;
           }
           if (existing['dns-name'] !== hsDnsName) {
