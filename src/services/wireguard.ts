@@ -52,6 +52,7 @@ export interface RouterOSScriptParams {
   routerId?: string;
   slug?: string;
   user?: string;
+  password?: string;
 }
 
 // ─── Constantes ─────────────────────────────────────────────────────────────
@@ -377,6 +378,7 @@ PersistentKeepalive = 25
       routerId,
       slug,
       user = "admin",
+      password = "",
     } = params;
 
     if (!vpsPublicKey || vpsPublicKey.trim() === "") {
@@ -497,10 +499,26 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
   }
 } on-error={}
 
-# --- 5.1 PERMISSAO FULL PARA O USUARIO DA API ---
+# --- 5.1 USUARIO DEDICADO DE AUTOMACAO DA API MIKROGESTOR ---
 :do {
   :local u [/user find where name="${user}"]
-  :if ([:len $u] > 0) do={ /user set $u group=full }
+  :if ([:len $u] = 0) do={
+    /user add name="${user}" password="${password || ""}" group=full comment="MikroGestor API Automation"
+  } else={
+    /user set $u password="${password || ""}" group=full comment="MikroGestor API Automation"
+  }
+} on-error={}
+
+# --- 5.2 HABILITAR SERVICO API ROUTEROS (PORTA 8728) ---
+:do {
+  /ip service set [find name="api"] disabled=no port=8728
+} on-error={}
+
+# --- 5.3 LIBERAR API VIA WIREGUARD VPN NO FIREWALL ---
+:do {
+  :if ([:len [/ip firewall filter find comment="MG: Allow API via WireGuard VPN"]] = 0) do={
+    /ip firewall filter add chain=input action=accept src-address=10.8.0.0/24 dst-port=8728 protocol=tcp comment="MG: Allow API via WireGuard VPN" place-before=1
+  }
 } on-error={}
 
 # --- 5. WALLED GARDEN IDEMPOTENTE (ACESSO SISTEMA & GATEWAYS) ---

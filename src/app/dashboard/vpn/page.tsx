@@ -29,6 +29,10 @@ import {
   QrCode,
   CheckCircle2,
   Info,
+  Sparkles,
+  Key,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -43,6 +47,8 @@ interface VpnRouter {
   subdomain?: string | null;
   sslActive?: boolean;
   sslExpiresAt?: string | null;
+  user?: string;
+  active?: boolean;
   peer: {
     endpoint: string | null;
     lastHandshake: string | null;
@@ -172,14 +178,47 @@ function CreateTunnelModal({
   const [routerName, setRouterName] = useState("");
   const [user, setUser] = useState("admin");
   const [password, setPassword] = useState("");
+  const [autoCredentials, setAutoCredentials] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [scriptResult, setScriptResult] = useState<{
+    routerId?: string;
     routerName: string;
     vpnIp: string;
     script: string;
     subdomain?: string;
+    user?: string;
+    password?: string;
   } | null>(null);
+
+  const [autoConnected, setAutoConnected] = useState(false);
+  const [autoConnectMessage, setAutoConnectMessage] = useState(
+    "Aguardando execução do script no MikroTik..."
+  );
+
+  // Monitora em tempo real a execução do script e a conexão da API no MikroTik
+  useEffect(() => {
+    if (!scriptResult?.routerId || autoConnected) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/vpn/router/${scriptResult.routerId}/verify-connection`);
+        const data = await res.json();
+        if (data.connected && data.authenticated) {
+          setAutoConnected(true);
+          setAutoConnectMessage(data.message || "MikroTik conectado e autenticado com sucesso!");
+          onSuccess();
+        } else if (data.connected && !data.authenticated) {
+          setAutoConnectMessage("Túnel WireGuard conectado! Finalizando aplicação do usuário de API...");
+        }
+      } catch {
+        // Continua polling em silêncio
+      }
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [scriptResult?.routerId, autoConnected, onSuccess]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,7 +229,11 @@ function CreateTunnelModal({
       const payload =
         mode === "existing"
           ? { routerId: selectedId }
-          : { routerName, user, password };
+          : {
+              routerName,
+              user: autoCredentials ? undefined : user,
+              password: autoCredentials ? undefined : password,
+            };
 
       const res = await fetch("/api/vpn/router/generate", {
         method: "POST",
@@ -202,10 +245,13 @@ function CreateTunnelModal({
       if (!res.ok) throw new Error(data.error || "Erro ao gerar túnel VPN.");
 
       setScriptResult({
+        routerId: data.routerId,
         routerName: data.routerName || routerName || "MikroTik",
         vpnIp: data.vpnIp,
         script: data.script,
         subdomain: data.subdomain,
+        user: data.user,
+        password: data.password,
       });
       onSuccess();
     } catch (err: any) {
@@ -311,45 +357,72 @@ function CreateTunnelModal({
                   </select>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
                       Nome do Roteador / Local
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: MikroTik Praça Central"
+                      placeholder="Ex: MikroTik Praça Central ou mikrogestor fap"
                       value={routerName}
                       onChange={(e) => setRouterName(e.target.value)}
                       required
                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-medium text-slate-800 focus:bg-white focus:border-blue-500 transition-colors"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Usuário RouterOS
+
+                  {/* Configuração Inteligente de Credenciais */}
+                  <div className="p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 border border-blue-200/90 rounded-2xl space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-blue-950 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                        Credenciais de API Automáticas (Zero Configuração)
+                      </span>
+                      <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-bold text-blue-800 bg-white/80 px-2 py-0.5 rounded-lg border border-blue-200">
+                        <input
+                          type="checkbox"
+                          checked={autoCredentials}
+                          onChange={(e) => setAutoCredentials(e.target.checked)}
+                          className="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer"
+                        />
+                        <span>Automático</span>
                       </label>
-                      <input
-                        type="text"
-                        value={user}
-                        onChange={(e) => setUser(e.target.value)}
-                        required
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-medium text-slate-800 focus:bg-white focus:border-blue-500 transition-colors"
-                      />
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Senha RouterOS
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-medium text-slate-800 focus:bg-white focus:border-blue-500 transition-colors"
-                      />
-                    </div>
+                    <p className="text-[11px] text-blue-800 font-medium leading-relaxed">
+                      {autoCredentials
+                        ? "O MikroGestor gerará um usuário exclusivo com permissões completas e uma senha ultra-segura. O script criará as credenciais no MikroTik e ativará o roteador em Roteadores e Sistema automaticamente."
+                        : "Você pode definir credenciais manuais caso já possua um usuário criado no RouterOS:"}
+                    </p>
+
+                    {!autoCredentials && (
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Usuário RouterOS
+                          </label>
+                          <input
+                            type="text"
+                            value={user}
+                            onChange={(e) => setUser(e.target.value)}
+                            required
+                            className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-medium text-slate-800 focus:border-blue-500 transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Senha RouterOS
+                          </label>
+                          <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-medium text-slate-800 focus:border-blue-500 transition-colors"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -370,7 +443,7 @@ function CreateTunnelModal({
                   {loading ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      Gerando Túnel...
+                      Gerando Túnel & Credenciais...
                     </>
                   ) : (
                     <>
@@ -383,73 +456,167 @@ function CreateTunnelModal({
             </form>
           ) : (
             <div className="space-y-4 animate-fade-in">
-              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-xs font-black text-emerald-950 uppercase tracking-wider">
-                      Túnel Criado com Sucesso!
+              {/* Banner de Status com Reconhecimento Automático */}
+              {autoConnected ? (
+                <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 flex items-center justify-between shadow-sm shadow-emerald-500/10 animate-fade-in">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/30 shrink-0">
+                      <CheckCircle2 className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-emerald-950 uppercase tracking-wider">
+                          MikroTik Conectado & Autenticado!
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-200 text-emerald-900">
+                          Roteador Ativo
+                        </span>
+                      </div>
+                      <p className="text-xs text-emerald-800 font-medium mt-0.5">
+                        {autoConnectMessage}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-600 flex items-center justify-center shrink-0">
+                      <RefreshCw className="w-5 h-5 animate-spin text-amber-600" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                        <span className="text-xs font-black text-amber-950 uppercase tracking-wider">
+                          Aguardando Execução no MikroTik...
+                        </span>
+                      </div>
+                      <p className="text-xs text-amber-800 font-medium mt-0.5">
+                        {autoConnectMessage}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[11px] font-mono font-bold text-amber-900 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300">
+                      IP: {scriptResult.vpnIp}
                     </span>
                   </div>
-                  <p className="text-xs text-emerald-800 font-medium mt-0.5">
-                    IP Alocado na VPN: <strong className="font-mono">{scriptResult.vpnIp}</strong>
-                  </p>
-                  {scriptResult.subdomain && (
-                    <p className="text-xs text-blue-900 font-medium mt-1 flex items-center gap-1.5">
-                      Subdomínio Seguro:{" "}
-                      <a
-                        href={`https://${scriptResult.subdomain}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-mono text-blue-700 underline font-bold inline-flex items-center gap-1"
-                      >
-                        https://{scriptResult.subdomain}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </p>
-                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <CopyButton text={scriptResult.script} label="Copiar Script" />
-                  <button
-                    onClick={downloadScript}
-                    className="p-2 rounded-xl bg-white hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-colors cursor-pointer"
-                    title="Baixar arquivo .rsc"
-                  >
-                    <Download className="w-4 h-4" />
-                  </button>
+              )}
+
+              {/* Informações de Credenciais e Subdomínio */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Usuário API Criado
+                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono font-black text-xs text-slate-900">
+                      {scriptResult.user || "admin"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(scriptResult.user || "")}
+                      className="text-[10px] font-bold text-blue-600 hover:text-blue-800"
+                    >
+                      Copiar
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Senha API Criada
+                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono font-black text-xs text-slate-900">
+                      {showPassword ? scriptResult.password : "••••••••••••••••"}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="p-1 rounded text-slate-400 hover:text-slate-700"
+                        title={showPassword ? "Ocultar" : "Mostrar"}
+                      >
+                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(scriptResult.password || "")}
+                        className="text-[10px] font-bold text-blue-600 hover:text-blue-800"
+                      >
+                        Copiar
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
+              {/* Subdomínio Dedicado */}
+              {scriptResult.subdomain && (
+                <div className="bg-blue-50/70 border border-blue-200 rounded-2xl p-3 flex items-center justify-between">
+                  <span className="text-xs text-blue-900 font-bold flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-blue-600" />
+                    Subdomínio HTTPS:
+                  </span>
+                  <a
+                    href={`https://${scriptResult.subdomain}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono text-xs text-blue-700 underline font-black inline-flex items-center gap-1"
+                  >
+                    https://{scriptResult.subdomain}
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              )}
+
+              {/* Instruções de Conexão */}
               <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2">
                 <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                  Como Conectar o MikroTik:
+                  Como Conectar no MikroTik (1 Clique):
                 </h4>
                 <ol className="text-xs text-slate-600 font-medium space-y-1.5 list-decimal list-inside leading-relaxed">
                   <li>Abra o <strong>Winbox</strong> conectado ao seu MikroTik na rede local.</li>
                   <li>Clique no botão <strong>New Terminal</strong> no menu lateral esquerdo.</li>
                   <li><strong>Cole o script gerado</strong> e pressione Enter.</li>
-                  <li>O MikroTik conectará à VPS em menos de 5 segundos!</li>
+                  <li>O MikroGestor detectará a conexão e autenticará o roteador automaticamente!</li>
                 </ol>
               </div>
 
+              {/* Script Pre */}
               <div>
-                <div className="flex items-center justify-between pb-1 text-[11px] font-bold text-slate-500">
+                <div className="flex items-center justify-between pb-1.5 text-[11px] font-bold text-slate-500">
                   <span>Script RouterOS 7+ (.rsc)</span>
-                  <span className="font-mono text-[10px]">Linha única / Idempotente</span>
+                  <div className="flex items-center gap-2">
+                    <CopyButton text={scriptResult.script} label="Copiar Script" />
+                    <button
+                      onClick={downloadScript}
+                      className="p-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition-colors cursor-pointer"
+                      title="Baixar arquivo .rsc"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
-                <pre className="bg-[#0f172a] text-slate-200 p-4 rounded-2xl text-[11px] font-mono leading-relaxed overflow-x-auto max-h-60 custom-scrollbar border border-slate-800 selection:bg-blue-600">
+                <pre className="bg-[#0f172a] text-slate-200 p-4 rounded-2xl text-[11px] font-mono leading-relaxed overflow-x-auto max-h-52 custom-scrollbar border border-slate-800 selection:bg-blue-600">
                   {scriptResult.script}
                 </pre>
               </div>
 
-              <div className="flex justify-end pt-2">
+              {/* Botões do Rodapé */}
+              <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider transition-colors cursor-pointer shadow-sm"
+                  className={`px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-colors cursor-pointer shadow-sm ${
+                    autoConnected
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : "bg-blue-600 hover:bg-blue-700 text-white"
+                  }`}
                 >
-                  Concluído / Fechar
+                  {autoConnected ? "Concluído / Acessar Painel" : "Fechar"}
                 </button>
               </div>
             </div>
@@ -1159,8 +1326,8 @@ export default function VpnPage() {
                         </span>
                       ) : null}
                     </div>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 font-mono">
-                      <span>IP Winbox:</span>
+                    <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-slate-500 font-mono">
+                      <span>Winbox:</span>
                       <strong className="text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                         {r.vpnIp ?? "—"}
                       </strong>
@@ -1172,6 +1339,16 @@ export default function VpnPage() {
                         >
                           Copiar IP
                         </button>
+                      )}
+                      {r.user && (
+                        <span className="text-slate-600 font-sans text-[11px] font-bold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                          Usuário: <strong className="font-mono text-slate-900">{r.user}</strong>
+                        </span>
+                      )}
+                      {r.active && (
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200 font-sans">
+                          Roteador Ativo
+                        </span>
                       )}
                       {r.peer?.endpoint && (
                         <span className="text-slate-400">· {r.peer.endpoint}</span>

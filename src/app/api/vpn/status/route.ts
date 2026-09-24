@@ -54,6 +54,9 @@ export async function GET() {
         subdomain: true,
         sslActive: true,
         sslExpiresAt: true,
+        user: true,
+        password: true,
+        active: true,
       },
     });
 
@@ -92,12 +95,25 @@ export async function GET() {
         }
 
         if (status !== router.vpnStatus || (lastSeen && lastSeen !== router.vpnLastSeen)) {
-          updates.push(
-            prisma.router.update({
-              where: { id: router.id },
-              data: { vpnStatus: status, vpnLastSeen: lastSeen },
-            })
-          );
+          const isNewlyConnected = status === "connected" && currentDbStatus === "pending";
+          if (isNewlyConnected) {
+            updates.push(
+              prisma.$transaction([
+                prisma.router.updateMany({ where: { id: { not: router.id } }, data: { active: false } }),
+                prisma.router.update({
+                  where: { id: router.id },
+                  data: { vpnStatus: status, vpnLastSeen: lastSeen, active: true },
+                }),
+              ])
+            );
+          } else {
+            updates.push(
+              prisma.router.update({
+                where: { id: router.id },
+                data: { vpnStatus: status, vpnLastSeen: lastSeen },
+              })
+            );
+          }
         }
 
         return {
