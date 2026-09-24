@@ -658,7 +658,7 @@ export async function POST(request: Request) {
             name: HS_PROF,
             'html-directory': 'hotspot',
             'dns-name': hsDnsName,
-            'login-by': hasSslCert ? 'http-chap,https,http-pap,trial' : 'http-chap,http-pap,trial',
+            'login-by': 'http-chap,http-pap,trial',
             'use-radius': 'no',
           };
           if (hasSslCert && effectiveCertName) {
@@ -673,7 +673,7 @@ export async function POST(request: Request) {
             updateParams['dns-name'] = hsDnsName;
             needsUpdate = true;
           }
-          const desiredLoginBy = hasSslCert ? 'http-chap,https,http-pap,trial' : 'http-chap,http-pap,trial';
+          const desiredLoginBy = 'http-chap,http-pap,trial';
           if (existing['login-by'] !== desiredLoginBy) {
             updateParams['login-by'] = desiredLoginBy;
             needsUpdate = true;

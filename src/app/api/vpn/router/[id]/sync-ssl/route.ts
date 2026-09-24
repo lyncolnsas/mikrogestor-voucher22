@@ -89,7 +89,7 @@ export async function POST(
   :do { /certificate set [find where name~"${certName}"] trusted=yes } on-error={}
   :do { /ip service set [find name="reverse-proxy"] disabled=yes } on-error={}
   /ip service set www-ssl certificate=[/certificate get [find where name~"${certName}" and private-key=yes] name] disabled=no port=443
-  /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate=[/certificate get [find where name~"${certName}" and private-key=yes] name] dns-name="${router.subdomain}" login-by=http-chap,https,http-pap,trial
+  /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate=[/certificate get [find where name~"${certName}" and private-key=yes] name] dns-name="${router.subdomain}" login-by=http-chap,http-pap,trial
   :log info "[MikroGestor] Certificado SSL ${router.subdomain} injetado com sucesso!"
 } on-error={
   :log error "[MikroGestor] Erro ao sincronizar certificado SSL para ${router.subdomain}"
@@ -140,14 +140,14 @@ export async function POST(
         name: 'hsprof_hotspot',
         'html-directory': 'flash/hotspot',
         'dns-name': router.subdomain,
-        'login-by': 'http-chap,https,http-pap,trial',
+        'login-by': 'http-chap,http-pap,trial',
         'ssl-certificate': certName,
         'use-radius': 'no',
       }).catch(() => null);
     } else {
       await (mk as any).client?.menu('/ip/hotspot/profile').where('.id', existingHsProf.id || existingHsProf['.id']).update({
         'dns-name': router.subdomain,
-        'login-by': 'http-chap,https,http-pap,trial',
+        'login-by': 'http-chap,http-pap,trial',
         'ssl-certificate': certName,
       }).catch(() => null);
     }
