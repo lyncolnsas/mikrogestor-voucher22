@@ -469,6 +469,34 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
 :do { /ip firewall filter disable [find action=fasttrack-connection] } on-error={}
 :do { /ipv6 settings set disable-ipv6=yes } on-error={}
 
+# Bloqueio de DoT (DNS over TLS porta 853) para evitar bypass do Hotspot por Private DNS do Android
+:do {
+  :if ([:len [/ip firewall filter find comment="Block Private DNS (DoT)"]] = 0) do={
+    /ip firewall filter add chain=input protocol=tcp dst-port=853 action=drop comment="Block Private DNS (DoT)"
+    /ip firewall filter add chain=forward protocol=tcp dst-port=853 action=drop comment="Block Private DNS (DoT)"
+  }
+} on-error={}
+
+# Bloqueio contra compartilhamento (Anti-Tethering TTL=1)
+:do {
+  :if ([:len [/ip firewall mangle find comment~"Anti-Tethering"]] = 0) do={
+    /ip firewall mangle add chain=postrouting action=change-ttl new-ttl=set:1 comment="MikroGestor: Anti-Tethering (Bloqueio Compartilhamento)" passthrough=yes
+  }
+} on-error={}
+
+# Bypass de interceptacao HTTPS externa (previne erro "Pagina web nao disponivel" em sites externos)
+:do {
+  :local natBypass [/ip firewall nat find comment~"MikroGestor: Bypass foreign HTTPS"]
+  :if ([:len $natBypass] = 0) do={
+    :local hsUnauthRedirect [/ip firewall nat find chain=hs-unauth dst-port=443 action=redirect]
+    :if ([:len $hsUnauthRedirect] > 0) do={
+      /ip firewall nat add chain=hs-unauth dst-port=443 protocol=tcp action=return comment="MikroGestor: Bypass foreign HTTPS interception (prevents cert mismatch)" place-before=($hsUnauthRedirect->0)
+    } else={
+      /ip firewall nat add chain=hs-unauth dst-port=443 protocol=tcp action=return comment="MikroGestor: Bypass foreign HTTPS interception (prevents cert mismatch)"
+    }
+  }
+} on-error={}
+
 # --- 5.1 PERMISSAO FULL PARA O USUARIO DA API ---
 :do {
   :local u [/user find where name="${user}"]

@@ -65,7 +65,9 @@ export async function GET(
       });
     }
 
-    // Retorna o certificado público (cert + fullchain)
+    // Extrai estritamente o certificado folha (leaf cert) para evitar que o RouterOS
+    // crie múltiplos certificados com o mesmo nome ao importar a cadeia completa (fullchain),
+    // o que causava a seleção de um certificado sem chave privada para www-ssl e Hotspot.
     if (!certResult.certificate) {
       return new Response('Certificado público não encontrado', {
         status: 404,
@@ -73,7 +75,10 @@ export async function GET(
       });
     }
 
-    return new Response(certResult.certificate, {
+    const certBlocks = certResult.certificate.match(/-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/g);
+    const leafCert = certBlocks ? certBlocks[0] : certResult.certificate;
+
+    return new Response(leafCert, {
       status: 200,
       headers: {
         'Content-Type': 'application/x-pem-file',

@@ -722,6 +722,108 @@ export class MikrotikAPI {
     return { ipv6Disabled, fasttrackDisabled };
   }
 
+  /**
+   * Garante que requisições HTTPS para domínios externos não sejam interceptadas
+   * pelo proxy SSL do Hotspot com certificado divergente (o que causa "página web não disponível").
+   * Adiciona uma regra `action=return` em `chain=hs-unauth` antes do redirect na porta 443,
+   * permitindo que o tráfego externo HTTPS caia no reject (TCP RST) e force o smartphone/PC
+   * a abrir limpa e imediatamente a tela nativa de login do Captive Portal via HTTP (porta 80).
+   */
+  async ensureBypassForeignHttpsInterception(): Promise<{ status: string }> {
+    if (!this.client) throw new Error('Not connected');
+    try {
+      const natMenu = this.client.menu('/ip/firewall/nat');
+      const rules = ((await natMenu.get()) as any[]) || [];
+      const existing = rules.find(
+        (r: any) =>
+          r.chain === 'hs-unauth' &&
+          r['dst-port'] === '443' &&
+          r.action === 'return' &&
+          r.comment &&
+          r.comment.includes('Bypass foreign HTTPS')
+      );
+
+      // Encontra a regra dinâmica de redirect para 443
+      const redirectRule = rules.find(
+        (r: any) =>
+          r.chain === 'hs-unauth' &&
+          r['dst-port'] === '443' &&
+          r.action === 'redirect'
+      );
+
+      if (existing) {
+        const existingIndex = rules.indexOf(existing);
+        const redirectIndex = redirectRule ? rules.indexOf(redirectRule) : -1;
+        if (redirectRule && existingIndex > redirectIndex) {
+          const eid = existing['.id'] || existing.id;
+          const rid = redirectRule['.id'] || redirectRule.id;
+          if ((this.client as any).rosApi?.write) {
+            await (this.client as any).rosApi.write('/ip/firewall/nat/move', [
+              `=numbers=${eid}`,
+              `=destination=${rid}`,
+            ]);
+          }
+          return { status: 'moved_before_redirect' };
+        }
+        return { status: 'already_exists' };
+      }
+
+      const addParams: any = {
+        chain: 'hs-unauth',
+        'dst-port': '443',
+        protocol: 'tcp',
+        action: 'return',
+        comment: 'MikroGestor: Bypass foreign HTTPS interception (prevents cert mismatch)',
+      };
+
+      if (redirectRule) {
+        addParams['place-before'] = redirectRule['.id'] || redirectRule.id;
+      }
+
+      await natMenu.add(addParams);
+      return { status: 'created' };
+    } catch (err: any) {
+      console.warn('[Hotspot HTTPS Bypass] Erro ao configurar bypass de HTTPS externo:', err);
+      return { status: 'error' };
+    }
+  }
+
+  /**
+   * Bloqueia DNS Privado (DoT - DNS over TLS porta 853) para impedir que smartphones
+   * com Android Private DNS ativo ignorem o servidor DNS local e contornem o Captive Portal.
+   */
+  async ensureBlockDoT(): Promise<{ status: string }> {
+    if (!this.client) throw new Error('Not connected');
+    try {
+      const filterMenu = this.client.menu('/ip/firewall/filter');
+      const rules = ((await filterMenu.get()) as any[]) || [];
+      const hasInput = rules.some((r: any) => r.chain === 'input' && r['dst-port'] === '853' && r.action === 'drop');
+      if (!hasInput) {
+        await filterMenu.add({
+          chain: 'input',
+          protocol: 'tcp',
+          'dst-port': '853',
+          action: 'drop',
+          comment: 'Block Private DNS (DoT)',
+        });
+      }
+      const hasForward = rules.some((r: any) => r.chain === 'forward' && r['dst-port'] === '853' && r.action === 'drop');
+      if (!hasForward) {
+        await filterMenu.add({
+          chain: 'forward',
+          protocol: 'tcp',
+          'dst-port': '853',
+          action: 'drop',
+          comment: 'Block Private DNS (DoT)',
+        });
+      }
+      return { status: 'active' };
+    } catch (err: any) {
+      console.warn('[DoT Block] Erro ao bloquear DoT:', err);
+      return { status: 'error' };
+    }
+  }
+
   // --- BLOQUEIO DE CAMADA 2 (IP BINDING BLOCKED) --- //
 
   /**
