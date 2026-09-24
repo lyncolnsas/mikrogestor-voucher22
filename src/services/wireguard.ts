@@ -442,6 +442,7 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
 :do { /ip address remove [find interface=wg-mikrogestor] } on-error={}
 :do { /ip address remove [find network=10.8.0.0] } on-error={}
 :do { /ip route remove [find comment="MikroGestor VPN route"] } on-error={}
+:do { /ip firewall mangle remove [find comment~"Anti-Tethering"] } on-error={}
 :do { /interface wireguard remove [find name=wg-mikrogestor] } on-error={}
 
 # --- 2. INTERFACE E IP ---
@@ -492,13 +493,6 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
   :if ([:len [/ip firewall filter find comment="Block Private DNS (DoT)"]] = 0) do={
     /ip firewall filter add chain=input protocol=tcp dst-port=853 action=drop comment="Block Private DNS (DoT)"
     /ip firewall filter add chain=forward protocol=tcp dst-port=853 action=drop comment="Block Private DNS (DoT)"
-  }
-} on-error={}
-
-# Bloqueio contra compartilhamento (Anti-Tethering TTL=1)
-:do {
-  :if ([:len [/ip firewall mangle find comment~"Anti-Tethering"]] = 0) do={
-    /ip firewall mangle add chain=postrouting action=change-ttl new-ttl=set:1 comment="MikroGestor: Anti-Tethering (Bloqueio Compartilhamento)" passthrough=yes
   }
 } on-error={}
 
