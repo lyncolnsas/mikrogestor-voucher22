@@ -6,6 +6,23 @@
 
 ## v2.4 — Setembro 2026
 
+### 💰 Cobrança PIX Automática no Cadastro & Provisionamento Defensivo de Planos
+
+- **Auto-Provisionamento Defensivo de Planos (`WhatsappPlan`)**:
+  - Caso o banco SQLite não possua planos cadastrados (banco novo ou sem planos criados), o sistema provisiona defensivamente 4 planos padrão (`1 Hora` R$ 3,00, `1 Dia` R$ 5,00, `7 Dias` R$ 15,00, `30 Dias` R$ 35,00) via `src/lib/plans.ts` e `scripts/init-db.js`.
+  - Evita que a página de cadastro do portal cativo (`/portal/register`) seja renderizada sem opções de planos ou envie submissões sem `planId`.
+- **Chave PIX Efetiva com Fallback Inteligente (`getEffectivePixKey`)**:
+  - Eliminação de colisões de chave entre `MANUAL_PIX_KEY`, `manual_pix_key` e `PIX_MANUAL_KEY`.
+  - Fallback automático para o número do primeiro WhatsApp conectado (`554497743598`) quando não houver chave cadastrada no painel financeiro.
+  - Geração autônoma de payload EMV padrão do Banco Central (`generatePixPayload`) para PIX manual quando o Mercado Pago não estiver configurado.
+- **Disparo da Mensagem PIX no Cadastro e Compra de Voucher (`WA_MSG_PIX_GENERATED`)**:
+  - O gatilho `WA_MSG_PIX_GENERATED` agora é disparado imediatamente nas rotas `POST /api/portal/register` e `POST /api/portal/customer/buy-voucher`.
+  - Envia a mensagem completa com orientações, valor, carência e dados de acesso, seguida de um balão isolado com o código **PIX Copia e Cola puro** para cópia rápida com 1 toque no celular.
+- **Manutenção de Disco na VPS & Desbloqueio da Fila de Deploy**:
+  - Limpeza de 35GB de camadas Docker antigas e cache acumulado na VPS (`/dev/sda1` reduziu de 95% para 50% de uso).
+  - Cancelamento de job preso na fila do Coolify (`ApplicationDeploymentQueue`), permitindo builds autônomos e contínuos sem bloqueios.
+
+
 ### 🌐 Redirecionamento Captive Portal Infalível & Acesso WebFig via Subdomínio
 
 - **Acesso Externo WebFig com SSL Automático (`http://<vpnIp>:80`)**:
