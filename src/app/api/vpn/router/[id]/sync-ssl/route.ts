@@ -89,7 +89,7 @@ export async function POST(
   :do { /certificate set [find where name~"${certName}"] trusted=yes } on-error={}
   :do { /ip service set [find name="reverse-proxy"] disabled=yes } on-error={}
   /ip service set www-ssl certificate=[/certificate get [find where name~"${certName}" and private-key=yes] name] disabled=no port=443
-  /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate=[/certificate get [find where name~"${certName}" and private-key=yes] name] dns-name="${router.subdomain}" login-by=http-chap,http-pap,trial
+  /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate=[/certificate get [find where name~"${certName}" and private-key=yes] name] dns-name="${router.subdomain}" login-by=http-chap,https,http-pap,trial
   :log info "[MikroGestor] Certificado SSL ${router.subdomain} injetado com sucesso!"
 } on-error={
   :log error "[MikroGestor] Erro ao sincronizar certificado SSL para ${router.subdomain}"
@@ -140,14 +140,14 @@ export async function POST(
         name: 'hsprof_hotspot',
         'html-directory': 'flash/hotspot',
         'dns-name': router.subdomain,
-        'login-by': 'http-chap,http-pap,trial',
+        'login-by': 'http-chap,https,http-pap,trial',
         'ssl-certificate': certName,
         'use-radius': 'no',
       }).catch(() => null);
     } else {
       await (mk as any).client?.menu('/ip/hotspot/profile').where('.id', existingHsProf.id || existingHsProf['.id']).update({
         'dns-name': router.subdomain,
-        'login-by': 'http-chap,http-pap,trial',
+        'login-by': 'http-chap,https,http-pap,trial',
         'ssl-certificate': certName,
       }).catch(() => null);
     }
@@ -187,6 +187,19 @@ export async function POST(
 
     // 4.8 Bloqueio de DoT (porta 853) para impedir bypass via Android Private DNS
     await mk.ensureBlockDoT().catch((e) => console.warn('DoT Block error:', e));
+
+    // 4.9 DNS Estático Local: subdomain → IP LAN do roteador
+    // Isso faz o MikroTik resolver fap2.mikrogestor.com → 192.168.88.1 para clientes
+    // conectados no Wi-Fi, que então acessam o www-ssl local com cert válido → SEM AVISO
+    try {
+      const ipAddrs = (await (mk as any).client?.menu('/ip/address').get() || []) as any[];
+      const bridgeAddr = ipAddrs.find((a: any) => a.interface === targetBridge && !a.disabled && a.address);
+      const lanIp = bridgeAddr?.address?.split('/')[0] || '192.168.88.1';
+      await mk.ensureHotspotLocalDns(router.subdomain, lanIp).catch((e) => console.warn('DNS estático hotspot error:', e));
+    } catch (e) {
+      console.warn('Erro ao obter IP LAN:', e);
+      await mk.ensureHotspotLocalDns(router.subdomain).catch(() => null);
+    }
 
     // 4.9 Perfil de Usuário Padrão com restrição a 1 dispositivo e auto-limpeza
     const userProfiles = (await mk.getHotspotProfiles().catch(() => [])) as any[];

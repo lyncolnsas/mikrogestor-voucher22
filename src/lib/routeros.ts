@@ -824,7 +824,52 @@ export class MikrotikAPI {
     }
   }
 
-  // --- BLOQUEIO DE CAMADA 2 (IP BINDING BLOCKED) --- //
+  /**
+   * Cria entrada DNS estática no MikroTik para que o subdomínio do Hotspot
+   * resolva para o IP LAN do roteador (192.168.88.1).
+   *
+   * Por que isso elimina o aviso do Android/browser:
+   *   1. Cert Let's Encrypt para fap2.mikrogestor.com está instalado no www-ssl ✅
+   *   2. Cliente resolve fap2.mikrogestor.com → 192.168.88.1 (via DNS interno)
+   *   3. Cliente conecta em 192.168.88.1:443 com cert válido = SEM AVISO ✅
+   *   4. Apenas o subdomínio dedicado é interceptado — www.mikrogestor.com
+   *      (pagamentos/API) NÃO é afetado pois tem hostname diferente.
+   */
+  async ensureHotspotLocalDns(subdomain: string, routerLanIp = '192.168.88.1'): Promise<{ status: string }> {
+    if (!this.client) throw new Error('Not connected');
+    try {
+      const dnsMenu = this.client.menu('/ip/dns/static');
+      const existing = ((await dnsMenu.get()) as any[]) || [];
+
+      // Remove entradas antigas para este subdomínio (evita duplicatas)
+      const old = existing.filter(
+        (e: any) => e.name === subdomain && e.address !== routerLanIp
+      );
+      for (const o of old) {
+        await dnsMenu.remove(o['.id'] || o.id).catch(() => null);
+      }
+
+      // Verifica se já existe entrada correta
+      const alreadyCorrect = existing.some(
+        (e: any) => e.name === subdomain && e.address === routerLanIp
+      );
+      if (alreadyCorrect) return { status: 'already_exists' };
+
+      // Cria entrada DNS estática: subdomínio → IP LAN do roteador
+      await dnsMenu.add({
+        name: subdomain,
+        address: routerLanIp,
+        ttl: '5m',
+        comment: `MikroGestor: DNS local hotspot (${subdomain} -> ${routerLanIp})`,
+      });
+
+      return { status: 'created' };
+    } catch (err: any) {
+      console.warn('[DNS Estático Hotspot] Erro ao criar entrada DNS:', err);
+      return { status: 'error' };
+    }
+  }
+
 
   /**
    * Bloqueia categoricamente um endereço MAC no MikroTik via IP-Binding type=blocked.
