@@ -27,6 +27,7 @@ export async function middleware(request: NextRequest) {
   // Define rotas públicas
   const isPublicRoute = 
     path === '/' || 
+    path === '/login' ||
     path.startsWith('/api/auth') || 
     path.startsWith('/portal') || 
     isPublicPortalApi || 
