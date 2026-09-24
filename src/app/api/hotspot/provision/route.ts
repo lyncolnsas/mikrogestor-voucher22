@@ -812,6 +812,16 @@ export async function POST(request: Request) {
       } catch (e: any) {
         warn('traffic_isolation', `Isolamento IPv6/FastTrack: ${e?.message || e}`);
       }
+
+      // Passo 9.4: DNS Estático Local: subdomain -> IP LAN do roteador (Regra 9 AGENTS.md)
+      if (deployMode === 'vps' && routerSubdomain) {
+        try {
+          await mk.ensureHotspotLocalDns(routerSubdomain, gatewayIp);
+          ok('local_dns', `DNS estático local configurado: ${routerSubdomain} -> ${gatewayIp}.`);
+        } catch (e: any) {
+          warn('local_dns', `DNS estático local: ${e?.message || e}`);
+        }
+      }
     }
 
     // Passo 10: NAT Masquerade (Bypass)

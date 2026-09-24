@@ -856,14 +856,20 @@ export class MikrotikAPI {
       if (alreadyCorrect) return { status: 'already_exists' };
 
       // Cria entrada DNS estática: subdomínio → IP LAN do roteador
-      await dnsMenu.add({
-        name: subdomain,
-        address: routerLanIp,
-        ttl: '5m',
-        comment: `MikroGestor: DNS local hotspot (${subdomain} -> ${routerLanIp})`,
-      });
-
-      return { status: 'created' };
+      try {
+        await dnsMenu.add({
+          name: subdomain,
+          address: routerLanIp,
+          ttl: '5m',
+          comment: `MikroGestor: DNS local hotspot (${subdomain} -> ${routerLanIp})`,
+        });
+        return { status: 'created' };
+      } catch (addErr: any) {
+        if (addErr?.message && addErr.message.includes('already exists')) {
+          return { status: 'already_exists' };
+        }
+        throw addErr;
+      }
     } catch (err: any) {
       console.warn('[DNS Estático Hotspot] Erro ao criar entrada DNS:', err);
       return { status: 'error' };

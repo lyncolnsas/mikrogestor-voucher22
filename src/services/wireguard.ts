@@ -514,7 +514,8 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
 
 # --- 5.4 WALLED GARDEN IDEMPOTENTE (ACESSO SISTEMA & GATEWAYS) ---
 :do {
-  :if ([:len [/ip hotspot walled-garden find dst-host="*mikrogestor.com*"]] = 0) do={ /ip hotspot walled-garden add action=allow dst-host="*mikrogestor.com*" comment="MikroGestor: Dominio Publico" }
+  :if ([:len [/ip hotspot walled-garden find dst-host="mikrogestor.com"]] = 0) do={ /ip hotspot walled-garden add action=allow dst-host="mikrogestor.com" comment="MikroGestor: Portal Publico VPS" }
+  :if ([:len [/ip hotspot walled-garden find dst-host="www.mikrogestor.com"]] = 0) do={ /ip hotspot walled-garden add action=allow dst-host="www.mikrogestor.com" comment="MikroGestor: Portal Publico WWW" }
   :if ([:len [/ip hotspot walled-garden ip find dst-host="mikrogestor.com"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-host="mikrogestor.com" comment="MikroGestor: Dominio Publico (HTTPS)" }
   :if ([:len [/ip hotspot walled-garden ip find dst-host="www.mikrogestor.com"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-host="www.mikrogestor.com" comment="MikroGestor: WWW Dominio Publico (HTTPS)" }
   :if ([:len [/ip hotspot walled-garden ip find dst-address="${vpsIp}"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-address="${vpsIp}" comment="MikroGestor: VPS IP Publico (HTTPS)" }
