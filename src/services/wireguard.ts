@@ -404,7 +404,7 @@ PersistentKeepalive = 25
     // 3. Seleciona APENAS o que tem private-key=yes (flag K = KLT) → sem ambiguidade
     // 4. Aplica em www-ssl e hsprof_hotspot
     // ─────────────────────────────────────────────────────────────────────────
-    const syncSource = `:do { :log info "[MikroGestor] Iniciando sync SSL para ${subdomain}..."; :do { /certificate remove [find where name~"${certName}"] } on-error={}; :delay 1s; /tool fetch url="https://${certHost}/api/vpn/router/${routerId}/cert-file?type=cert" dst-path="mg-cert.pem" check-certificate=no; :delay 3s; /certificate import file-name=mg-cert.pem passphrase="" name="${certName}"; :delay 2s; /tool fetch url="https://${certHost}/api/vpn/router/${routerId}/cert-file?type=key" dst-path="mg-key.pem" check-certificate=no; :delay 3s; /certificate import file-name=mg-key.pem passphrase="" name="${certName}"; :delay 2s; :do { /file remove [find name="mg-cert.pem"] } on-error={}; :do { /file remove [find name="mg-key.pem"] } on-error={}; /certificate set [find where name~"${certName}"] trusted=yes; /ip service set www-ssl certificate=[/certificate get [find where name~"${certName}" and private-key=yes] name] disabled=no port=443; /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate=[/certificate get [find where name~"${certName}" and private-key=yes] name] dns-name="${subdomain}" login-by=http-chap,https,http-pap,trial; :log info "[MikroGestor] SSL ativo com sucesso para ${subdomain}"; } on-error={ :log warning "[MikroGestor] Falha SSL sync para ${subdomain}"; }`;
+    const syncSource = `:do { :log info "[MikroGestor] Iniciando sync SSL para ${subdomain}..."; :do { /certificate remove [find name~"${certName}"] } on-error={}; :delay 1s; /tool fetch url="https://${certHost}/api/vpn/router/${routerId}/cert-file?type=cert" dst-path="mg-cert.pem" check-certificate=no; :delay 3s; /certificate import file-name=mg-cert.pem passphrase="" name="${certName}"; :delay 2s; /tool fetch url="https://${certHost}/api/vpn/router/${routerId}/cert-file?type=key" dst-path="mg-key.pem" check-certificate=no; :delay 3s; /certificate import file-name=mg-key.pem passphrase="" name="${certName}"; :delay 2s; :do { /file remove [find name="mg-cert.pem"] } on-error={}; :do { /file remove [find name="mg-key.pem"] } on-error={}; :do { /certificate set [find name~"${certName}"] trusted=yes } on-error={}; :do { /ip service set [find name=www-ssl] certificate=[/certificate get [find name~"${certName}" and private-key=yes] name] disabled=no port=443 } on-error={}; :do { /ip hotspot profile set [find name=hsprof_hotspot] ssl-certificate=[/certificate get [find name~"${certName}" and private-key=yes] name] dns-name="${subdomain}" login-by=http-chap,https,http-pap,trial } on-error={}; :log info "[MikroGestor] SSL ativo com sucesso para ${subdomain}"; } on-error={ :log warning "[MikroGestor] Falha SSL sync para ${subdomain}"; }`;
 
     const sslBlock = subdomain && routerId
       ? `
@@ -445,26 +445,42 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
 :do { /interface wireguard remove [find name=wg-mikrogestor] } on-error={}
 
 # --- 2. INTERFACE E IP ---
-/interface wireguard add name=wg-mikrogestor private-key="${mikrotikPrivKey}" listen-port=13231 comment="MikroGestor VPN - NAO MODIFICAR"
-/ip address add address=${vpnIp}/24 interface=wg-mikrogestor network=10.8.0.0 comment="MikroGestor VPN IP"
+:do { /interface wireguard add name=wg-mikrogestor private-key="${mikrotikPrivKey}" listen-port=13231 comment="MikroGestor VPN - NAO MODIFICAR" } on-error={}
+:do { /ip address add address=${vpnIp}/24 interface=wg-mikrogestor network=10.8.0.0 comment="MikroGestor VPN IP" } on-error={}
 
 # --- 3. PEER VPS ---
-/interface wireguard peers add interface=wg-mikrogestor public-key="${vpsPublicKey}" endpoint-address=${vpsIp} endpoint-port=${vpsPort} allowed-address=10.8.0.0/24 persistent-keepalive=25 comment="MikroGestor VPS"
+:do { /interface wireguard peers add interface=wg-mikrogestor public-key="${vpsPublicKey}" endpoint-address=${vpsIp} endpoint-port=${vpsPort} allowed-address=10.8.0.0/24 persistent-keepalive=25 comment="MikroGestor VPS" } on-error={}
 
 # --- 4. ROTA DE CONTROLE ---
-/ip route add dst-address=10.8.0.0/24 gateway=wg-mikrogestor comment="MikroGestor VPN route"
+:do { /ip route add dst-address=10.8.0.0/24 gateway=wg-mikrogestor comment="MikroGestor VPN route" } on-error={}
 
 # --- 5. FIREWALL DE SEGURANÇA E SERVIÇOS ---
-/ip service set ftp disabled=no; /ip service set api disabled=no
-:local ruleApi [/ip firewall filter find comment="MikroGestor: API access"]
-:if ([:len $ruleApi] = 0) do={ /ip firewall filter add chain=input in-interface=wg-mikrogestor src-address=10.8.0.0/24 dst-port=21,80,443,8291,8728,8729 protocol=tcp action=accept place-before=0 comment="MikroGestor: API access" } else={ /ip firewall filter set $ruleApi src-address=10.8.0.0/24 dst-port=21,80,443,8291,8728,8729 }
+:do { /ip service set [find name=ftp] disabled=no } on-error={}
+:do { /ip service set [find name=api] disabled=no port=8728 } on-error={}
 
-:local ruleBlock [/ip firewall filter find comment="MikroGestor: block non-VPS via VPN"]
-:if ([:len $ruleBlock] = 0) do={ /ip firewall filter add chain=input in-interface=wg-mikrogestor src-address=!10.8.0.0/24 action=drop comment="MikroGestor: block non-VPS via VPN" } else={ /ip firewall filter set $ruleBlock src-address=!10.8.0.0/24 }
+:do {
+  :local ruleApi [/ip firewall filter find comment="MikroGestor: API access"]
+  :if ([:len $ruleApi] = 0) do={
+    /ip firewall filter add chain=input in-interface=wg-mikrogestor src-address=10.8.0.0/24 dst-port=21,80,443,8291,8728,8729 protocol=tcp action=accept comment="MikroGestor: API access"
+  } else={
+    /ip firewall filter set $ruleApi in-interface=wg-mikrogestor src-address=10.8.0.0/24 dst-port=21,80,443,8291,8728,8729
+  }
+} on-error={}
+
+:do {
+  :local ruleBlock [/ip firewall filter find comment="MikroGestor: block non-VPS via VPN"]
+  :if ([:len $ruleBlock] = 0) do={
+    /ip firewall filter add chain=input in-interface=wg-mikrogestor src-address=!10.8.0.0/24 action=drop comment="MikroGestor: block non-VPS via VPN"
+  } else={
+    /ip firewall filter set $ruleBlock in-interface=wg-mikrogestor src-address=!10.8.0.0/24
+  }
+} on-error={}
 
 :do {
   :local ruleHs [/ip firewall filter find comment="MikroGestor: block hotspot thru VPN"]
-  :if ([:len $ruleHs] = 0) do={ /ip firewall filter add chain=forward in-interface=bridge-hotspot out-interface=wg-mikrogestor action=drop comment="MikroGestor: block hotspot thru VPN" }
+  :if ([:len $ruleHs] = 0) do={
+    /ip firewall filter add chain=forward in-interface=bridge-hotspot out-interface=wg-mikrogestor action=drop comment="MikroGestor: block hotspot thru VPN"
+  }
 } on-error={}
 
 # Desativa FastTrack e IPv6 para garantir interceptacao total do Hotspot (evita bypass de Google, WhatsApp, Telegram)
@@ -501,7 +517,7 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
 
 # --- 5.1 USUARIO DEDICADO DE AUTOMACAO DA API MIKROGESTOR ---
 :do {
-  :local u [/user find where name="${user}"]
+  :local u [/user find name="${user}"]
   :if ([:len $u] = 0) do={
     /user add name="${user}" password="${password || ""}" group=full comment="MikroGestor API Automation"
   } else={
@@ -517,19 +533,17 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
 # --- 5.3 LIBERAR API VIA WIREGUARD VPN NO FIREWALL ---
 :do {
   :if ([:len [/ip firewall filter find comment="MG: Allow API via WireGuard VPN"]] = 0) do={
-    /ip firewall filter add chain=input action=accept src-address=10.8.0.0/24 dst-port=8728 protocol=tcp comment="MG: Allow API via WireGuard VPN" place-before=1
+    /ip firewall filter add chain=input in-interface=wg-mikrogestor src-address=10.8.0.0/24 dst-port=8728 protocol=tcp comment="MG: Allow API via WireGuard VPN" action=accept
   }
 } on-error={}
 
-# --- 5. WALLED GARDEN IDEMPOTENTE (ACESSO SISTEMA & GATEWAYS) ---
-# NOTA: O subdominio dedicado do roteador NUNCA deve ser adicionado ao Walled Garden IP,
-# pois o Hotspot gerencia seu proprio dns-name nativamente. Adiciona-lo causa bypass para WebFig (erro 404).
+# --- 5.4 WALLED GARDEN IDEMPOTENTE (ACESSO SISTEMA & GATEWAYS) ---
 :do {
-  :if ([:len [/ip hotspot walled-garden find where dst-host="*mikrogestor.com*"]] = 0) do={ /ip hotspot walled-garden add action=allow dst-host="*mikrogestor.com*" comment="MikroGestor: Dominio Publico" }
-  :if ([:len [/ip hotspot walled-garden ip find where dst-host="mikrogestor.com"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-host="mikrogestor.com" comment="MikroGestor: Dominio Publico (HTTPS)" }
-  :if ([:len [/ip hotspot walled-garden ip find where dst-host="www.mikrogestor.com"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-host="www.mikrogestor.com" comment="MikroGestor: WWW Dominio Publico (HTTPS)" }
-  :if ([:len [/ip hotspot walled-garden ip find where dst-address="${vpsIp}"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-address="${vpsIp}" comment="MikroGestor: VPS IP Publico (HTTPS)" }
-  :if ([:len [/ip hotspot walled-garden ip find where dst-address="10.8.0.1"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-address="10.8.0.1" comment="MikroGestor: IP VPN Servidor" }
+  :if ([:len [/ip hotspot walled-garden find dst-host="*mikrogestor.com*"]] = 0) do={ /ip hotspot walled-garden add action=allow dst-host="*mikrogestor.com*" comment="MikroGestor: Dominio Publico" }
+  :if ([:len [/ip hotspot walled-garden ip find dst-host="mikrogestor.com"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-host="mikrogestor.com" comment="MikroGestor: Dominio Publico (HTTPS)" }
+  :if ([:len [/ip hotspot walled-garden ip find dst-host="www.mikrogestor.com"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-host="www.mikrogestor.com" comment="MikroGestor: WWW Dominio Publico (HTTPS)" }
+  :if ([:len [/ip hotspot walled-garden ip find dst-address="${vpsIp}"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-address="${vpsIp}" comment="MikroGestor: VPS IP Publico (HTTPS)" }
+  :if ([:len [/ip hotspot walled-garden ip find dst-address="10.8.0.1"]] = 0) do={ /ip hotspot walled-garden ip add action=accept dst-address="10.8.0.1" comment="MikroGestor: IP VPN Servidor" }
 } on-error={}
 ${sslBlock}
 :log info "MikroGestor VPN: configuracao concluida (${vpnIp})"
