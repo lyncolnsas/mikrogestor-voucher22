@@ -808,6 +808,7 @@ export async function POST(request: Request) {
         const details = [];
         if (isoRes.ipv6Disabled) details.push('IPv6 desativado');
         if (isoRes.fasttrackDisabled > 0) details.push(`${isoRes.fasttrackDisabled} regra(s) FastTrack desativada(s)`);
+        if (isoRes.quicBlocked) details.push('QUIC bloqueado');
         ok('traffic_isolation', `Isolamento ativo (${details.join(', ') || 'regras já em conformidade'}).`);
       } catch (e: any) {
         warn('traffic_isolation', `Isolamento IPv6/FastTrack: ${e?.message || e}`);

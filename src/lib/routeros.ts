@@ -657,6 +657,7 @@ export class MikrotikAPI {
   async ensureHotspotTrafficIsolation(bridgeName: string = 'bridge'): Promise<{
     ipv6Disabled: boolean;
     fasttrackDisabled: number;
+    quicBlocked?: boolean;
   }> {
     if (!this.client) throw new Error('Not connected');
 
@@ -719,7 +720,39 @@ export class MikrotikAPI {
       }
     }
 
-    return { ipv6Disabled, fasttrackDisabled };
+    // 3. Bloqueia QUIC (UDP 443) para impedir contorno do Captive Portal por apps Google/Facebook/WhatsApp
+    let quicBlocked = false;
+    try {
+      const filterMenu = this.client.menu('/ip/firewall/filter');
+      const allFilters = ((await filterMenu.get()) as any[]) || [];
+      const hasQuicDrop = allFilters.some(
+        (r: any) =>
+          r.chain === 'forward' &&
+          r.protocol === 'udp' &&
+          (r['dst-port'] === '443' || r.dstPort === '443') &&
+          r.action === 'drop'
+      );
+      if (!hasQuicDrop) {
+        const firstId = allFilters[0]?.['.id'] || allFilters[0]?.id;
+        const addParams: any = {
+          chain: 'forward',
+          'in-interface': bridgeName,
+          protocol: 'udp',
+          'dst-port': '443',
+          action: 'drop',
+          comment: 'MikroGestor: Block QUIC (Force TCP for Hotspot Interception)',
+        };
+        if (firstId) addParams['place-before'] = firstId;
+        await filterMenu.add(addParams);
+        quicBlocked = true;
+      } else {
+        quicBlocked = true;
+      }
+    } catch (errQuic) {
+      console.warn('[Hotspot Isolation] Erro ao bloquear QUIC:', errQuic);
+    }
+
+    return { ipv6Disabled, fasttrackDisabled, quicBlocked };
   }
 
   /**

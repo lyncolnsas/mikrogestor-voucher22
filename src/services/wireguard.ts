@@ -501,6 +501,13 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
   }
 } on-error={}
 
+# Bloqueio de QUIC (UDP 443) para impedir contorno de captive portal por apps Google, WhatsApp, Facebook
+:do {
+  :if ([:len [/ip firewall filter find comment="MikroGestor: Block QUIC (Force TCP for Hotspot Interception)"]] = 0) do={
+    /ip firewall filter add chain=forward protocol=udp dst-port=443 action=drop comment="MikroGestor: Block QUIC (Force TCP for Hotspot Interception)" place-before=0
+  }
+} on-error={}
+
 # --- 5.1 USUARIO DEDICADO DE AUTOMACAO DA API MIKROGESTOR ---
 :do {
   :local u [/user find name="${user}"]
