@@ -49,3 +49,33 @@ export function generatePixPayload(key: string, amount: number, name: string = '
 
   return payload + crc16(payload);
 }
+
+/**
+ * Obtém a chave PIX manual configurada no sistema com fallback inteligente
+ */
+export async function getEffectivePixKey(): Promise<string> {
+  const { prisma } = await import('@/lib/prisma');
+  try {
+    const configs = await prisma.systemConfig.findMany({
+      where: {
+        key: { in: ['MANUAL_PIX_KEY', 'manual_pix_key', 'PIX_MANUAL_KEY', 'ADMIN_WHATSAPP_PHONE'] }
+      }
+    });
+    const configMap: Record<string, string> = {};
+    for (const c of configs) configMap[c.key] = c.value;
+
+    const key = configMap['MANUAL_PIX_KEY'] || configMap['manual_pix_key'] || configMap['PIX_MANUAL_KEY'] || configMap['ADMIN_WHATSAPP_PHONE'];
+    if (key && key.trim()) return key.trim();
+
+    // Se nenhuma chave foi digitada no painel financeiro, usa o número do primeiro WhatsApp conectado
+    const wa = await prisma.whatsappInstance.findFirst({
+      where: { status: 'connected', number: { not: null } }
+    });
+    if (wa?.number) return wa.number.replace(/\D/g, '');
+  } catch (err) {
+    console.error('[Pix] Erro ao buscar chave PIX efetiva:', err);
+  }
+
+  return '4497743598'; // Fallback final
+}
+

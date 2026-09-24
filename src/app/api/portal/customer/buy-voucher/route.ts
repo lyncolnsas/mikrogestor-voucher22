@@ -88,19 +88,12 @@ export async function POST(request: Request) {
       pixQrCodeBase64 = mpResult.point_of_interaction?.transaction_data?.qr_code_base64 ?? null;
     } else {
       // Check for Manual PIX Key fallback
-      const manualPixKey = configMap['manual_pix_key'];
-      if (manualPixKey) {
-        const { generatePixPayload } = await import('@/lib/pix');
-        pixId = `MANUAL_${Date.now()}`;
-        pixPayload = generatePixPayload(manualPixKey, plan.price * voucherQty);
-        pixQrCodeBase64 = null;
-        isManualPix = true;
-      } else {
-        // Preview / test mode
-        pixId = `PREVIEW_${Date.now()}`;
-        pixPayload = '00020126580014br.gov.bcb.pix0136PREVIEW_KEY_FOR_TESTING52040000530398654' + `05${(plan.price * voucherQty).toFixed(2).replace('.', '')}5802BR5925MIKROGESTOR TEST6009SAO PAULO62070503***6304TEST`;
-        pixQrCodeBase64 = null;
-      }
+      const { getEffectivePixKey, generatePixPayload } = await import('@/lib/pix');
+      const manualPixKey = await getEffectivePixKey();
+      pixId = `MANUAL_${Date.now()}`;
+      pixPayload = generatePixPayload(manualPixKey, plan.price * voucherQty, 'MIKROGESTOR', 'SAO PAULO');
+      pixQrCodeBase64 = null;
+      isManualPix = true;
     }
 
     const payments = [];
@@ -151,29 +144,57 @@ export async function POST(request: Request) {
            mk.disconnect();
         }
       }
-    } else if (isManualPix) {
-      // Se PIX manual, avisa no whatsapp do cliente que ele gerou N vouchers E inclui a chave PIX
+    } else if (pixPayload) {
+      // Disparo de mensagem PIX via WhatsApp (tanto Mercado Pago quanto PIX Manual)
       const contactPhone = lead.phone || lead.whatsappNumber;
       if (contactPhone) {
         const { whatsappService } = await import('@/services/whatsapp');
+        const { getCustomTemplate, applyTemplateTags, getTriggerSendOptions } = await import('@/services/whatsapp-custom-messages');
         const codesStr = payments.map((p, idx) => `🎟️ *Voucher ${idx+1}:*\nUsuário: ${p.voucherCode}\nSenha: ${p.voucherCode}`).join('\n\n');
         const giftLine = forFriend && friendName ? `\n👤 *Para:* ${friendName}` : '';
         const totalValor = `R$ ${(plan.price * voucherQty).toFixed(2).replace('.', ',')}`;
 
-        // Mensagem para o CLIENTE com a chave PIX incluída
-        const clientMsg = `⏳ *Pedido Recebido!*\n\nVocê solicitou ${voucherQty}x voucher(s) do plano *${plan.title}*.${giftLine}\n\n💳 *Pague via PIX para habilitar:*\nChave: \`${pixPayload}\`\nValor: ${totalValor}\n_Copie a chave acima e pague pelo app do seu banco._\n\nApós o pagamento, aguarde a confirmação do administrador.\n\n*Suas credenciais (ainda bloqueadas):*\n\n${codesStr}\n\nAssim que o pagamento for confirmado, você receberá um aviso e eles estarão prontos para uso.`;
-        whatsappService.sendWhatsAppMessage('admin', contactPhone, clientMsg).catch(() => {});
+        try {
+          const rawPixTemplate = await getCustomTemplate('WA_MSG_PIX_GENERATED');
+          const pixSendOpts = await getTriggerSendOptions('WA_MSG_PIX_GENERATED');
+          const pixMsg = applyTemplateTags(rawPixTemplate, {
+            cliente: lead.name || lead.hotspotUser,
+            plano: `${plan.title}${voucherQty > 1 ? ` (${voucherQty}x)` : ''}${giftLine}`,
+            valor: totalValor,
+            cortesia: '15 minutos',
+            pix_copia_cola: pixPayload,
+            usuario: payments[0]?.voucherCode || lead.hotspotUser,
+            senha: payments[0]?.voucherCode || lead.hotspotUser,
+            rede_wifi: process.env.HOTSPOT_WIFI_NAME || 'nossa rede Wi-Fi'
+          });
 
-        // Notificação para o ADMIN com todos os detalhes do pedido
-        (async () => {
-          try {
-            const adminNumbers = await whatsappService.getOnlineOfficialNumbers();
-            if (adminNumbers.length > 0) {
-              const adminMsg = `🔔 *Novo Pedido de Voucher PIX Manual!*\n\n👤 *Cliente:* ${lead.name || lead.hotspotUser}\n📱 *WhatsApp:* ${contactPhone}\n🎟️ *Plano:* ${plan.title}${giftLine}\n📦 *Quantidade:* ${voucherQty}x\n💰 *Valor Total:* ${totalValor}\n🆔 *PIX ID:* ${pixId}\n\n🔑 *Chave PIX enviada ao cliente:*\n\`${pixPayload}\`\n\n➡️ Acesse /dashboard/finance para *Aprovar* ou *Rejeitar*.`;
-              await whatsappService.sendWhatsAppMessage('admin', adminNumbers[0], adminMsg).catch(() => {});
-            }
-          } catch (e) { console.warn('[PIX Manual Voucher] Erro ao notificar admin:', e); }
-        })();
+          // 1. Envia mensagem do PIX
+          await whatsappService.sendWhatsAppMessage('admin', contactPhone, pixMsg, {
+            skipStandby: true,
+            media: pixSendOpts.media,
+            forwardLibraryId: pixSendOpts.forwardLibraryId
+          });
+
+          // 2. Envia balão isolado com o PIX Copia e Cola puro para facilidade de cópia com 1 toque
+          await whatsappService.sendWhatsAppMessage('admin', contactPhone, pixPayload, {
+            skipStandby: true
+          });
+        } catch (msgErr) {
+          console.error('[BuyVoucher] Erro ao enviar mensagem PIX para o cliente:', msgErr);
+        }
+
+        // Notificação para o ADMIN caso seja PIX Manual
+        if (isManualPix) {
+          (async () => {
+            try {
+              const adminNumbers = await whatsappService.getOnlineOfficialNumbers();
+              if (adminNumbers.length > 0) {
+                const adminMsg = `🔔 *Novo Pedido de Voucher PIX Manual!*\n\n👤 *Cliente:* ${lead.name || lead.hotspotUser}\n📱 *WhatsApp:* ${contactPhone}\n🎟️ *Plano:* ${plan.title}${giftLine}\n📦 *Quantidade:* ${voucherQty}x\n💰 *Valor Total:* ${totalValor}\n🆔 *PIX ID:* ${pixId}\n\n🔑 *Chave PIX enviada ao cliente:*\n\`${pixPayload}\`\n\n➡️ Acesse /dashboard/finance para *Aprovar* ou *Rejeitar*.`;
+                await whatsappService.sendWhatsAppMessage('admin', adminNumbers[0], adminMsg).catch(() => {});
+              }
+            } catch (e) { console.warn('[PIX Manual Voucher] Erro ao notificar admin:', e); }
+          })();
+        }
       }
     }
 

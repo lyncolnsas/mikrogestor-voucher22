@@ -60,6 +60,26 @@ async function main() {
     console.warn('[MikroGestor] Aviso na validação defensiva de schema:', schemaErr.message);
   }
   
+  // Verifica se já existem planos de acesso
+  try {
+    const planCount = await prisma.whatsappPlan.count();
+    if (planCount === 0) {
+      console.log('[MikroGestor] Nenhum plano cadastrado. Provisionando planos padrão...');
+      const defaultPlans = [
+        { title: '1 Hora', profile: '1hora', price: 3.0, uptimeLimit: '01:00:00', active: true },
+        { title: '1 Dia', profile: '1dia', price: 5.0, uptimeLimit: '1d 00:00:00', active: true },
+        { title: '7 Dias', profile: '7dias', price: 15.0, uptimeLimit: '7d 00:00:00', active: true },
+        { title: '30 Dias', profile: '30dias', price: 35.0, uptimeLimit: '30d 00:00:00', active: true }
+      ];
+      for (const p of defaultPlans) {
+        await prisma.whatsappPlan.create({ data: p });
+      }
+      console.log('[MikroGestor] 4 Planos padrão provisionados com sucesso!');
+    }
+  } catch (err) {
+    console.warn('[MikroGestor] Aviso ao verificar/criar planos padrão:', err.message);
+  }
+
   // Verifica se já existe algum usuário
   const userCount = await prisma.user.count();
   

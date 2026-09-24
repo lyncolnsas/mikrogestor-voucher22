@@ -66,16 +66,24 @@ export default async function RegisterPage({ searchParams }: PageProps) {
     console.warn('Erro ao checar free_wifi_mode:', e);
   }
 
-  // Se o Modo Evento / Wi-Fi Gratuito estiver ativo ou se o modo de venda estiver desligado na configuração
-  const isSaleModeEnabled = !isFreeWifiMode && Boolean(initialConfig?.saleMode === true);
+  let isPaidSalesMode = true;
+  try {
+    const salesModeRecord = await prisma.systemConfig.findUnique({
+      where: { key: 'PORTAL_SALES_MODE' }
+    });
+    if (salesModeRecord?.value === 'free') isPaidSalesMode = false;
+  } catch (e) {
+    console.warn('Erro ao checar PORTAL_SALES_MODE:', e);
+  }
+
+  // Se o Modo Evento / Wi-Fi Gratuito não estiver ativo e o modo for de venda (padrão)
+  const isSaleModeEnabled = !isFreeWifiMode && (isPaidSalesMode || Boolean(initialConfig?.saleMode === true));
 
   let activePlans: any[] = [];
   if (isSaleModeEnabled) {
     try {
-      activePlans = await (prisma.whatsappPlan as any).findMany({
-        where: { active: true },
-        orderBy: { price: 'asc' }
-      });
+      const { getOrSeedDefaultPlans } = await import('@/lib/plans');
+      activePlans = await getOrSeedDefaultPlans();
     } catch (plansErr) {
       console.warn('Erro ao carregar planos para o portal:', plansErr);
     }

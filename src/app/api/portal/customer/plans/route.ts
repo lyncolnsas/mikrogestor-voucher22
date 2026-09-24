@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getMikrotikClient } from '@/lib/session';
+import { getOrSeedDefaultPlans } from '@/lib/plans';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const plans = await prisma.whatsappPlan.findMany({
+    let plans = await prisma.whatsappPlan.findMany({
       where: { active: true, price: { gt: 0 } },
       orderBy: { price: 'asc' },
       select: {
@@ -17,6 +18,21 @@ export async function GET() {
         uptimeLimit: true,
       },
     });
+
+    if (plans.length === 0) {
+      await getOrSeedDefaultPlans();
+      plans = await prisma.whatsappPlan.findMany({
+        where: { active: true, price: { gt: 0 } },
+        orderBy: { price: 'asc' },
+        select: {
+          id: true,
+          title: true,
+          profile: true,
+          price: true,
+          uptimeLimit: true,
+        },
+      });
+    }
     
     const configFreeWifi = await prisma.systemConfig.findUnique({ where: { key: 'free_wifi_mode' } });
     const freeWifiMode = configFreeWifi?.value === 'true';

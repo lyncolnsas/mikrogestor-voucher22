@@ -560,6 +560,16 @@ export async function POST(request: Request) {
       }
     }
 
+    // Se estiver em modo venda (PORTAL_SALES_MODE !== 'free' e !isFreeWifi) e não veio planId, busca o plano padrão
+    if (!selectedPlan && !isFreeWifi) {
+      const salesModeCfg = await prisma.systemConfig.findUnique({ where: { key: 'PORTAL_SALES_MODE' } });
+      if (salesModeCfg?.value !== 'free') {
+        const { getOrSeedDefaultPlans } = await import('@/lib/plans');
+        const defaultPlans = await getOrSeedDefaultPlans();
+        selectedPlan = defaultPlans[0] || null;
+      }
+    }
+
     if (selectedPlan && selectedPlan.price > 0) {
       if (isPreview) {
         pixData = {
@@ -574,8 +584,8 @@ export async function POST(request: Request) {
       } else {
         try {
           const mpConfig = await prisma.systemConfig.findUnique({ where: { key: 'MERCADOPAGO_TOKEN' } });
-          if (mpConfig?.value) {
-            const mpService = new MercadoPagoService(mpConfig.value);
+          if (mpConfig?.value && mpConfig.value.trim()) {
+            const mpService = new MercadoPagoService(mpConfig.value.trim());
             const payerEmail = email || `${hotspotUser}@wifi.local`;
             const payerName = finalName;
             const payerCpf = rawCpf ? rawCpf.replace(/\D/g, '') : undefined;
@@ -620,44 +630,43 @@ export async function POST(request: Request) {
             }
           } else {
             // Fallback: Check manual PIX key if Mercado Pago is not configured
-            const manualKeyConfig = await prisma.systemConfig.findUnique({ where: { key: 'PIX_MANUAL_KEY' } });
-            if (manualKeyConfig?.value) {
-              // ⚠️ MUST start with 'MANUAL_' so the admin panel can find it via pending-pix
-              const pixId = `MANUAL_reg_${Date.now()}`;
-              const pixKey = manualKeyConfig.value;
-              pixData = {
+            const { getEffectivePixKey, generatePixPayload } = await import('@/lib/pix');
+            const pixKey = await getEffectivePixKey();
+            const pixId = `MANUAL_reg_${Date.now()}`;
+            const pixPayload = generatePixPayload(pixKey, selectedPlan.price, 'MIKROGESTOR', 'SAO PAULO');
+            
+            pixData = {
+              pixId,
+              pixPayload,
+              pixQrCodeBase64: '',
+              amount: selectedPlan.price,
+              planTitle: selectedPlan.title,
+              gracePeriodMinutes: 15
+            };
+            await prisma.payment.create({
+              data: {
+                leadId: lead.id,
                 pixId,
-                pixPayload: pixKey,
+                pixPayload,
                 pixQrCodeBase64: '',
                 amount: selectedPlan.price,
-                planTitle: selectedPlan.title,
-                gracePeriodMinutes: 15
-              };
-              await prisma.payment.create({
-                data: {
-                  leadId: lead.id,
-                  pixId,
-                  pixPayload: pixKey,
-                  pixQrCodeBase64: '',
-                  amount: selectedPlan.price,
-                  profile: selectedPlan.profile,
-                  status: 'pending',
-                  macAddress: clientMac || null
-                }
-              });
+                profile: selectedPlan.profile,
+                status: 'pending',
+                macAddress: clientMac || null
+              }
+            });
 
-              // Notificar admin via WhatsApp sobre novo pedido manual
-              (async () => {
-                try {
-                  const adminNumbers = await whatsappService.getOnlineOfficialNumbers();
-                  if (adminNumbers.length > 0) {
-                    const adminMsg = `🔔 *Novo Pedido PIX Manual!*\n\n👤 *Cliente:* ${finalName}\n📱 *WhatsApp:* ${rawPhone || 'não informado'}\n📋 *CPF:* ${rawCpf || 'não informado'}\n🎟️ *Plano:* ${selectedPlan.title}\n💰 *Valor:* R$ ${Number(selectedPlan.price).toFixed(2)}\n🆔 *ID:* ${pixId}\n\n🔑 *Chave PIX enviada ao cliente:*\n\`${pixKey}\`\n\n➡️ Acesse o painel em /dashboard/finance para aprovar ou rejeitar.`;
-                    // Envia para o próprio número conectado (admin number)
-                    await whatsappService.sendWhatsAppMessage('admin', adminNumbers[0], adminMsg).catch(() => {});
-                  }
-                } catch (e) { console.warn('[PIX Manual] Erro ao notificar admin:', e); }
-              })();
-            }
+            // Notificar admin via WhatsApp sobre novo pedido manual
+            (async () => {
+              try {
+                const adminNumbers = await whatsappService.getOnlineOfficialNumbers();
+                if (adminNumbers.length > 0) {
+                  const adminMsg = `🔔 *Novo Pedido PIX Manual!*\n\n👤 *Cliente:* ${finalName}\n📱 *WhatsApp:* ${rawPhone || 'não informado'}\n📋 *CPF:* ${rawCpf || 'não informado'}\n🎟️ *Plano:* ${selectedPlan.title}\n💰 *Valor:* R$ ${Number(selectedPlan.price).toFixed(2)}\n🆔 *ID:* ${pixId}\n\n🔑 *Chave PIX enviada ao cliente:*\n\`${pixKey}\`\n\n➡️ Acesse o painel em /dashboard/finance para aprovar ou rejeitar.`;
+                  // Envia para o próprio número conectado (admin number)
+                  await whatsappService.sendWhatsAppMessage('admin', adminNumbers[0], adminMsg).catch(() => {});
+                }
+              } catch (e) { console.warn('[PIX Manual] Erro ao notificar admin:', e); }
+            })();
           }
         } catch (mpErr: any) {
           console.error('[MercadoPago] Erro ao gerar cobrança PIX no cadastro:', mpErr);
@@ -838,6 +847,58 @@ export async function POST(request: Request) {
               setTimeout(sendStepMessage, delayMs);
             } else {
               await sendStepMessage();
+            }
+          }
+
+          // ⚡ DISPARO CRÍTICO: Mensagem de Cobrança PIX Gerada (WA_MSG_PIX_GENERATED)
+          if (pixData?.pixPayload && flowMap.pix_generated?.enabled !== false) {
+            try {
+              const portalUrl = getMaskedPortalUrl('', request.headers.get('host'));
+              const rawPixTemplate = await getCustomTemplate('WA_MSG_PIX_GENERATED');
+              const pixSendOpts = await getTriggerSendOptions('WA_MSG_PIX_GENERATED');
+              const formattedValor = `R$ ${Number(pixData.amount).toFixed(2).replace('.', ',')}`;
+
+              let officialNumbersSection = '';
+              if (officialNumbers.length > 0) {
+                const formattedList = officialNumbers.map(n => `• ${n}`).join('\n');
+                officialNumbersSection = `\n\n🛡️ *Canais Oficiais:*\n${formattedList}`;
+              }
+
+              const pixMsgBody = applyTemplateTags(rawPixTemplate, {
+                cliente: finalName,
+                plano: pixData.planTitle || selectedPlan?.title || 'Acesso Wi-Fi',
+                valor: formattedValor,
+                cortesia: '15 minutos',
+                pix_copia_cola: pixData.pixPayload,
+                usuario: hotspotUser,
+                senha: passwordStr,
+                link_portal: `${portalUrl}/portal/planos`,
+                rede_wifi: wifiName,
+                canais_oficiais: officialNumbersSection
+              });
+
+              // 1. Envia mensagem formatada de cobrança PIX com orientações
+              const resPix = await whatsappService.sendWhatsAppMessage('admin', targetPhone, pixMsgBody, {
+                skipStandby: true,
+                pinnedInstanceId: dispatchedInstanceId,
+                media: pixSendOpts.media,
+                forwardLibraryId: pixSendOpts.forwardLibraryId,
+              });
+
+              if (resPix.success && !dispatchedInstanceId && resPix.instanceId) {
+                dispatchedInstanceId = resPix.instanceId;
+              }
+
+              // 2. Envia balão isolado com o código Copia e Cola puro para facilidade de cópia com 1 clique no WhatsApp
+              await whatsappService.sendWhatsAppMessage('admin', targetPhone, pixData.pixPayload, {
+                skipStandby: true,
+                pinnedInstanceId: dispatchedInstanceId,
+              });
+
+              logEvent('WA_PIX_SENT', { targetPhone, pixId: pixData.pixId, amount: pixData.amount });
+            } catch (pixErr: any) {
+              console.error('[WhatsApp] Erro ao enviar mensagem PIX:', pixErr);
+              logEvent('WA_PIX_ERROR', pixErr?.message || pixErr);
             }
           }
         } catch (e: any) {

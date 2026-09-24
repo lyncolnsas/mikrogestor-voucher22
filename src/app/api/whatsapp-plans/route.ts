@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getOrSeedDefaultPlans } from '@/lib/plans';
 
 export async function GET() {
   try {
-    const plans = await prisma.whatsappPlan.findMany({
+    let plans = await prisma.whatsappPlan.findMany({
       orderBy: { price: 'asc' }
     });
+    if (plans.length === 0) {
+      plans = await getOrSeedDefaultPlans();
+    }
     return NextResponse.json(plans);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch plans' }, { status: 500 });
