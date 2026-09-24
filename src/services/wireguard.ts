@@ -501,19 +501,6 @@ ${subdomain ? `# Subdomínio: ${subdomain}\n` : ""}# Gerado em: ${new Date().toI
   }
 } on-error={}
 
-# Bypass de interceptacao HTTPS externa (previne erro "Pagina web nao disponivel" em sites externos)
-:do {
-  :local natBypass [/ip firewall nat find comment~"MikroGestor: Bypass foreign HTTPS"]
-  :if ([:len $natBypass] = 0) do={
-    :local hsUnauthRedirect [/ip firewall nat find chain=hs-unauth dst-port=443 action=redirect]
-    :if ([:len $hsUnauthRedirect] > 0) do={
-      /ip firewall nat add chain=hs-unauth dst-port=443 protocol=tcp action=return comment="MikroGestor: Bypass foreign HTTPS interception (prevents cert mismatch)" place-before=($hsUnauthRedirect->0)
-    } else={
-      /ip firewall nat add chain=hs-unauth dst-port=443 protocol=tcp action=return comment="MikroGestor: Bypass foreign HTTPS interception (prevents cert mismatch)"
-    }
-  }
-} on-error={}
-
 # --- 5.1 USUARIO DEDICADO DE AUTOMACAO DA API MIKROGESTOR ---
 :do {
   :local u [/user find name="${user}"]

@@ -177,8 +177,7 @@ export async function POST(
       }).catch(() => null);
     }
 
-    // 4.4 Bypass de Interceptação HTTPS Externa (Elimina erro "Página web não disponível")
-    await mk.ensureBypassForeignHttpsInterception().catch((e) => console.warn('Bypass Foreign HTTPS error:', e));
+    // 4.4 Isolamento de Tráfego e Walled Garden Ultra-Restrito (Regra 13: Lockdown Total)
 
     // 4.5 Walled Garden Ultra-Restrito (Regra 13: Lockdown Total)
     const publicDomain = getPublicDomain() || 'mikrogestor.com';

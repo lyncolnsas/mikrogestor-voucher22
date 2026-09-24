@@ -1643,19 +1643,23 @@ export class MikrotikAPI {
 
       const filterMenu = this.client.menu('/ip/firewall/filter');
       const filters = await filterMenu.get() as any[];
-      if (!filters.find((f: any) => f['dst-port'] === '853' && f.chain === 'forward')) {
-        await filterMenu.add({ chain: 'forward', protocol: 'tcp', 'dst-port': '853', action: 'drop', comment: 'Block Private DNS (DoT)', 'place-before': '0' }).catch(() => null);
+      const hasForwardDoT = filters.some((f: any) => (f['dst-port'] === '853' || (f.comment && f.comment.includes('DoT'))) && f.chain === 'forward');
+      if (!hasForwardDoT) {
+        await filterMenu.add({ chain: 'forward', protocol: 'tcp', 'dst-port': '853', action: 'drop', comment: 'MikroGestor: Block DoT', 'place-before': '0' }).catch(() => null);
       }
-      if (!filters.find((f: any) => f['dst-port'] === '853' && f.chain === 'input')) {
-        await filterMenu.add({ chain: 'input', protocol: 'tcp', 'dst-port': '853', action: 'drop', comment: 'Block Private DNS (DoT)', 'place-before': '0' }).catch(() => null);
+      const hasInputDoT = filters.some((f: any) => (f['dst-port'] === '853' || (f.comment && f.comment.includes('DoT'))) && f.chain === 'input');
+      if (!hasInputDoT) {
+        await filterMenu.add({ chain: 'input', protocol: 'tcp', 'dst-port': '853', action: 'drop', comment: 'MikroGestor: Block DoT', 'place-before': '0' }).catch(() => null);
       }
 
       const natMenu = this.client.menu('/ip/firewall/nat');
       const nats = await natMenu.get() as any[];
-      if (!nats.find((n: any) => n['dst-port'] === '53' && n.protocol === 'udp' && n.action === 'redirect')) {
+      const hasNatUdp = nats.some((n: any) => n['dst-port'] === '53' && (n.protocol === 'udp' || n.protocol === '17') && n.action === 'redirect');
+      if (!hasNatUdp) {
         await natMenu.add({ chain: 'dstnat', protocol: 'udp', 'dst-port': '53', action: 'redirect', 'to-ports': '53', comment: 'Force local DNS UDP', 'place-before': '0' }).catch(() => null);
       }
-      if (!nats.find((n: any) => n['dst-port'] === '53' && n.protocol === 'tcp' && n.action === 'redirect')) {
+      const hasNatTcp = nats.some((n: any) => n['dst-port'] === '53' && (n.protocol === 'tcp' || n.protocol === '6') && n.action === 'redirect');
+      if (!hasNatTcp) {
         await natMenu.add({ chain: 'dstnat', protocol: 'tcp', 'dst-port': '53', action: 'redirect', 'to-ports': '53', comment: 'Force local DNS TCP', 'place-before': '0' }).catch(() => null);
       }
     } catch (e) {
