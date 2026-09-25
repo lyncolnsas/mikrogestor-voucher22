@@ -57,7 +57,7 @@ export async function POST(request: Request) {
       return acc;
     }, {});
 
-    const mpToken = configMap['mercadopago_access_token'];
+    const mpToken = configMap['MERCADOPAGO_TOKEN'] || configMap['mercadopago_token'] || configMap['mercadopago_access_token'] || '';
     const isTestMode = !mpToken || mpToken.startsWith('TEST-') || mpToken === 'test';
     const isFreeWifiMode = configMap['free_wifi_mode'] === 'true';
 
@@ -70,8 +70,8 @@ export async function POST(request: Request) {
        // Free mode bypasses PIX creation
        pixId = `FREE_${Date.now()}`;
        pixPayload = 'FREE_WIFI';
-    } else if (!isTestMode && mpToken) {
-      const mpService = await MercadoPagoService.init(mpToken);
+    } else if (!isTestMode && mpToken && mpToken.trim()) {
+      const mpService = await MercadoPagoService.init(mpToken.trim());
       const payerEmail = lead.email || `${lead.hotspotUser}@wifi.local`;
 
       const mpResult = await mpService.createPixPayment({
@@ -87,13 +87,20 @@ export async function POST(request: Request) {
       pixPayload = mpResult.point_of_interaction?.transaction_data?.qr_code ?? null;
       pixQrCodeBase64 = mpResult.point_of_interaction?.transaction_data?.qr_code_base64 ?? null;
     } else {
-      // Check for Manual PIX Key fallback
+      // Check for Manual PIX Key fallback — only if key is actually configured
       const { getEffectivePixKey, generatePixPayload } = await import('@/lib/pix');
       const manualPixKey = await getEffectivePixKey();
-      pixId = `MANUAL_${Date.now()}`;
-      pixPayload = generatePixPayload(manualPixKey, plan.price * voucherQty, 'MIKROGESTOR', 'SAO PAULO');
-      pixQrCodeBase64 = null;
-      isManualPix = true;
+      if (manualPixKey && manualPixKey.trim()) {
+        pixId = `MANUAL_${Date.now()}`;
+        pixPayload = generatePixPayload(manualPixKey.trim(), plan.price * voucherQty, 'MIKROGESTOR', 'SAO PAULO');
+        pixQrCodeBase64 = null;
+        isManualPix = true;
+      } else {
+        return NextResponse.json({ 
+          success: false, 
+          message: 'Nenhum meio de pagamento PIX (Mercado Pago ou Chave Manual) configurado no momento. Contate o administrador.' 
+        }, { status: 400 });
+      }
     }
 
     const payments = [];

@@ -83,11 +83,14 @@ export async function POST(request: Request) {
 
       // Manda mensagem de cobrança
       if (payment.lead.whatsappNumber) {
-        const configPix = await prisma.systemConfig.findUnique({ where: { key: 'manual_pix_key' } });
-        const pixKey = configPix?.value || '';
+        const { getEffectivePixKey } = await import('@/lib/pix');
+        const pixKey = await getEffectivePixKey();
+        const pixSection = pixKey
+          ? `\n\nPor favor, faça o PIX de *R$ ${payment.amount.toFixed(2)}* para a chave: *${pixKey}* e envie o comprovante para reativarmos.`
+          : '\n\nPor favor, entre em contato com o suporte para regularizar seu acesso.';
 
         whatsappService.sendWhatsAppMessage('admin', payment.lead.whatsappNumber, 
-          `⚠️ *Aviso de Bloqueio*\n\nNotamos que o pagamento do seu voucher não foi confirmado e o seu acesso foi suspenso.\n\nPor favor, faça o PIX de *R$ ${payment.amount.toFixed(2)}* para a chave: *${pixKey}* e envie o comprovante para reativarmos.`
+          `⚠️ *Aviso de Bloqueio*\n\nNotamos que o pagamento do seu voucher não foi confirmado e o seu acesso foi suspenso.${pixSection}`
         );
       }
     }

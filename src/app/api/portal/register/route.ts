@@ -632,41 +632,44 @@ export async function POST(request: Request) {
             // Fallback: Check manual PIX key if Mercado Pago is not configured
             const { getEffectivePixKey, generatePixPayload } = await import('@/lib/pix');
             const pixKey = await getEffectivePixKey();
-            const pixId = `MANUAL_reg_${Date.now()}`;
-            const pixPayload = generatePixPayload(pixKey, selectedPlan.price, 'MIKROGESTOR', 'SAO PAULO');
-            
-            pixData = {
-              pixId,
-              pixPayload,
-              pixQrCodeBase64: '',
-              amount: selectedPlan.price,
-              planTitle: selectedPlan.title,
-              gracePeriodMinutes: 15
-            };
-            await prisma.payment.create({
-              data: {
-                leadId: lead.id,
+            if (pixKey && pixKey.trim()) {
+              const pixId = `MANUAL_reg_${Date.now()}`;
+              const pixPayload = generatePixPayload(pixKey.trim(), selectedPlan.price, 'MIKROGESTOR', 'SAO PAULO');
+              
+              pixData = {
                 pixId,
                 pixPayload,
                 pixQrCodeBase64: '',
                 amount: selectedPlan.price,
-                profile: selectedPlan.profile,
-                status: 'pending',
-                macAddress: clientMac || null
-              }
-            });
-
-            // Notificar admin via WhatsApp sobre novo pedido manual
-            (async () => {
-              try {
-                const adminNumbers = await whatsappService.getOnlineOfficialNumbers();
-                if (adminNumbers.length > 0) {
-                  const adminMsg = `🔔 *Novo Pedido PIX Manual!*\n\n👤 *Cliente:* ${finalName}\n📱 *WhatsApp:* ${rawPhone || 'não informado'}\n📋 *CPF:* ${rawCpf || 'não informado'}\n🎟️ *Plano:* ${selectedPlan.title}\n💰 *Valor:* R$ ${Number(selectedPlan.price).toFixed(2)}\n🆔 *ID:* ${pixId}\n\n🔑 *Chave PIX enviada ao cliente:*\n\`${pixKey}\`\n\n➡️ Acesse o painel em /dashboard/finance para aprovar ou rejeitar.`;
-                  // Envia para o próprio número conectado (admin number)
-                  await whatsappService.sendWhatsAppMessage('admin', adminNumbers[0], adminMsg).catch(() => {});
+                planTitle: selectedPlan.title,
+                gracePeriodMinutes: 15
+              };
+              await prisma.payment.create({
+                data: {
+                  leadId: lead.id,
+                  pixId,
+                  pixPayload,
+                  pixQrCodeBase64: '',
+                  amount: selectedPlan.price,
+                  profile: selectedPlan.profile,
+                  status: 'pending',
+                  macAddress: clientMac || null
                 }
-              } catch (e) { console.warn('[PIX Manual] Erro ao notificar admin:', e); }
-            })();
+              });
+
+              // Notificar admin via WhatsApp sobre novo pedido manual
+              (async () => {
+                try {
+                  const adminNumbers = await whatsappService.getOnlineOfficialNumbers();
+                  if (adminNumbers.length > 0) {
+                    const adminMsg = `🔔 *Novo Pedido PIX Manual!*\n\n👤 *Cliente:* ${finalName}\n📱 *WhatsApp:* ${rawPhone || 'não informado'}\n📋 *CPF:* ${rawCpf || 'não informado'}\n🎟️ *Plano:* ${selectedPlan.title}\n💰 *Valor:* R$ ${Number(selectedPlan.price).toFixed(2)}\n🆔 *ID:* ${pixId}\n\n🔑 *Chave PIX enviada ao cliente:*\n\`${pixKey}\`\n\n➡️ Acesse o painel em /dashboard/finance para aprovar ou rejeitar.`;
+                    await whatsappService.sendWhatsAppMessage('admin', adminNumbers[0], adminMsg).catch(() => {});
+                  }
+                } catch (e) { console.warn('[PIX Manual] Erro ao notificar admin:', e); }
+              })();
+            } else {
+              logEvent('PIX_KEY_NOT_CONFIGURED', { planId: selectedPlan.id, planTitle: selectedPlan.title });
+            }
           }
         } catch (mpErr: any) {
           console.error('[MercadoPago] Erro ao gerar cobrança PIX no cadastro:', mpErr);

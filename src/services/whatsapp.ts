@@ -302,6 +302,13 @@ class WhatsappSpecialist {
     content: string,
     options?: import('./whatsapp-interface').SendMessageOptions
   ): Promise<{ success: boolean; instanceId?: string; error?: string }> {
+    // Validação estrita do número destinatário: deve estar preenchido e conter dígitos válidos
+    const cleanDigits = (toJid || '').replace(/\D/g, '');
+    if (!toJid || cleanDigits.length < 8) {
+      console.warn(`[WhatsApp Hub] Tentativa de envio para número inválido ou vazio: "${toJid}"`);
+      return { success: false, error: 'Número de telefone/WhatsApp destinatário não informado ou inválido' };
+    }
+
     const [metaEnabled, baileysEnabled] = await Promise.all([
       this.isMetaEnabled(),
       this.isBaileysEnabled()
@@ -664,7 +671,7 @@ class WhatsappSpecialist {
 
       try {
         const mpConfig = await prisma.systemConfig.findUnique({ where: { key: 'MERCADOPAGO_TOKEN' } });
-        const manualPixConfig = await prisma.systemConfig.findUnique({ where: { key: 'MANUAL_PIX_KEY' } });
+        const hasMpToken = Boolean(mpConfig?.value && mpConfig.value.trim() && !mpConfig.value.startsWith('TEST-') && mpConfig.value !== 'test');
 
         const lead = await prisma.hotspotLead.upsert({
           where: { hotspotUser: state.name || '' },
@@ -677,10 +684,50 @@ class WhatsappSpecialist {
           }
         });
 
-        // ── Opção A: PIX Manual (Chave PIX) ──
-        if (!mpConfig?.value) {
-          const pixKey = manualPixConfig?.value || 'Não configurada';
+        // ── Opção A: Mercado Pago (PIX Automático Copia e Cola) — SOMENTE SE PREENCHIDO ──
+        if (hasMpToken && mpConfig?.value) {
+          const mpService = new MercadoPagoService(mpConfig.value.trim());
+          const paymentRes = await mpService.createPixPayment({
+            transaction_amount: selectedPlan.price,
+            description: `Voucher Wi-Fi: ${selectedPlan.title}`,
+            payer: {
+              email: `${state.name?.replace(/\s+/g, '').toLowerCase() || 'cliente'}@wifi.local`,
+              first_name: state.name || 'Cliente'
+            }
+          });
 
+          const pixId = String(paymentRes.id);
+          const pixPayload = paymentRes.point_of_interaction?.transaction_data?.qr_code;
+          const qrCode64 = paymentRes.point_of_interaction?.transaction_data?.qr_code_base64;
+
+          if (!pixPayload) throw new Error('Falha ao gerar o código PIX no Mercado Pago.');
+
+          await prisma.payment.create({
+            data: {
+              leadId: lead.id,
+              pixId,
+              pixPayload,
+              pixQrCodeBase64: qrCode64,
+              amount: selectedPlan.price,
+              profile: selectedPlan.profile,
+              macAddress: (state as any).mac
+            }
+          });
+
+          await this.sendWhatsAppMessage('admin', remoteJid, spinText(
+            `{✅|🚀|💸} *PIX Gerado com Sucesso!*\n\n{Copie|Pegue} o {código|Pix Copia e Cola} abaixo e {pague|realize o pagamento} no {aplicativo do seu banco|seu app bancário}.\n\n*Sua conexão está liberada temporariamente para você abrir o app do banco.*\n\nAssim que o pagamento for confirmado, seu voucher será ativado automaticamente!`
+          ), { pinnedInstanceId: sessionPinned });
+          await this.sendWhatsAppMessage('admin', remoteJid, pixPayload, { pinnedInstanceId: sessionPinned });
+
+          await this.deleteState(remoteJid);
+          return;
+        }
+
+        // ── Opção B: PIX Manual (Chave PIX) — SOMENTE SE A CHAVE ESTIVER PREENCHIDA ──
+        const { getEffectivePixKey } = await import('@/lib/pix');
+        const pixKey = await getEffectivePixKey();
+
+        if (pixKey && pixKey.trim()) {
           const activeRouter = await prisma.router.findFirst({ where: { active: true } });
           if (activeRouter) {
             const mk = new MikrotikAPI();
@@ -723,7 +770,7 @@ class WhatsappSpecialist {
           });
 
           await this.sendWhatsAppMessage('admin', remoteJid,
-            `Olá ${state.name}! A sua solicitação foi registrada com sucesso.\n\nDetalhes de Acesso:\n\nUS: *${state.name}*\nSN: *${(state as any).password}*\n\nGuarde essas informações para conectar seus aparelhos.\n\n⚠️ Para ativar seu plano, efetue o pagamento de *R$ ${selectedPlan.price.toFixed(2)}*:\n\n*CHAVE PIX:* ${pixKey}`,
+            `Olá ${state.name}! A sua solicitação foi registrada com sucesso.\n\nDetalhes de Acesso:\n\nUS: *${state.name}*\nSN: *${(state as any).password}*\n\nGuarde essas informações para conectar seus aparelhos.\n\n⚠️ Para ativar seu plano, efetue o pagamento de *R$ ${selectedPlan.price.toFixed(2)}*:\n\n*CHAVE PIX:* ${pixKey.trim()}`,
             { pinnedInstanceId: sessionPinned }
           );
 
@@ -731,41 +778,12 @@ class WhatsappSpecialist {
           return;
         }
 
-        // ── Opção B: Mercado Pago (PIX Automático Copia e Cola) ──
-        const mpService = new MercadoPagoService(mpConfig.value);
-        const paymentRes = await mpService.createPixPayment({
-          transaction_amount: selectedPlan.price,
-          description: `Voucher Wi-Fi: ${selectedPlan.title}`,
-          payer: {
-            email: `${state.name?.replace(/\s+/g, '').toLowerCase() || 'cliente'}@wifi.local`,
-            first_name: state.name || 'Cliente'
-          }
-        });
-
-        const pixId = String(paymentRes.id);
-        const pixPayload = paymentRes.point_of_interaction?.transaction_data?.qr_code;
-        const qrCode64 = paymentRes.point_of_interaction?.transaction_data?.qr_code_base64;
-
-        if (!pixPayload) throw new Error('Falha ao gerar o código PIX.');
-
-        await prisma.payment.create({
-          data: {
-            leadId: lead.id,
-            pixId,
-            pixPayload,
-            pixQrCodeBase64: qrCode64,
-            amount: selectedPlan.price,
-            profile: selectedPlan.profile,
-            macAddress: (state as any).mac
-          }
-        });
-
+        // Se nem Mercado Pago nem chave manual estiverem configurados/preenchidos
         await this.sendWhatsAppMessage('admin', remoteJid, spinText(
-          `{✅|🚀|💸} *PIX Gerado com Sucesso!*\n\n{Copie|Pegue} o {código|Pix Copia e Cola} abaixo e {pague|realize o pagamento} no {aplicativo do seu banco|seu app bancário}.\n\n*Sua conexão está liberada temporariamente para você abrir o app do banco.*\n\nAssim que o pagamento for confirmado, seu voucher será ativado automaticamente!`
+          `{⚠️|ℹ️} As opções de pagamento automático via PIX não estão ativadas no momento. Por favor, entre em contato direto com o suporte ou aguarde o atendimento de um de nossos administradores.`
         ), { pinnedInstanceId: sessionPinned });
-        await this.sendWhatsAppMessage('admin', remoteJid, pixPayload, { pinnedInstanceId: sessionPinned });
-
         await this.deleteState(remoteJid);
+        return;
       } catch (err: any) {
         console.error('Error generating PIX:', err);
         await this.sendWhatsAppMessage('admin', remoteJid, spinText(

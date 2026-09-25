@@ -51,7 +51,8 @@ export function generatePixPayload(key: string, amount: number, name: string = '
 }
 
 /**
- * Obtém a chave PIX manual configurada no sistema com fallback inteligente
+ * Obtém a chave PIX manual configurada no sistema.
+ * Retorna string vazia caso nenhuma chave esteja configurada ou preenchida.
  */
 export async function getEffectivePixKey(): Promise<string> {
   const { prisma } = await import('@/lib/prisma');
@@ -62,20 +63,57 @@ export async function getEffectivePixKey(): Promise<string> {
       }
     });
     const configMap: Record<string, string> = {};
-    for (const c of configs) configMap[c.key] = c.value;
+    for (const c of configs) {
+      if (c.value && c.value.trim()) {
+        configMap[c.key] = c.value.trim();
+      }
+    }
 
     const key = configMap['MANUAL_PIX_KEY'] || configMap['manual_pix_key'] || configMap['PIX_MANUAL_KEY'] || configMap['ADMIN_WHATSAPP_PHONE'];
     if (key && key.trim()) return key.trim();
 
-    // Se nenhuma chave foi digitada no painel financeiro, usa o número do primeiro WhatsApp conectado
+    // Se nenhuma chave manual foi preenchida no painel financeiro, verifica número do WhatsApp conectado
     const wa = await prisma.whatsappInstance.findFirst({
       where: { status: 'connected', number: { not: null } }
     });
-    if (wa?.number) return wa.number.replace(/\D/g, '');
+    const waNum = wa?.number?.replace(/\D/g, '');
+    if (waNum && waNum.length >= 8) return waNum;
   } catch (err) {
     console.error('[Pix] Erro ao buscar chave PIX efetiva:', err);
   }
 
-  return '4497743598'; // Fallback final
+  // Nenhuma chave configurada — nunca retornar chave inventada/chumbada
+  return '';
 }
+
+/**
+ * Verifica se existe alguma forma de pagamento PIX configurada (Mercado Pago ou Chave Manual)
+ */
+export async function hasConfiguredPaymentMethod(): Promise<{ hasMercadoPago: boolean; hasManualPix: boolean; mpToken?: string; manualKey?: string }> {
+  const { prisma } = await import('@/lib/prisma');
+  try {
+    const configs = await prisma.systemConfig.findMany({
+      where: {
+        key: { in: ['MERCADOPAGO_TOKEN', 'mercadopago_token', 'mercadoPagoToken', 'mercadopago_access_token', 'MANUAL_PIX_KEY', 'manual_pix_key', 'PIX_MANUAL_KEY'] }
+      }
+    });
+    const map: Record<string, string> = {};
+    for (const c of configs) {
+      if (c.value && c.value.trim()) map[c.key] = c.value.trim();
+    }
+
+    const mpToken = map['MERCADOPAGO_TOKEN'] || map['mercadopago_token'] || map['mercadoPagoToken'] || map['mercadopago_access_token'] || '';
+    const manualKey = map['MANUAL_PIX_KEY'] || map['manual_pix_key'] || map['PIX_MANUAL_KEY'] || '';
+
+    return {
+      hasMercadoPago: Boolean(mpToken && mpToken.trim() && !mpToken.startsWith('TEST-') && mpToken !== 'test'),
+      hasManualPix: Boolean(manualKey && manualKey.trim()),
+      mpToken: mpToken || undefined,
+      manualKey: manualKey || undefined
+    };
+  } catch {
+    return { hasMercadoPago: false, hasManualPix: false };
+  }
+}
+
 
