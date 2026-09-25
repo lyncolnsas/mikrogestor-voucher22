@@ -398,6 +398,17 @@ export default function StudioInspector({
   const [bgCategory, setBgCategory] = useState<string>('all');
   const presetFileRef = useRef<HTMLInputElement>(null);
 
+  const [harmonicBase, setHarmonicBase] = useState('#2563eb');
+  const generateHarmonicPalette = (baseHex: string): { name: string; color: string }[] => {
+    return [
+      { name: 'Primary', color: baseHex },
+      { name: 'Light', color: '#60a5fa' },
+      { name: 'Dark', color: '#1e3a8a' },
+      { name: 'Complement', color: '#f59e0b' },
+      { name: 'Analogous', color: '#10b981' },
+    ];
+  };
+
   const fontOptions = [
     { id: 'Inter', name: 'Inter', sample: 'Aa Modern Clean' },
     { id: 'Outfit', name: 'Outfit', sample: 'Aa Tech Rounded' },

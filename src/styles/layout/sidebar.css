@@ -33,12 +33,12 @@
 
 /* ── Rótulos de Seção ── */
 .mg-sidebar-section-label {
-  padding: 0.75rem 1.25rem 0.25rem;
-  font-size: var(--mg-text-2xs);
-  font-weight: var(--mg-weight-black);
+  padding: 0.75rem 1rem 0.25rem;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #94a3b8;
+  letter-spacing: 0.05em;
+  color: var(--mg-sidebar-label);
 }
 
 /* ── Links de Navegação ── */
@@ -46,13 +46,14 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin: 0.125rem 0.625rem;
-  padding: 0.625rem 0.75rem;
-  border-radius: var(--mg-radius-md);
-  font-size: var(--mg-text-sm);
-  font-weight: var(--mg-weight-bold);
+  margin: 0.125rem 0.5rem;
+  padding: 0.5rem 1rem;
+  min-height: 44px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
   color: var(--mg-sidebar-text);
-  transition: all 0.15s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   text-decoration: none;
   user-select: none;
@@ -60,14 +61,14 @@
 
 .mg-nav-link:hover {
   color: var(--mg-sidebar-text-hover);
-  background-color: rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .mg-nav-link.active {
   background-color: var(--mg-sidebar-item-active-bg) !important;
   color: var(--mg-sidebar-text-active) !important;
-  font-weight: var(--mg-weight-black);
-  box-shadow: var(--mg-shadow-sidebar-active);
+  font-weight: 700;
+  box-shadow: 0 4px 14px var(--mg-shadow-sidebar-active);
 }
 
 .mg-nav-link-indicator {

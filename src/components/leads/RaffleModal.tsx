@@ -14,7 +14,7 @@ export default function RaffleModal({ onClose, onRaffleComplete }: RaffleModalPr
   const [winner, setWinner] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const [whatsappMsg] = useState('Parabéns [Nome]! Você acaba de ser sorteado!');
+  const [whatsappMsg, setWhatsappMsg] = useState('Parabéns [Nome]! Você acaba de ser sorteado!');
 
   const fetchEligibleLeads = useCallback(async () => {
     try {

@@ -149,3 +149,49 @@
   background-color: var(--mg-card-border-subtle);
   margin: 1rem 0;
 }
+
+/* ── Botões de Ação Rápida (Pill Action Cards - Seção 5.2) ── */
+.mg-action-pill {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--mg-radius-lg); /* 16px */
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+  color: #ffffff !important;
+}
+
+.mg-action-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.12);
+}
+
+.mg-action-pill-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--mg-radius-full);
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mg-action-pill-green {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.mg-action-pill-blue {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.mg-action-pill-rose {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+}
+
+.mg-action-pill-amber {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}

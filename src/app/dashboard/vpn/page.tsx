@@ -1275,14 +1275,14 @@ export default function VpnPage() {
       </section>
 
       {/* ── SEÇÃO 1: Roteadores MikroTik ──────────────────────────── */}
-      <section className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+      <section className="mg-card rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--mg-card-border-subtle)]">
           <div>
-            <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+            <h2 className="text-sm font-extrabold flex items-center gap-2" style={{ color: 'var(--mg-text-heading)' }}>
               <Wifi className="w-4 h-4 text-blue-600" />
               Roteadores MikroTik (Hotspots)
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">Túneis privados estabelecidos entre a VPS e as Routerboards</p>
+            <p className="text-xs text-[var(--mg-text-muted)] mt-0.5">Túneis privados estabelecidos entre a VPS e as Routerboards</p>
           </div>
           <button
             onClick={loadStatus}
@@ -1436,14 +1436,14 @@ export default function VpnPage() {
       </section>
 
       {/* ── SEÇÃO 2: Dispositivos de Acesso Remoto (Windows / Celular) ──── */}
-      <section className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50/80 to-indigo-50/30">
+      <section className="mg-card rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--mg-card-border-subtle)] bg-[var(--mg-card-bg-subtle)]">
           <div>
-            <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+            <h2 className="text-sm font-extrabold flex items-center gap-2" style={{ color: 'var(--mg-text-heading)' }}>
               <Laptop className="w-4 h-4 text-indigo-600" />
               Dispositivos de Acesso Remoto (Windows / Celular)
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[var(--mg-text-muted)] mt-0.5">
               Conecte seu computador ou smartphone à VPN para abrir o Winbox de qualquer lugar
             </p>
           </div>
@@ -1545,7 +1545,7 @@ export default function VpnPage() {
       </section>
 
       {/* ── Guia Passo a Passo: Como Acessar via Winbox ────────────── */}
-      <section className="bg-gradient-to-br from-slate-900 to-slate-950 rounded-3xl p-6 text-white shadow-md border border-slate-800 space-y-4">
+      <section className="bg-gradient-to-br from-slate-900 to-slate-950 rounded-2xl p-6 text-white shadow-md border border-slate-800 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-2xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center">
             <Monitor className="w-5 h-5" />
@@ -1589,19 +1589,19 @@ export default function VpnPage() {
 
       {/* ── Roteadores Cadastrados sem VPN ────────────────────────── */}
       {nonVpnRouters.length > 0 && (
-        <section className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <section className="mg-card rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-[var(--mg-card-border-subtle)] flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-extrabold text-slate-900">Roteadores Cadastrados sem VPN</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Routerboards locais que ainda não possuem túnel configurado</p>
+              <h2 className="text-sm font-extrabold" style={{ color: 'var(--mg-text-heading)' }}>Roteadores Cadastrados sem VPN</h2>
+              <p className="text-xs text-[var(--mg-text-muted)] mt-0.5">Routerboards locais que ainda não possuem túnel configurado</p>
             </div>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-[var(--mg-card-border-subtle)]">
             {nonVpnRouters.map((r) => (
-              <div key={r.id} className="flex items-center justify-between gap-4 px-6 py-3.5 hover:bg-slate-50/60 transition-colors">
+              <div key={r.id} className="flex items-center justify-between gap-4 px-6 py-3.5 hover:bg-[var(--mg-card-bg-subtle)] transition-colors">
                 <div>
-                  <p className="font-bold text-slate-900 text-xs">{r.name}</p>
-                  <p className="text-[11px] text-slate-500 font-mono mt-0.5">{r.host}</p>
+                  <p className="font-bold text-xs" style={{ color: 'var(--mg-text-heading)' }}>{r.name}</p>
+                  <p className="text-[11px] text-[var(--mg-text-muted)] font-mono mt-0.5">{r.host}</p>
                 </div>
                 <button
                   onClick={() => {

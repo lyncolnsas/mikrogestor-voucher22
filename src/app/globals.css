@@ -686,8 +686,8 @@ body {
 
 /* Dark Navy Sidebar */
 .saas-sidebar {
-  background: #1a1d2e;
-  border-right: 1px solid #262a3d;
+  background: var(--mg-sidebar-bg);
+  border-right: 1px solid var(--mg-sidebar-border);
 }
 
 /* Custom Smooth Table for SaaS */
@@ -784,49 +784,47 @@ body {
    GLOBAL HIGH-CONTRAST ENFORCEMENT (WCAG AAA - MAXIMUM READABILITY)
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* 1. SIDEBAR: Dark Navy (#0f1322) with Crisp White/Slate-100 Text (apenas na barra lateral do painel) */
+/* 1. SIDEBAR: Dark Navy (#0B1120 / #0F172A) with High-Contrast Text */
 .saas-sidebar {
-  background-color: #0f1322 !important;
-  border-right: 1px solid #1e2538 !important;
+  background-color: var(--mg-sidebar-bg) !important;
+  border-right: 1px solid var(--mg-sidebar-border) !important;
 }
 
-.saas-sidebar [class*="text-slate-"],
-.saas-sidebar p,
-.saas-sidebar span {
-  color: #f1f5f9;
+.saas-sidebar .mg-sidebar-section-label {
+  color: var(--mg-sidebar-label) !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.05em !important;
 }
 
-.saas-sidebar [class*="uppercase"] {
-  color: #cbd5e1;
-  font-weight: 800;
-  font-size: 11px;
-  letter-spacing: 0.12em;
+.saas-sidebar nav a.mg-nav-link {
+  color: var(--mg-sidebar-text) !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
 }
 
-.saas-sidebar nav a {
-  color: #f8fafc;
-  font-size: 0.875rem; /* 14px */
-  font-weight: 600;
+.saas-sidebar nav a.mg-nav-link svg {
+  color: var(--mg-sidebar-icon) !important;
+  stroke-width: 2 !important;
 }
 
-.saas-sidebar nav a svg {
-  color: #93c5fd;
-  stroke-width: 2;
+.saas-sidebar nav a.mg-nav-link:hover {
+  color: var(--mg-sidebar-text-hover) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-.saas-sidebar nav a:hover {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.14);
+.saas-sidebar nav a.mg-nav-link:hover svg {
+  color: var(--mg-sidebar-text-hover) !important;
 }
 
-.saas-sidebar nav a[class*="bg-blue-600"] {
-  background-color: #2563eb !important;
-  color: #ffffff !important;
-  font-weight: 800;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
+.saas-sidebar nav a.mg-nav-link.active {
+  background-color: var(--mg-sidebar-item-active-bg) !important;
+  color: var(--mg-sidebar-text-active) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px var(--mg-shadow-sidebar-active) !important;
 }
 
-.saas-sidebar nav a[class*="bg-blue-600"] svg {
+.saas-sidebar nav a.mg-nav-link.active svg {
   color: #ffffff !important;
 }
 

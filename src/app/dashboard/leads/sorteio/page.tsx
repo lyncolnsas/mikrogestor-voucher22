@@ -45,6 +45,7 @@ export default function SorteadorPage() {
   const [isRolling, setIsRolling] = useState(false);
   const [rollingCandidate, setRollingCandidate] = useState<Lead | null>(null);
   const [winner, setWinner] = useState<Lead | null>(null);
+  const [winnerHistory, setWinnerHistory] = useState<Lead[]>([]);
   
   // WhatsApp Message config
   const [whatsappMsg, setWhatsappMsg] = useState(

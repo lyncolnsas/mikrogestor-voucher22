@@ -46,6 +46,8 @@
   /* ── 6. Menu Lateral (Sidebar) & Header ── */
   --mg-sidebar-bg: #0b1120;
   --mg-sidebar-border: #1e293b;
+  --mg-sidebar-label: #64748b;
+  --mg-sidebar-icon: #94a3b8;
   --mg-sidebar-text: #e2e8f0;
   --mg-sidebar-text-hover: #ffffff;
   --mg-sidebar-text-active: #ffffff;
@@ -121,6 +123,8 @@
   /* ── 6. Menu Lateral (Sidebar) & Header ── */
   --mg-sidebar-bg: #0b1120;
   --mg-sidebar-border: #1e293b;
+  --mg-sidebar-label: #64748b;
+  --mg-sidebar-icon: #94a3b8;
   --mg-sidebar-text: #e2e8f0;
   --mg-sidebar-text-hover: #ffffff;
   --mg-sidebar-text-active: #ffffff;
