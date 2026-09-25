@@ -47,6 +47,7 @@ export default function LeadsWorkspace({
   const [pageSize, setPageSize] = useState(10);
   const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
   const [syncingAvatars, setSyncingAvatars] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const fetchLeads = useCallback(async () => {
     try {
@@ -67,6 +68,7 @@ export default function LeadsWorkspace({
   }, []);
 
   useEffect(() => {
+    const frame = requestAnimationFrame(() => setMounted(true));
     let ignore = false;
     const run = async () => {
       if (!ignore) {
@@ -74,7 +76,10 @@ export default function LeadsWorkspace({
       }
     };
     run();
-    return () => { ignore = true; };
+    return () => {
+      cancelAnimationFrame(frame);
+      ignore = true;
+    };
   }, [fetchLeads]);
 
   const handleDeleteLead = async (id: string) => {

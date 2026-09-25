@@ -39,6 +39,7 @@ export default function Dashboard() {
 
   const [error, setError] = useState('');
   const [notConnected, setNotConnected] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -55,6 +56,7 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    const frame = requestAnimationFrame(() => setMounted(true));
     let ignore = false;
     const run = async () => {
       if (!ignore) {
@@ -66,6 +68,7 @@ export default function Dashboard() {
       if (!ignore) fetchStats();
     }, 10000);
     return () => {
+      cancelAnimationFrame(frame);
       ignore = true;
       clearInterval(interval);
     };
