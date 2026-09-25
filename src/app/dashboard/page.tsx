@@ -165,7 +165,7 @@ export default function Dashboard() {
 
       {/* ── NOT CONNECTED BANNER ──────────────────────────────────────── */}
       {notConnected ? (
-        <div className="saas-card p-8 flex flex-col sm:flex-row items-center gap-6 bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800">
+        <div className="saas-card p-8 flex flex-col sm:flex-row items-center gap-6 mg-card border border-slate-200/80 dark:border-slate-800">
           <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-center justify-center text-3xl shrink-0 text-amber-600 dark:text-amber-400">
             🔌
           </div>
@@ -311,7 +311,7 @@ export default function Dashboard() {
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             {/* LEFT: LARGE SPLINE AREA CHART (FATURAMENTO & TENDÊNCIA) */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-6 lg:col-span-2 flex flex-col justify-between">
+            <div className="mg-card border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-6 lg:col-span-2 flex flex-col justify-between">
               <div>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-slate-100 dark:border-slate-800 gap-2">
                   <div>
@@ -421,7 +421,7 @@ export default function Dashboard() {
             <div className="flex flex-col gap-6">
 
               {/* CARD: USERS & MEMORY TELEMETRY */}
-              <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 grid grid-cols-2 gap-4">
+              <div className="mg-card border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 grid grid-cols-2 gap-4">
                 {/* User Real Stats */}
                 <div className="flex flex-col justify-between">
                   <div>
@@ -477,7 +477,7 @@ export default function Dashboard() {
 
 
               {/* CARD: CIRCULAR PROGRESS DONUT (ONLINE VS OFFLINE) */}
-              <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 flex-1 flex flex-col justify-between">
+              <div className="mg-card border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 flex-1 flex flex-col justify-between">
                 <div>
                   <h4 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
                     Conexões & Consumo
@@ -569,7 +569,7 @@ export default function Dashboard() {
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             {/* LEFT: RECENT CLIENTS & TICKETS TABLE (WITH COLORFUL AVATARS) */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl lg:col-span-2 overflow-hidden flex flex-col justify-between">
+            <div className="mg-card border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl lg:col-span-2 overflow-hidden flex flex-col justify-between">
               <div className="p-5 pb-3 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
                 <div>
                   <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">
@@ -656,7 +656,7 @@ export default function Dashboard() {
             </div>
 
             {/* RIGHT: UPDATES / LIVE MIKROTIK EVENT LOGS */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 flex flex-col justify-between">
+            <div className="mg-card border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 flex flex-col justify-between">
               <div className="pb-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">
@@ -720,7 +720,7 @@ export default function Dashboard() {
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
             {/* CARD 1: DISTRIBUTION (REAL PROFILES) */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 flex flex-col justify-between">
+            <div className="mg-card border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 flex flex-col justify-between">
               <div>
                 <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">
                   Perfis de Hotspot
@@ -762,7 +762,7 @@ export default function Dashboard() {
             </div>
 
             {/* CARD 2: SALE REPORT (REAL BAR CHART) */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 flex flex-col justify-between">
+            <div className="mg-card border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 flex flex-col justify-between">
               <div>
                 <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">
                   Relatório de Vendas
@@ -802,7 +802,7 @@ export default function Dashboard() {
             </div>
 
             {/* CARD 3: PLATFORM OVERVIEW (REAL METRICS) */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 flex flex-col justify-between">
+            <div className="mg-card border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 flex flex-col justify-between">
               <div>
                 <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">
                   Visão Geral da Plataforma
@@ -862,7 +862,7 @@ export default function Dashboard() {
           {/* ═══════════════════════════════════════════════════════════════
              5. FIFTH SECTION: FULL-WIDTH OPEN INVOICES / FATURAS TABLE
              ═══════════════════════════════════════════════════════════════ */}
-          <section className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden">
+          <section className="mg-card border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden">
             <div className="p-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">

@@ -685,17 +685,46 @@ export class BaileysAdapter implements IWhatsappAdapter {
       return { success: false, error: 'Nenhum aparelho WhatsApp conectado no momento' };
     }
 
-    // Se houver sessão fixada válida, prioriza ela; senão usa Round-Robin entre os aparelhos conectados (2 até 8 números)
+    // Normaliza telefone do destinatário para busca de afinidade
+    let cleanPhone = to.replace(/\D/g, '');
+    if (cleanPhone.length === 10 || cleanPhone.length === 11) cleanPhone = `55${cleanPhone}`;
+
+    // 1. Prioridade Absoluta: Busca chip que já iniciou conversa anterior com este contato (Afinidade Permanente / LeadRouting)
+    let boundInstanceId: string | undefined = options?.pinnedInstanceId;
+
+    if (!boundInstanceId) {
+      try {
+        const existingRoute = await prisma.leadRouting.findUnique({
+          where: { customerPhone: cleanPhone }
+        });
+        if (existingRoute?.whatsappInstanceId) {
+          boundInstanceId = existingRoute.whatsappInstanceId;
+        }
+      } catch (routeErr) {
+        console.warn(`[BaileysManager] Erro ao consultar LeadRouting para ${cleanPhone}:`, routeErr);
+      }
+    }
+
     let sessionPool: BaileysSessionInstance[] = [];
-    if (options?.pinnedInstanceId) {
-      const pinned = this.sessions.get(options.pinnedInstanceId);
-      if (pinned && this.isSocketReady(pinned)) {
-        sessionPool = [pinned, ...readySessions.filter(s => s.id !== pinned.id)];
+
+    // Se encontramos o chip de origem do contato:
+    if (boundInstanceId) {
+      const boundSession = this.sessions.get(boundInstanceId);
+      // REGRA: O contato SEMPRE continuará a conversa com o mesmo chip
+      if (boundSession && this.isSocketReady(boundSession)) {
+        // O chip original está conectado: ele é o ÚNICO da lista prioritária.
+        // Os demais chips só entram como fallback secundário caso o envio por ele falhe.
+        sessionPool = [boundSession, ...readySessions.filter(s => s.id !== boundSession.id)];
+      } else {
+        // RESSALVA: O chip no qual ele iniciou NÃO está conectado no momento.
+        // Somente nesta hipótese outro chip do pool assume a conversa.
+        console.warn(`[BaileysManager] Chip original (${boundInstanceId}) do contato ${cleanPhone} está desconectado. Realizando failover para outro chip disponível.`);
+        sessionPool = [...readySessions];
       }
     }
 
     if (sessionPool.length === 0) {
-      // Rotação Round-Robin circular perfeita
+      // Primeiro contato (novo cliente): Rotação Round-Robin entre os chips online
       const startIndex = this.roundRobinIndex % readySessions.length;
       this.roundRobinIndex = (this.roundRobinIndex + 1) % readySessions.length;
       sessionPool = [
@@ -706,11 +735,18 @@ export class BaileysAdapter implements IWhatsappAdapter {
 
     let lastError: any = null;
 
-    // Tenta enviar com as sessões disponíveis na ordem da rotação (com failover automático)
+    // Tenta enviar com as sessões disponíveis na ordem de afinidade
     for (const session of sessionPool) {
       try {
         const result = await this.sendViaSingleSession(session, to, text, options);
         if (result.success) {
+          // Grava/atualiza a afinidade permanente no banco para que todas as próximas mensagens deste cliente fiquem presas a este chip
+          prisma.leadRouting.upsert({
+            where: { customerPhone: cleanPhone },
+            update: { whatsappInstanceId: session.id, lastInteraction: new Date() },
+            create: { customerPhone: cleanPhone, whatsappInstanceId: session.id }
+          }).catch(() => {});
+
           return result;
         }
         lastError = result.error;
@@ -727,11 +763,12 @@ export class BaileysAdapter implements IWhatsappAdapter {
     const cfg = await this.loadMaskingConfig();
     const jid = await this.resolveJid(session, to);
 
-    // Anti-burst cooldown: se uma mensagem acabou de ser enviada por este chip, aguarda um respiro natural
+    // Anti-burst cooldown inteligente por chip:
+    // Garante que o mesmo número nunca dispare mensagens em rajada (burst), respeitando cadência humana
     const now = Date.now();
     const lastSent = session.lastSentTimestamp || 0;
     const timeSinceLastSend = now - lastSent;
-    const minCooldown = cfg.enabled ? randomBetween(1500, 3000) : 400;
+    const minCooldown = cfg.enabled ? randomBetween(2500, 4800) : 600;
     if (timeSinceLastSend < minCooldown) {
       await sleep(minCooldown - timeSinceLastSend);
     }
@@ -748,7 +785,7 @@ export class BaileysAdapter implements IWhatsappAdapter {
             const originalMsg = JSON.parse(libEntry.messageJson);
             const forwardContent = generateForwardMessageContent(originalMsg, false);
             await session.sock.relayMessage(jid, forwardContent, {});
-            await sleep(1500);
+            await sleep(randomBetween(1200, 2200));
             return; // forward concluído com sucesso
           }
           console.warn(`[Baileys][${session.id}] forwardLibraryId "${options.forwardLibraryId}" não encontrado. Tentando fallback de URL.`);
@@ -765,19 +802,21 @@ export class BaileysAdapter implements IWhatsappAdapter {
             msgPayload.mimetype = 'audio/mp4';
           }
           await session.sock.sendMessage(jid, msgPayload);
-          await sleep(1500);
+          await sleep(randomBetween(1200, 2200));
         } catch (mediaErr) {
           console.error(`[Baileys][${session.id}] Erro ao enviar mídia para ${jid}:`, mediaErr);
         }
       }
     };
 
-    // Immediate transactional send (credentials / vouchers / PIX)
+    // Envio transacional imediato (boas-vindas, credenciais, vouchers, PIX)
     if (options?.skipStandby || !cfg.enabled) {
       if (cfg.enabled && cfg.simulateTyping) {
         try {
+          // Digitação proporcional ao tamanho do texto (mínimo 1.2s, máximo 3.5s) com oscilação natural
+          const textTypingTime = Math.min(Math.max((text.length / 5 / 60) * 60 * 1000, 1200), 3500);
           await session.sock.sendPresenceUpdate('composing', jid);
-          await sleep(randomBetween(800, 1500));
+          await sleep(Math.floor(textTypingTime));
           await session.sock.sendPresenceUpdate('paused', jid);
         } catch {}
       }

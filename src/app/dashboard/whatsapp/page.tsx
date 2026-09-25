@@ -581,7 +581,7 @@ export default function WhatsappConnection() {
               modeInfo.mode === 'hybrid' ? 'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800/60' :
               modeInfo.mode === 'meta' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60' :
               modeInfo.mode === 'baileys' ? 'bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800/60' :
-              'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700'
+              'mg-badge-neutral'
             }`}>
               {modeInfo.mode === 'hybrid' ? '⚡ Modo Híbrido Concorrente' :
                modeInfo.mode === 'meta' ? '🛡️ Apenas Meta Cloud API' :

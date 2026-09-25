@@ -72,17 +72,17 @@ export default function DHCPLeases() {
         {/* Table */}
         <div className="p-4">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="mg-table">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 font-bold uppercase tracking-wider text-[11px]">
-                  <th className="px-6 py-3.5">Endereço IP</th>
-                  <th className="px-6 py-3.5">MAC Address</th>
-                  <th className="px-6 py-3.5">Host Name</th>
-                  <th className="px-6 py-3.5">Servidor</th>
-                  <th className="px-6 py-3.5 text-right">Status</th>
+                <tr>
+                  <th>Endereço IP</th>
+                  <th>MAC Address</th>
+                  <th>Host Name</th>
+                  <th>Servidor</th>
+                  <th className="text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-[#111726]">
+              <tbody>
                 {loading ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-slate-500 italic font-medium">

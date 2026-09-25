@@ -182,7 +182,10 @@ export async function POST(request: Request) {
             forwardLibraryId: pixSendOpts.forwardLibraryId
           });
 
-          // 2. Envia balão isolado com o PIX Copia e Cola puro para facilidade de cópia com 1 toque
+          // 2. Aguarda um intervalo humano de 2.5 a 4 segundos antes de disparar o balão isolado com o Copia e Cola puro
+          const copyPasteDelay = Math.floor(Math.random() * (4000 - 2500 + 1)) + 2500;
+          await new Promise(r => setTimeout(r, copyPasteDelay));
+
           await whatsappService.sendWhatsAppMessage('admin', contactPhone, pixPayload, {
             skipStandby: true
           });

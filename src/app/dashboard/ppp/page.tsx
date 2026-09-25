@@ -72,16 +72,16 @@ export default function PPPoESecrets() {
         {/* Table */}
         <div className="p-4">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="mg-table">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 font-bold uppercase tracking-wider text-[11px]">
-                  <th className="px-6 py-3.5">Nome (Usuário)</th>
-                  <th className="px-6 py-3.5">Serviço</th>
-                  <th className="px-6 py-3.5">Perfil (Profile)</th>
-                  <th className="px-6 py-3.5 text-right">Status</th>
+                <tr>
+                  <th>Nome (Usuário)</th>
+                  <th>Serviço</th>
+                  <th>Perfil (Profile)</th>
+                  <th className="text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-[#111726]">
+              <tbody>
                 {loading ? (
                   <tr>
                     <td colSpan={4} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400 italic font-medium">

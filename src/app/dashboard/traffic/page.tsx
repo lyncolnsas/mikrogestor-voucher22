@@ -28,7 +28,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
     const txVal = payload[1]?.value ?? 0;
     const timeLabel = payload[0]?.payload?.time ?? '';
     return (
-      <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-lg text-xs space-y-1.5 min-w-[160px]">
+      <div className="mg-card border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-lg text-xs space-y-1.5 min-w-[160px]">
         <p className="font-extrabold text-slate-900 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 pb-1">{timeLabel}</p>
         <div className="flex items-center justify-between gap-4">
           <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-medium">
@@ -164,7 +164,7 @@ export default function TrafficMonitor() {
                 setPeakTx(0);
                 setHistory([]);
               }} 
-              className="w-full bg-white dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:border-blue-600 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none shadow-sm min-w-[200px]"
+              className="w-full mg-card border border-slate-300 dark:border-slate-700 focus:border-blue-600 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none shadow-sm min-w-[200px]"
             >
               {interfaces.map((i, idx) => (
                 <option key={`${i.id || i.name}-${idx}`} value={i.name}>
@@ -193,11 +193,11 @@ export default function TrafficMonitor() {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-white dark:bg-slate-900/50 border border-[var(--mg-card-border-subtle)] rounded-xl text-center shadow-xs">
+              <div className="p-4 mg-card-subtle border border-[var(--mg-card-border-subtle)] rounded-xl text-center shadow-xs">
                 <span className="block text-[11px] font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-muted)' }}>Pico RX</span>
                 <span className="text-sm font-black font-mono" style={{ color: 'var(--mg-text-heading)' }}>{formatBps(peakRx)}</span>
               </div>
-              <div className="p-4 bg-white dark:bg-slate-900/50 border border-[var(--mg-card-border-subtle)] rounded-xl text-center shadow-xs">
+              <div className="p-4 mg-card-subtle border border-[var(--mg-card-border-subtle)] rounded-xl text-center shadow-xs">
                 <span className="block text-[11px] font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-muted)' }}>Status do Link</span>
                 <span className="text-xs font-black uppercase text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
@@ -222,11 +222,11 @@ export default function TrafficMonitor() {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-white dark:bg-slate-900/50 border border-[var(--mg-card-border-subtle)] rounded-xl text-center shadow-xs">
+              <div className="p-4 mg-card-subtle border border-[var(--mg-card-border-subtle)] rounded-xl text-center shadow-xs">
                 <span className="block text-[11px] font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-muted)' }}>Pico TX</span>
                 <span className="text-sm font-black font-mono" style={{ color: 'var(--mg-text-heading)' }}>{formatBps(peakTx)}</span>
               </div>
-              <div className="p-4 bg-white dark:bg-slate-900/50 border border-[var(--mg-card-border-subtle)] rounded-xl text-center shadow-xs">
+              <div className="p-4 mg-card-subtle border border-[var(--mg-card-border-subtle)] rounded-xl text-center shadow-xs">
                 <span className="block text-[11px] font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-muted)' }}>Status do Link</span>
                 <span className="text-xs font-black uppercase text-blue-600 dark:text-blue-400 flex items-center justify-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-blue-500 inline-block animate-pulse"></span>
@@ -241,7 +241,7 @@ export default function TrafficMonitor() {
 
       {/* Recharts Traffic Plot Container */}
       <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-[#161e31]">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-slate-800 mg-card-subtle">
           <div>
             <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Gráfico de Consumo em Tempo Real</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Amostragem a cada 2 segundos</p>

@@ -595,7 +595,7 @@ export default function AdminSettings() {
                 type="number" 
                 value={maxUsers} 
                 onChange={(e) => setMaxUsers(e.target.value)} 
-                className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs focus:bg-white dark:focus:bg-[#141d30] focus:border-blue-500 outline-none" 
+                className="mg-input text-xs" 
                 placeholder="Ex: 50"
               />
               <button 
@@ -628,15 +628,15 @@ export default function AdminSettings() {
               <form onSubmit={handleUserUpdate} className="space-y-3.5">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Novo Nome de Usuário</label>
-                  <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required placeholder="Ex: lyncoln" className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs focus:bg-white dark:focus:bg-[#141d30] focus:border-blue-500 outline-none font-medium" />
+                  <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required placeholder="Ex: lyncoln" className="mg-input text-xs font-medium" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Senha Atual (Confirmação)</label>
-                  <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required placeholder="Sua senha atual" className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs focus:bg-white dark:focus:bg-[#141d30] focus:border-blue-500 outline-none" />
+                  <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required placeholder="Sua senha atual" className="mg-input text-xs" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nova Senha Forte</label>
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Mínimo 8 caracteres" className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs focus:bg-white dark:focus:bg-[#141d30] focus:border-blue-500 outline-none" />
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Mínimo 8 caracteres" className="mg-input text-xs" />
                 </div>
                 <button type="submit" disabled={saving} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50 mt-1">
                   {saving ? 'Atualizando e Protegendo...' : 'Salvar Novas Credenciais'}
@@ -668,7 +668,7 @@ export default function AdminSettings() {
                     value={adminPhone}
                     onChange={(e) => setAdminPhone(e.target.value)}
                     placeholder="Ex: 5511999998888"
-                    className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-xs focus:bg-white dark:focus:bg-[#141d30] focus:border-blue-500 outline-none"
+                    className="mg-input text-xs"
                   />
                   <span className="text-[10px] text-slate-500 mt-1 block">
                     {adminPhone.trim() ? '✅ 2FA ativo para este número' : '⚠️ Deixe vazio para desativar o 2FA'}

@@ -783,79 +783,69 @@ export async function POST(request: Request) {
 
           let dispatchedInstanceId: string | undefined;
 
-          // Processa os passos configurados na régua de boas-vindas
+          // 1. Executa a mensagem de Boas-Vindas (Passo 1 do fluxo ativo)
           const steps = activeFlow.steps || [];
+          const step1 = steps.find(s => s.id === 'step_1' && s.enabled) || steps[0];
 
-          for (let i = 0; i < steps.length; i++) {
-            const step = steps[i];
-            if (!step.enabled) continue;
-
-            const delayMs = (step.delaySeconds || 0) * 1000;
-
-            const sendStepMessage = async () => {
-              try {
-                let officialNumbersSection = '';
-                if (officialNumbers.length > 0 && isPaidMode) {
-                  const formattedList = officialNumbers.map(n => `• ${n}`).join('\n');
-                  officialNumbersSection = `\n\n🛡️ *Aviso de Segurança & Canais Oficiais:*\nNossa rede opera com múltiplos números autorizados de atendimento e recarga:\n${formattedList}\nAo renovar seu acesso, solicitar vouchers ou receber chaves PIX, as mensagens poderão ser enviadas por qualquer um destes canais oficiais acima.`;
-                }
-
-                const portalUrl = getMaskedPortalUrl('', request.headers.get('host'));
-                const rawTemplate = await getCustomTemplate(step.key);
-                const sendOpts = await getTriggerSendOptions(step.key);
-
-                // Monta chave PIX para incluir na mensagem quando pagamento é manual
-                const pixChave = pixData?.pixPayload && pixData.pixId?.startsWith('MANUAL_')
-                  ? pixData.pixPayload
-                  : '';
-                const pixValor = pixData?.amount
-                  ? `R$ ${Number(pixData.amount).toFixed(2).replace('.', ',')}`
-                  : '';
-
-                const msgBody = applyTemplateTags(rawTemplate, {
-                  cliente: finalName,
-                  usuario: hotspotUser,
-                  senha: passwordStr,
-                  cortesia: '15 minutos',
-                  rede_wifi: wifiName,
-                  canais_oficiais: officialNumbersSection,
-                  link_portal: `${portalUrl}/portal/planos`,
-                  chave_pix: pixChave ? `\n\n💳 *Pagamento PIX:*\nChave: \`${pixChave}\`\nValor: ${pixValor}\n_Envie o comprovante após o pagamento para agilizar a liberação._` : '',
-                  valor_pix: pixValor,
-                });
-
-                const res = await whatsappService.sendWhatsAppMessage('admin', targetPhone, msgBody, {
-                  skipStandby: true,
-                  pinnedInstanceId: dispatchedInstanceId,
-                  media: sendOpts.media,
-                  forwardLibraryId: sendOpts.forwardLibraryId,
-                });
-
-                if (res.success && !dispatchedInstanceId && res.instanceId) {
-                  dispatchedInstanceId = res.instanceId;
-                }
-
-                logEvent(res.success ? 'WA_STEP_SENT' : 'WA_STEP_FAILED', {
-                  stepId: step.id,
-                  stepKey: step.key,
-                  targetPhone,
-                  dispatchedInstanceId
-                });
-              } catch (err: any) {
-                logEvent('WA_STEP_ERROR', { stepId: step.id, error: err?.message || err });
+          if (step1 && step1.enabled) {
+            try {
+              let officialNumbersSection = '';
+              if (officialNumbers.length > 1 && isPaidMode) {
+                const formattedList = officialNumbers.map(n => `• ${n}`).join('\n');
+                officialNumbersSection = `\n\n🛡️ *Canais Oficiais:*\n${formattedList}`;
               }
-            };
 
-            if (delayMs > 0) {
-              setTimeout(sendStepMessage, delayMs);
-            } else {
-              await sendStepMessage();
+              const portalUrl = getMaskedPortalUrl('', request.headers.get('host'));
+              const rawTemplate = await getCustomTemplate(step1.key);
+              const sendOpts = await getTriggerSendOptions(step1.key);
+
+              const pixChave = pixData?.pixPayload && pixData.pixId?.startsWith('MANUAL_')
+                ? pixData.pixPayload
+                : '';
+              const pixValor = pixData?.amount
+                ? `R$ ${Number(pixData.amount).toFixed(2).replace('.', ',')}`
+                : '';
+
+              const msgBody = applyTemplateTags(rawTemplate, {
+                cliente: finalName,
+                usuario: hotspotUser,
+                senha: passwordStr,
+                cortesia: '15 minutos',
+                rede_wifi: wifiName,
+                canais_oficiais: officialNumbersSection,
+                link_portal: `${portalUrl}/portal/planos`,
+                chave_pix: pixChave ? `\n\n💳 *Pagamento PIX:*\nChave: \`${pixChave}\`\nValor: ${pixValor}\n_Envie o comprovante após o pagamento para agilizar a liberação._` : '',
+                valor_pix: pixValor,
+              });
+
+              const res = await whatsappService.sendWhatsAppMessage('admin', targetPhone, msgBody, {
+                skipStandby: true,
+                media: sendOpts.media,
+                forwardLibraryId: sendOpts.forwardLibraryId,
+              });
+
+              if (res.success && res.instanceId) {
+                dispatchedInstanceId = res.instanceId;
+              }
+
+              logEvent(res.success ? 'WA_STEP_SENT' : 'WA_STEP_FAILED', {
+                stepId: step1.id,
+                stepKey: step1.key,
+                targetPhone,
+                dispatchedInstanceId
+              });
+            } catch (err: any) {
+              logEvent('WA_STEP_ERROR', { stepId: step1?.id, error: err?.message || err });
             }
           }
 
           // ⚡ DISPARO CRÍTICO: Mensagem de Cobrança PIX Gerada (WA_MSG_PIX_GENERATED)
           if (pixData?.pixPayload && flowMap.pix_generated?.enabled !== false) {
             try {
+              // Anti-ban humano: aguarda um intervalo de 4 a 7 segundos após as boas-vindas antes de enviar a cobrança PIX
+              const humanDelay = Math.floor(Math.random() * (7000 - 4000 + 1)) + 4000;
+              await new Promise(r => setTimeout(r, humanDelay));
+
               const portalUrl = getMaskedPortalUrl('', request.headers.get('host'));
               const rawPixTemplate = await getCustomTemplate('WA_MSG_PIX_GENERATED');
               const pixSendOpts = await getTriggerSendOptions('WA_MSG_PIX_GENERATED');
@@ -892,7 +882,10 @@ export async function POST(request: Request) {
                 dispatchedInstanceId = resPix.instanceId;
               }
 
-              // 2. Envia balão isolado com o código Copia e Cola puro para facilidade de cópia com 1 clique no WhatsApp
+              // 2. Aguarda um intervalo humano de 2.5 a 4 segundos antes de disparar o balão isolado com o Copia e Cola puro
+              const copyPasteDelay = Math.floor(Math.random() * (4000 - 2500 + 1)) + 2500;
+              await new Promise(r => setTimeout(r, copyPasteDelay));
+
               await whatsappService.sendWhatsAppMessage('admin', targetPhone, pixData.pixPayload, {
                 skipStandby: true,
                 pinnedInstanceId: dispatchedInstanceId,

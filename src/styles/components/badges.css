@@ -2,8 +2,14 @@
    MIKROGESTOR — COMPONENTES: BADGES, PÍLULAS E LEDS
    ========================================================================== */
 
-/* ── Badges Base ── */
-.mg-badge {
+/* ── Badge Base ── */
+.mg-badge,
+.mg-badge-success,
+.mg-badge-danger,
+.mg-badge-warning,
+.mg-badge-info,
+.mg-badge-primary,
+.mg-badge-neutral {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -13,9 +19,10 @@
   font-size: var(--mg-text-2xs);
   font-weight: var(--mg-weight-extrabold);
   line-height: 1;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   border: 1px solid transparent;
+  white-space: nowrap;
 }
 
 .mg-badge-success {
@@ -46,6 +53,12 @@
   background-color: var(--mg-primary-light);
   color: var(--mg-primary);
   border-color: var(--mg-primary-border);
+}
+
+.mg-badge-neutral {
+  background-color: var(--mg-card-bg-subtle);
+  color: var(--mg-text-body);
+  border-color: var(--mg-card-border);
 }
 
 /* ── LED Telemetry Dot ── */

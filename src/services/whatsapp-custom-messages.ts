@@ -27,7 +27,17 @@ export const WHATSAPP_TRIGGERS: MessageTriggerDefinition[] = [
     title: 'Boas-Vindas no Hotspot (Modo Venda com Cortesia)',
     triggerEvent: 'Quando o cliente termina de se cadastrar no portal captive com plano pago e recebe cortesia temporária de internet para pagar.',
     description: 'Envia credenciais de login, cortesia para navegação e lista de canais oficiais anti-golpe.',
-    defaultTemplate: `🌐 *Bem-vindo(a) à nossa Rede Wi-Fi!*\n\nOlá, *{cliente}*! Seu cadastro foi concluído com sucesso.\n\n🔑 *Suas Credenciais de Acesso:*\n• *Usuário:* \`{usuario}\`\n• *Senha:* \`{senha}\`\n• *Cortesia Liberada:* {cortesia} ⚡\n\nTenha uma excelente navegação! 🚀\n{canais_oficiais}\n\nCaso precise se reconectar ou queira escolher um plano após a cortesia, acesse:\n{link_portal}`,
+    defaultTemplate: `🌐 *Bem-vindo(a) à nossa Rede Wi-Fi!*
+
+Olá, *{cliente}*!
+
+🔑 *Suas Credenciais:*
+• *Login:* \`{usuario}\`
+• *Senha:* \`{senha}\`
+• *Cortesia:* {cortesia} ⚡
+
+Para escolher um plano após a cortesia:
+👉 {link_portal}`,
     availableTags: [
       { tag: '{cliente}', label: 'Nome do Cliente', example: 'João da Silva' },
       { tag: '{usuario}', label: 'Usuário Hotspot', example: 'joao.silva' },
@@ -47,11 +57,20 @@ export const WHATSAPP_TRIGGERS: MessageTriggerDefinition[] = [
     title: 'Cobrança PIX Gerada (Compra de Acesso)',
     triggerEvent: 'Quando o cliente escolhe um plano no portal ou no WhatsApp e gera um pagamento PIX.',
     description: 'Envia o resumo do pedido, valor, cortesia para pagamento e o código PIX Copia e Cola.',
-    defaultTemplate: `⚡ *PIX Gerado com Sucesso!*\n\nOlá, *{cliente}*! Seu pedido do plano *{plano}* no valor de *R$ {valor}* está pronto.\n\nLiberamos {cortesia} de cortesia para você abrir o app do seu banco sem interrupções.\n\n📱 *Chave PIX Copia e Cola:*\n\`{pix_copia_cola}\`\n\nAssim que o pagamento for aprovado, seu plano continuará ativo sem nenhuma queda!`,
+    defaultTemplate: `⚡ *PIX Gerado com Sucesso!*
+
+Olá, *{cliente}*! Pedido do plano *{plano}* no valor de *{valor}*.
+
+Liberamos {cortesia} de cortesia para você abrir o app do seu banco.
+
+📱 *Chave PIX Copia e Cola:*
+\`{pix_copia_cola}\`
+
+_Assim que pagar, sua conexão continuará ativa automaticamente!_`,
     availableTags: [
       { tag: '{cliente}', label: 'Nome do Cliente', example: 'Carlos Souza' },
       { tag: '{plano}', label: 'Nome do Plano', example: '1 Dia Ilimitado' },
-      { tag: '{valor}', label: 'Valor em Reais', example: '5.00' },
+      { tag: '{valor}', label: 'Valor Formatado', example: 'R$ 5,00' },
       { tag: '{cortesia}', label: 'Tempo de Cortesia', example: '15 minutos' },
       { tag: '{pix_copia_cola}', label: 'Código PIX Copia e Cola', example: '00020126580014br.gov.bcb.pix...' },
       { tag: '{usuario}', label: 'Usuário Hotspot', example: 'carlos' },
@@ -256,7 +275,7 @@ export const DEFAULT_FLOW_MAP: SystemFlowMap = {
     enabled: true,
     steps: [
       { id: 'step_1', name: 'Passo 1: Boas-Vindas & Credenciais', key: 'WA_MSG_WELCOME_PAID', enabled: true, delaySeconds: 0 },
-      { id: 'step_2', name: 'Passo 2: Link de Planos Isolado', key: 'WA_MSG_WELCOME_STEP2_PAID', enabled: true, delaySeconds: 10 },
+      { id: 'step_2', name: 'Passo 2: Link de Planos Isolado', key: 'WA_MSG_WELCOME_STEP2_PAID', enabled: false, delaySeconds: 10 },
       { id: 'step_3', name: 'Passo 3: Lembrete Antes de Vencer Cortesia', key: 'WA_MSG_WELCOME_STEP3_PAID', enabled: false, delaySeconds: 600 },
     ],
   },

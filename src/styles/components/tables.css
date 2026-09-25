@@ -20,6 +20,9 @@
 }
 
 .mg-table thead tr {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   background-color: var(--mg-table-th-bg);
   border-bottom: 2px solid var(--mg-table-row-divide);
 }

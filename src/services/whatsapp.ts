@@ -583,25 +583,34 @@ class WhatsappSpecialist {
   }
 
   public async handleIncomingMessage(phoneId: string, remoteJid: string, text: string) {
-    // Roteamento inteligente na Meta — registra qual instância o cliente usou
+    // Roteamento inteligente e afinidade permanente: registra qual instância/chip iniciou ou recebeu a conversa
+    let cleanPhone = remoteJid.replace(/\D/g, '');
+    if (cleanPhone.length === 10 || cleanPhone.length === 11) cleanPhone = `55${cleanPhone}`;
+
     let pinnedInstanceId: string | undefined;
-    if (phoneId !== 'baileys') {
-      let cleanPhone = remoteJid.replace(/\D/g, '');
-      if (cleanPhone.length === 10 || cleanPhone.length === 11) cleanPhone = `55${cleanPhone}`;
-      const instance = await prisma.whatsappInstance.findFirst({ where: { phoneId } });
-      if (instance) {
-        await prisma.leadRouting.upsert({
-          where: { customerPhone: cleanPhone },
-          update: { whatsappInstanceId: instance.id, lastInteraction: new Date() },
-          create: { customerPhone: cleanPhone, whatsappInstanceId: instance.id }
-        });
-        pinnedInstanceId = instance.id;
+
+    // Se veio de instância Baileys (phoneId é o instance.id) ou Meta (phoneId da Meta)
+    const instance = await prisma.whatsappInstance.findFirst({
+      where: {
+        OR: [
+          { id: phoneId },
+          { phoneId: phoneId }
+        ]
       }
+    });
+
+    if (instance) {
+      await prisma.leadRouting.upsert({
+        where: { customerPhone: cleanPhone },
+        update: { whatsappInstanceId: instance.id, lastInteraction: new Date() },
+        create: { customerPhone: cleanPhone, whatsappInstanceId: instance.id }
+      });
+      pinnedInstanceId = instance.id;
     }
 
     // P1: Estado persistido no SQLite (sobrevive a redeploys no Coolify)
     const state = await this.getState(remoteJid) || { step: 0 };
-    // P3: recupera session pinning salvo no estado, ou usa o da instância atual
+    // P3: recupera session pinning salvo no estado, ou usa a instância associada ao lead
     const sessionPinned: string | undefined = (state as any).instanceId || pinnedInstanceId;
     const content = text.trim();
 

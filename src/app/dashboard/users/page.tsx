@@ -466,9 +466,9 @@ export default function Users() {
       </header>
 
       {error && (
-        <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl flex items-center gap-3 animate-pulse">
+        <div className="mg-alert mg-alert-danger animate-pulse">
           <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
-          <span className="text-xs font-bold text-rose-800 font-mono">
+          <span className="text-xs font-bold font-mono">
             SYSTEM_DATABASE_ERROR // {error}
           </span>
         </div>
@@ -482,31 +482,31 @@ export default function Users() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Search */}
             <div className="mg-card p-5 md:col-span-2 lg:col-span-2 space-y-2">
-              <span className="block text-xs font-black" style={{ color: 'var(--mg-text-heading)' }}>Buscar Usuário</span>
+              <span className="block text-xs font-black mg-label">Buscar Usuário</span>
               <input 
                 type="text" 
                 placeholder="Buscar por nome ou lote..." 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-white dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:border-blue-600 dark:focus:border-blue-500 font-bold rounded-xl px-3.5 py-2 text-xs outline-none transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500" style={{ color: 'var(--mg-text-heading)' }}
+                className="mg-input text-xs"
               />
             </div>
 
             {/* Print Batch */}
             <div className="mg-card p-5 space-y-2">
-              <span className="block text-xs font-black text-emerald-600 dark:text-emerald-400">Imprimir Lote (Comentário)</span>
+              <span className="block text-xs font-black" style={{ color: 'var(--mg-success)' }}>Imprimir Lote (Comentário)</span>
               <form onSubmit={handlePrintBatch} className="flex gap-2 w-full">
                 <input 
                   type="text" 
                   placeholder="Ex: dez-2023" 
                   value={batchPrintComment}
                   onChange={(e) => setBatchPrintComment(e.target.value)}
-                  className="bg-white dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:border-emerald-600 dark:focus:border-emerald-500 font-bold rounded-xl px-3 py-1.5 text-xs flex-1 outline-none transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500" style={{ color: 'var(--mg-text-heading)' }}
+                  className="mg-input text-xs flex-1"
                 />
                 <button 
                   disabled={!batchPrintComment} 
                   type="submit" 
-                  className="mg-btn-success text-xs py-1.5 px-3.5 rounded-xl font-black transition-all shrink-0 disabled:opacity-50 cursor-pointer"
+                  className="mg-btn mg-btn-success text-xs shrink-0 disabled:opacity-50"
                 >
                   Imprimir
                 </button>
@@ -515,19 +515,19 @@ export default function Users() {
 
             {/* Delete Batch */}
             <div className="mg-card p-5 space-y-2">
-              <span className="block text-xs font-black text-rose-600 dark:text-rose-400">Excluir Lote (Comentário)</span>
+              <span className="block text-xs font-black" style={{ color: 'var(--mg-danger)' }}>Excluir Lote (Comentário)</span>
               <form onSubmit={handleBatchDelete} className="flex gap-2 w-full">
                 <input 
                   type="text" 
                   placeholder="Ex: dez-2023" 
                   value={batchDeleteComment}
                   onChange={(e) => setBatchDeleteComment(e.target.value)}
-                  className="bg-white dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:border-rose-600 dark:focus:border-rose-500 font-bold rounded-xl px-3 py-1.5 text-xs flex-1 outline-none transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500" style={{ color: 'var(--mg-text-heading)' }}
+                  className="mg-input text-xs flex-1"
                 />
                 <button 
                   disabled={!batchDeleteComment || isDeleting} 
                   type="submit" 
-                  className="mg-btn-danger text-xs py-1.5 px-3.5 rounded-xl font-black transition-all shrink-0 disabled:opacity-50 cursor-pointer"
+                  className="mg-btn mg-btn-danger text-xs shrink-0 disabled:opacity-50"
                 >
                   {isDeleting ? 'Apagando...' : 'Apagar'}
                 </button>
@@ -536,39 +536,39 @@ export default function Users() {
           </div>
 
           {/* Users Table */}
-          <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="mg-card overflow-hidden">
+            <div className="mg-card-header">
               <div>
-                <h2 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">Vouchers Registrados no Roteador</h2>
-                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">Exibindo registros correspondentes aos filtros ativos</p>
+                <h2 className="mg-card-title">Vouchers Registrados no Roteador</h2>
+                <p className="mg-card-desc mt-0.5">Exibindo registros correspondentes aos filtros ativos</p>
               </div>
-              <span className="text-xs font-black px-3 py-1 rounded-full border border-blue-300 dark:border-blue-800/60 bg-blue-100 dark:bg-blue-950/50 text-blue-900 dark:text-blue-400 tracking-wider uppercase self-start sm:self-auto shrink-0">
+              <span className="mg-badge-primary tracking-wider uppercase self-start sm:self-auto shrink-0">
                 {filteredUsers.length} VOUCHERS
               </span>
             </div>
             
             <div className="p-0">
               <div className="overflow-x-auto w-full max-h-[500px] custom-scrollbar">
-                <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
-                  <thead className="sticky top-0 bg-slate-200 dark:bg-slate-800 border-b-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200 font-black" style={{ zIndex: 10 }}>
+                <table className="mg-table whitespace-nowrap">
+                  <thead style={{ zIndex: 10 }}>
                     <tr>
                       <th className="px-6 py-3.5 w-12 text-center">
                         <input 
                           type="checkbox"
                           checked={isAllSelected}
                           onChange={handleSelectAll}
-                          className="w-4 h-4 rounded border-slate-400 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          className="w-4 h-4 rounded cursor-pointer"
                         />
                       </th>
-                      <th className="px-6 py-3.5 font-black uppercase tracking-wider text-slate-950 dark:text-slate-200">Servidor</th>
-                      <th className="px-6 py-3.5 font-black uppercase tracking-wider text-slate-950 dark:text-slate-200">Nome (Voucher)</th>
-                      <th className="px-6 py-3.5 font-black uppercase tracking-wider text-slate-950 dark:text-slate-200">Perfil</th>
-                      <th className="px-6 py-3.5 font-black uppercase tracking-wider text-slate-950 dark:text-slate-200">Uptime</th>
-                      <th className="px-6 py-3.5 font-black uppercase tracking-wider text-slate-950 dark:text-slate-200">Comentário / Lote</th>
-                      <th className="px-6 py-3.5 font-black uppercase tracking-wider text-right text-slate-950 dark:text-slate-200">Ações</th>
+                      <th>Servidor</th>
+                      <th>Nome (Voucher)</th>
+                      <th>Perfil</th>
+                      <th>Uptime</th>
+                      <th>Comentário / Lote</th>
+                      <th className="text-right">Ações</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-slate-800 dark:text-slate-200 font-medium">
+                  <tbody>
                     {loading ? (
                       <tr>
                         <td colSpan={7} className="px-6 py-8 text-center text-slate-600 dark:text-slate-400 font-bold italic">
@@ -586,28 +586,28 @@ export default function Users() {
                         const isChecked = selectedIds.includes(user.id || user.name);
                         
                         return (
-                          <tr key={`${user.id || user.name}-${index}`} className="hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+                          <tr key={`${user.id || user.name}-${index}`}>
                             <td className="px-6 py-3.5 text-center">
                               <input 
                                 type="checkbox"
                                 checked={isChecked}
                                 onChange={() => handleSelectRow(user.id || user.name)}
-                                className="w-4 h-4 rounded border-slate-400 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                className="w-4 h-4 rounded cursor-pointer"
                               />
                             </td>
-                            <td className="px-6 py-4 text-slate-800 dark:text-slate-300 uppercase font-black text-xs">{user.server}</td>
-                            <td className="px-6 py-4 font-black text-slate-950 dark:text-white text-sm tracking-wide">{user.name}</td>
-                            <td className="px-6 py-4">
-                              <span className="text-xs font-black px-2.5 py-0.5 rounded-md border border-blue-300 dark:border-blue-800/60 bg-blue-100 dark:bg-blue-950/50 text-blue-900 dark:text-blue-400">
+                            <td className="uppercase font-black text-xs">{user.server}</td>
+                            <td className="font-black text-sm tracking-wide" style={{ color: 'var(--mg-text-heading)' }}>{user.name}</td>
+                            <td>
+                              <span className="mg-badge-primary text-xs">
                                 {user.profile}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-slate-800 dark:text-slate-300 font-bold text-xs">{user.uptime}</td>
-                            <td className="px-6 py-4 text-slate-800 dark:text-slate-300 font-bold text-xs">{user.comment || '-'}</td>
-                            <td className="px-6 py-4 text-right">
+                            <td className="font-bold text-xs">{user.uptime}</td>
+                            <td className="font-bold text-xs">{user.comment || '-'}</td>
+                            <td className="text-right">
                               <button 
                                 onClick={() => handleDeleteUser(user.id, user.name)} 
-                                className="py-1.5 px-3 text-xs font-black text-rose-700 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950/50 border border-rose-300 dark:border-rose-800/60 rounded-lg transition-colors cursor-pointer"
+                                className="mg-btn mg-btn-danger text-xs py-1"
                               >
                                 Excluir
                               </button>
@@ -624,10 +624,12 @@ export default function Users() {
         </div>
       ) : activeTab === 'batch' ? (
         /* ==================== TAB 2: BATCH GENERATION ==================== */
-        <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm max-w-3xl overflow-hidden animate-fade-in">
-          <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#111726]">
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Gerador de Vouchers em Lote</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Crie múltiplos vouchers de forma automatizada e sincronizada com o MikroTik</p>
+        <div className="mg-card max-w-3xl overflow-hidden animate-fade-in">
+          <div className="mg-card-header">
+            <div>
+              <h2 className="mg-card-title">Gerador de Vouchers em Lote</h2>
+              <p className="mg-card-desc mt-0.5">Crie múltiplos vouchers de forma automatizada e sincronizada com o MikroTik</p>
+            </div>
           </div>
 
           <div className="p-6">
@@ -650,31 +652,31 @@ export default function Users() {
 
             {loadingOptions ? (
               <div className="animate-pulse space-y-4 py-6">
-                <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700"></div>
-                <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700"></div>
-                <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700"></div>
+                <div className="h-10 mg-card-subtle rounded-xl"></div>
+                <div className="h-10 mg-card-subtle rounded-xl"></div>
+                <div className="h-10 mg-card-subtle rounded-xl"></div>
               </div>
             ) : (
               <form onSubmit={handleGenerateBatch} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Quantidade de Vouchers</label>
+                    <label className="mg-label">Quantidade de Vouchers</label>
                     <input 
                       type="number" 
                       min="1" 
                       max="1000" 
                       value={qty} 
                       onChange={(e) => setQty(Number(e.target.value))} 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-bold focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all" 
+                      className="mg-input text-xs" 
                       required 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Servidor Hotspot</label>
+                    <label className="mg-label">Servidor Hotspot</label>
                     <select 
                       value={genServer} 
                       onChange={(e) => setGenServer(e.target.value)} 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-medium focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all"
+                      className="mg-select text-xs"
                     >
                       <option value="all">Todos os Servidores (all)</option>
                       {servers.map((s, idx) => <option key={`${s.id || s.name}-${idx}`} value={s.name}>{s.name}</option>)}
@@ -682,45 +684,45 @@ export default function Users() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Modo de Login</label>
+                    <label className="mg-label">Modo de Login</label>
                     <select 
                       value={mode} 
                       onChange={(e) => setMode(e.target.value)} 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-medium focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all"
+                      className="mg-select text-xs"
                     >
                       <option value="up">Usuário = Senha</option>
                       <option value="vc">Usuário e Senha Diferentes</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Tamanho do Código</label>
+                    <label className="mg-label">Tamanho do Código</label>
                     <input 
                       type="number" 
                       min="3" 
                       max="12" 
                       value={userLen} 
                       onChange={(e) => setUserLen(Number(e.target.value))} 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-bold focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all" 
+                      className="mg-input text-xs" 
                       required 
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Prefixo do Código (Opcional)</label>
+                    <label className="mg-label">Prefixo do Código (Opcional)</label>
                     <input 
                       type="text" 
                       value={prefix} 
                       onChange={(e) => setPrefix(e.target.value)} 
                       placeholder="Ex: VIP-" 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-medium focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all" 
+                      className="mg-input text-xs" 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Tipo de Caracteres</label>
+                    <label className="mg-label">Tipo de Caracteres</label>
                     <select 
                       value={charset} 
                       onChange={(e) => setCharset(e.target.value)} 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-medium focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all"
+                      className="mg-select text-xs"
                     >
                       <option value="low">Letras Minúsculas (a-z)</option>
                       <option value="upp">Letras Maiúsculas (A-Z)</option>
@@ -730,29 +732,29 @@ export default function Users() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Perfil de Velocidade (Profile)</label>
+                    <label className="mg-label">Perfil de Velocidade (Profile)</label>
                     <select 
                       value={genProfile} 
                       onChange={(e) => setGenProfile(e.target.value)} 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-medium focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all"
+                      className="mg-select text-xs"
                     >
                       {profiles.map((p, idx) => <option key={`${p.id || p.name}-${idx}`} value={p.name}>{p.name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Lote / Comentário Identificador</label>
+                    <label className="mg-label">Lote / Comentário Identificador</label>
                     <input 
                       type="text" 
                       value={genComment} 
                       onChange={(e) => setGenComment(e.target.value)} 
                       placeholder="Ex: dez-2023" 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-medium focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all" 
+                      className="mg-input text-xs" 
                       required 
                     />
                   </div>
                   
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Preço de Venda Unitário (R$) - Opcional</label>
+                    <label className="mg-label">Preço de Venda Unitário (R$) - Opcional</label>
                     <input 
                       type="number" 
                       step="0.01" 
@@ -760,17 +762,17 @@ export default function Users() {
                       value={genPrice} 
                       onChange={(e) => setGenPrice(Number(e.target.value))} 
                       placeholder="Ex: 5.00" 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-bold focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all" 
+                      className="mg-input text-xs" 
                     />
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-none">Este valor será utilizado no financeiro para o cálculo de faturamento.</p>
+                    <p className="text-[10px] mt-1.5 leading-none" style={{ color: 'var(--mg-text-muted)' }}>Este valor será utilizado no financeiro para o cálculo de faturamento.</p>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="pt-4 border-t border-[var(--mg-card-border)]">
                   <button 
                     type="submit" 
                     disabled={generatingBatch}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                    className="mg-btn mg-btn-primary w-full text-xs uppercase tracking-wider disabled:opacity-50"
                   >
                     {generatingBatch ? 'Gerando Lote...' : 'Gerar Vouchers em Lote Agora'}
                   </button>
@@ -781,10 +783,12 @@ export default function Users() {
         </div>
       ) : activeTab === 'single' ? (
         /* ==================== TAB 3: SINGLE CREATION ==================== */
-        <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm max-w-3xl overflow-hidden animate-fade-in">
-          <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#111726]">
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Criar Voucher Avulso</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Provisione uma credencial individual no Hotspot</p>
+        <div className="mg-card max-w-3xl overflow-hidden animate-fade-in">
+          <div className="mg-card-header">
+            <div>
+              <h2 className="mg-card-title">Criar Voucher Avulso</h2>
+              <p className="mg-card-desc mt-0.5">Provisione uma credencial individual no Hotspot</p>
+            </div>
           </div>
 
           <div className="p-6">
@@ -807,69 +811,69 @@ export default function Users() {
 
             {loadingOptions ? (
               <div className="animate-pulse space-y-4 py-6">
-                <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700"></div>
-                <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700"></div>
-                <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700"></div>
+                <div className="h-10 mg-card-subtle rounded-xl"></div>
+                <div className="h-10 mg-card-subtle rounded-xl"></div>
+                <div className="h-10 mg-card-subtle rounded-xl"></div>
               </div>
             ) : (
               <form onSubmit={handleCreateSingle} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Nome de Usuário (Login)</label>
+                    <label className="mg-label">Nome de Usuário (Login)</label>
                     <input 
                       type="text" 
                       value={singleName} 
                       onChange={(e) => setSingleName(e.target.value)} 
                       placeholder="Ex: pedro ou vip-cliente" 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-bold focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all" 
+                      className="mg-input text-xs" 
                       required 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Senha (Opcional)</label>
+                    <label className="mg-label">Senha (Opcional)</label>
                     <input 
                       type="text" 
                       value={singlePass} 
                       onChange={(e) => setSinglePass(e.target.value)} 
                       placeholder="Igual ao login se em branco" 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-medium focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all" 
+                      className="mg-input text-xs" 
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Servidor Hotspot</label>
+                    <label className="mg-label">Servidor Hotspot</label>
                     <select 
                       value={singleServer} 
                       onChange={(e) => setSingleServer(e.target.value)} 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-medium focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all"
+                      className="mg-select text-xs"
                     >
                       <option value="all">Todos os Servidores (all)</option>
                       {servers.map((s, idx) => <option key={`${s.id || s.name}-${idx}`} value={s.name}>{s.name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Perfil de Velocidade (Profile)</label>
+                    <label className="mg-label">Perfil de Velocidade (Profile)</label>
                     <select 
                       value={singleProfile} 
                       onChange={(e) => setSingleProfile(e.target.value)} 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-medium focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all"
+                      className="mg-select text-xs"
                     >
                       {profiles.map((p, idx) => <option key={`${p.id || p.name}-${idx}`} value={p.name}>{p.name}</option>)}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Comentário / Lote Identificador</label>
+                    <label className="mg-label">Comentário / Lote Identificador</label>
                     <input 
                       type="text" 
                       value={singleComment} 
                       onChange={(e) => setSingleComment(e.target.value)} 
                       placeholder="Ex: VIP-Ana ou avulso" 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-medium focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all" 
+                      className="mg-input text-xs" 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Preço de Venda (R$) - Opcional</label>
+                    <label className="mg-label">Preço de Venda (R$) - Opcional</label>
                     <input 
                       type="number" 
                       step="0.01" 
@@ -877,16 +881,16 @@ export default function Users() {
                       value={singlePrice} 
                       onChange={(e) => setSinglePrice(Number(e.target.value))} 
                       placeholder="Ex: 10.00" 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-bold focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-xs transition-all" 
+                      className="mg-input text-xs" 
                     />
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="pt-4 border-t border-[var(--mg-card-border)]">
                   <button 
                     type="submit" 
                     disabled={creatingSingle}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                    className="mg-btn mg-btn-primary w-full text-xs uppercase tracking-wider disabled:opacity-50"
                   >
                     {creatingSingle ? 'Criando Usuário...' : 'Criar Usuário Avulso Agora'}
                   </button>
@@ -902,20 +906,20 @@ export default function Users() {
           {/* Header da aba */}
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
+              <h2 className="text-base font-extrabold" style={{ color: 'var(--mg-text-heading)' }}>
                 📦 {pendingCounts.total} Pedido{pendingCounts.total !== 1 ? 's' : ''} Pendente{pendingCounts.total !== 1 ? 's' : ''}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {pendingCounts.manual > 0 && <span className="text-amber-700 dark:text-amber-400 font-semibold">{pendingCounts.manual} aguardam aprovação manual</span>}
+              <p className="text-xs mt-0.5" style={{ color: 'var(--mg-text-muted)' }}>
+                {pendingCounts.manual > 0 && <span className="text-amber-600 font-semibold">{pendingCounts.manual} aguardam aprovação manual</span>}
                 {pendingCounts.manual > 0 && pendingCounts.mercadopago > 0 && <span className="mx-1">·</span>}
-                {pendingCounts.mercadopago > 0 && <span className="text-blue-600 dark:text-blue-400 font-semibold">{pendingCounts.mercadopago} aguardam webhook MP</span>}
-                {pendingCounts.total === 0 && <span className="text-emerald-600 font-semibold">Nenhum pedido pendente ✓</span>}
+                {pendingCounts.mercadopago > 0 && <span style={{ color: 'var(--mg-primary)' }} className="font-semibold">{pendingCounts.mercadopago} aguardam webhook MP</span>}
+                {pendingCounts.total === 0 && <span style={{ color: 'var(--mg-success)' }} className="font-semibold">Nenhum pedido pendente ✓</span>}
               </p>
             </div>
             <button
               onClick={() => fetchPendingOrders(true)}
               disabled={refreshingOrders}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm disabled:opacity-50"
+              className="mg-btn mg-btn-secondary text-xs disabled:opacity-50"
             >
               <svg className={`w-3.5 h-3.5 ${refreshingOrders ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -925,56 +929,56 @@ export default function Users() {
           </div>
 
           {pendingCounts.total === 0 && (
-            <div className="bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center shadow-sm">
+            <div className="mg-card p-12 text-center">
               <div className="text-5xl mb-3">✅</div>
-              <p className="font-extrabold text-slate-900 dark:text-white text-lg">Tudo em dia!</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Não há pedidos pendentes de aprovação ou pagamento.</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">Esta lista atualiza automaticamente a cada 30 segundos.</p>
+              <p className="font-extrabold text-lg" style={{ color: 'var(--mg-text-heading)' }}>Tudo em dia!</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--mg-text-muted)' }}>Não há pedidos pendentes de aprovação ou pagamento.</p>
+              <p className="text-xs mt-2" style={{ color: 'var(--mg-text-subtle)' }}>Esta lista atualiza automaticamente a cada 30 segundos.</p>
             </div>
           )}
 
           {/* Grupo 1: PIX Manual */}
           {pendingPix.length > 0 && (
-            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800/60 rounded-2xl p-5 shadow-sm">
+            <div className="mg-card p-5 border-amber-500/40">
               <div className="flex items-center gap-2 mb-4">
-                <span className="inline-flex items-center gap-1.5 text-xs font-black text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-700 px-2.5 py-1 rounded-full">
+                <span className="mg-badge-warning">
                   ✋ PIX MANUAL — AGUARDA APROVAÇÃO
                 </span>
-                <span className="text-xs text-amber-700 dark:text-amber-400 font-medium">Confirme o recebimento no seu banco antes de aprovar</span>
+                <span className="text-xs font-medium" style={{ color: 'var(--mg-warning-text)' }}>Confirme o recebimento no seu banco antes de aprovar</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {pendingPix.map((p) => (
-                  <div key={p.id} className="bg-white dark:bg-[#111726] border border-amber-200 dark:border-amber-800/40 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+                  <div key={p.id} className="mg-card p-4 flex flex-col gap-3">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-black text-slate-900 dark:text-white text-sm leading-tight">{p.clientName || p.username}</p>
-                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">@{p.username}</p>
-                        {p.clientPhone && <p className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5">📱 {p.clientPhone}</p>}
-                        {p.clientCpf && <p className="text-[11px] text-slate-400 mt-0.5">CPF: {p.clientCpf}</p>}
+                        <p className="font-black text-sm leading-tight" style={{ color: 'var(--mg-text-heading)' }}>{p.clientName || p.username}</p>
+                        <p className="text-[11px] font-mono mt-0.5" style={{ color: 'var(--mg-text-muted)' }}>@{p.username}</p>
+                        {p.clientPhone && <p className="text-[11px] font-semibold mt-0.5" style={{ color: 'var(--mg-primary)' }}>📱 {p.clientPhone}</p>}
+                        {p.clientCpf && <p className="text-[11px] mt-0.5" style={{ color: 'var(--mg-text-subtle)' }}>CPF: {p.clientCpf}</p>}
                       </div>
-                      <span className="text-[10px] text-slate-500 whitespace-nowrap font-medium shrink-0">{p.formattedDate}</span>
+                      <span className="text-[10px] whitespace-nowrap font-medium shrink-0" style={{ color: 'var(--mg-text-muted)' }}>{p.formattedDate}</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      <span className="text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">🎟️ {p.plan}</span>
-                      {p.isVoucher && <span className="text-[11px] font-bold bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 px-2 py-0.5 rounded-lg border border-teal-200 dark:border-teal-800/40">Voucher</span>}
-                      {p.giftTo && <span className="text-[11px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-lg border border-blue-200 dark:border-blue-800/40">🎁 Para: {p.giftTo}</span>}
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg border border-[var(--mg-card-border)] bg-[var(--mg-card-bg-subtle)]" style={{ color: 'var(--mg-text-body)' }}>🎟️ {p.plan}</span>
+                      {p.isVoucher && <span className="mg-badge-primary text-[11px]">Voucher</span>}
+                      {p.giftTo && <span className="mg-badge-primary text-[11px]">🎁 Para: {p.giftTo}</span>}
                     </div>
-                    <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 rounded-lg px-3 py-2">
-                      <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Valor a receber:</span>
-                      <span className="text-lg font-black text-emerald-700 dark:text-emerald-400">{formatBRL(p.amount)}</span>
+                    <div className="flex items-center justify-between border border-emerald-500/30 bg-emerald-500/10 rounded-lg px-3 py-2">
+                      <span className="text-xs font-bold" style={{ color: 'var(--mg-text-muted)' }}>Valor a receber:</span>
+                      <span className="text-lg font-black text-emerald-500">{formatBRL(p.amount)}</span>
                     </div>
                     {p.pixPayload && (
-                      <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-wide mb-1">Chave PIX enviada ao cliente:</p>
+                      <div className="border border-[var(--mg-card-border)] bg-[var(--mg-card-bg-subtle)] rounded-lg px-3 py-2">
+                        <p className="text-[10px] font-black uppercase tracking-wide mb-1" style={{ color: 'var(--mg-text-muted)' }}>Chave PIX enviada ao cliente:</p>
                         <div className="flex items-center gap-2">
-                          <code className="text-[11px] text-slate-800 dark:text-slate-200 font-mono break-all flex-1">{p.pixPayload}</code>
+                          <code className="text-[11px] font-mono break-all flex-1">{p.pixPayload}</code>
                           <button onClick={() => navigator.clipboard?.writeText(p.pixPayload)} className="text-slate-400 hover:text-blue-600 shrink-0 p-1 rounded" title="Copiar">📋</button>
                         </div>
                       </div>
                     )}
                     <div className="flex gap-2 mt-auto pt-1">
-                      <button onClick={() => handleRejectPix(p.id)} className="flex-1 py-2 text-xs font-bold rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 hover:bg-rose-100 transition-colors border border-rose-200 dark:border-rose-800/40">✕ Rejeitar</button>
-                      <button onClick={() => handleApprovePix(p.id)} className="flex-1 py-2 text-xs font-black rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm">✓ Aprovar e Liberar</button>
+                      <button onClick={() => handleRejectPix(p.id)} className="mg-btn mg-btn-danger flex-1 text-xs py-1.5">✕ Rejeitar</button>
+                      <button onClick={() => handleApprovePix(p.id)} className="mg-btn mg-btn-success flex-1 text-xs py-1.5">✓ Aprovar e Liberar</button>
                     </div>
                   </div>
                 ))}
@@ -984,39 +988,39 @@ export default function Users() {
 
           {/* Grupo 2: Mercado Pago */}
           {pendingMp.length > 0 && (
-            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 rounded-2xl p-5 shadow-sm">
+            <div className="mg-card p-5 border-blue-500/40">
               <div className="flex items-center gap-2 mb-4">
-                <span className="inline-flex items-center gap-1.5 text-xs font-black text-blue-800 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-700 px-2.5 py-1 rounded-full">
+                <span className="mg-badge-primary">
                   🤖 MERCADO PAGO — AGUARDANDO CONFIRMAÇÃO AUTOMÁTICA
                 </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {pendingMp.map((p) => (
-                  <div key={p.id} className="bg-white dark:bg-[#111726] border border-blue-200 dark:border-blue-800/40 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+                  <div key={p.id} className="mg-card p-4 flex flex-col gap-3">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-black text-slate-900 dark:text-white text-sm leading-tight">{p.clientName || p.username}</p>
-                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">@{p.username}</p>
-                        {p.clientPhone && <p className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5">📱 {p.clientPhone}</p>}
+                        <p className="font-black text-sm leading-tight" style={{ color: 'var(--mg-text-heading)' }}>{p.clientName || p.username}</p>
+                        <p className="text-[11px] font-mono mt-0.5" style={{ color: 'var(--mg-text-muted)' }}>@{p.username}</p>
+                        {p.clientPhone && <p className="text-[11px] font-semibold mt-0.5" style={{ color: 'var(--mg-primary)' }}>📱 {p.clientPhone}</p>}
                       </div>
-                      <span className="text-[10px] text-slate-500 whitespace-nowrap font-medium shrink-0">{p.formattedDate}</span>
+                      <span className="text-[10px] whitespace-nowrap font-medium shrink-0" style={{ color: 'var(--mg-text-muted)' }}>{p.formattedDate}</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      <span className="text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">🎟️ {p.plan}</span>
-                      {p.isVoucher && <span className="text-[11px] font-bold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-lg border border-purple-200 dark:border-purple-800/40">Voucher</span>}
-                      {p.giftTo && <span className="text-[11px] font-bold bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 px-2 py-0.5 rounded-lg border border-sky-200 dark:border-sky-800/40">🎁 Para: {p.giftTo}</span>}
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg border border-[var(--mg-card-border)] bg-[var(--mg-card-bg-subtle)]" style={{ color: 'var(--mg-text-body)' }}>🎟️ {p.plan}</span>
+                      {p.isVoucher && <span className="mg-badge-primary text-[11px]">Voucher</span>}
+                      {p.giftTo && <span className="mg-badge-primary text-[11px]">🎁 Para: {p.giftTo}</span>}
                     </div>
-                    <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40 rounded-lg px-3 py-2">
-                      <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Valor esperado:</span>
-                      <span className="text-lg font-black text-blue-700 dark:text-blue-400">{formatBRL(p.amount)}</span>
+                    <div className="flex items-center justify-between border border-blue-500/30 bg-blue-500/10 rounded-lg px-3 py-2">
+                      <span className="text-xs font-bold" style={{ color: 'var(--mg-text-muted)' }}>Valor esperado:</span>
+                      <span className="text-lg font-black" style={{ color: 'var(--mg-primary)' }}>{formatBRL(p.amount)}</span>
                     </div>
-                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2 border border-[var(--mg-card-border)] bg-[var(--mg-card-bg-subtle)] rounded-lg px-3 py-2">
                       <span className="inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse shrink-0"></span>
-                      <span className="text-[11px] text-slate-600 dark:text-slate-400">MP ID: <code className="font-mono text-slate-800 dark:text-slate-200">{p.pixId}</code></span>
+                      <span className="text-[11px]" style={{ color: 'var(--mg-text-muted)' }}>MP ID: <code className="font-mono" style={{ color: 'var(--mg-text-body)' }}>{p.pixId}</code></span>
                     </div>
                     <div className="flex gap-2 mt-auto pt-1">
-                      <button onClick={() => handleRejectPix(p.id)} className="flex-1 py-1.5 text-xs font-bold rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 hover:bg-rose-100 border border-rose-200 dark:border-rose-800/40">✕ Cancelar</button>
-                      <button onClick={() => handleApprovePix(p.id)} className="flex-1 py-1.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 shadow-sm" title="Aprovar manualmente caso o webhook não tenha chegado">⚡ Forçar Aprovação</button>
+                      <button onClick={() => handleRejectPix(p.id)} className="mg-btn mg-btn-danger flex-1 text-xs py-1.5">✕ Cancelar</button>
+                      <button onClick={() => handleApprovePix(p.id)} className="mg-btn mg-btn-primary flex-1 text-xs py-1.5" title="Aprovar manualmente caso o webhook não tenha chegado">⚡ Forçar Aprovação</button>
                     </div>
                   </div>
                 ))}
@@ -1030,10 +1034,10 @@ export default function Users() {
       {/* Floating Sticky Print Bar */}
       {selectedIds.length > 0 && activeTab === 'list' && (
         <div 
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 p-4 rounded-2xl flex items-center justify-between gap-6 shadow-2xl z-50 animate-scale-up max-w-[90vw] md:max-w-xl w-full bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-slate-900/10 dark:shadow-black/40"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 p-4 rounded-2xl flex items-center justify-between gap-6 shadow-2xl z-50 animate-scale-up max-w-[90vw] md:max-w-xl w-full mg-card"
         >
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse shrink-0" />
+          <div className="flex items-center gap-2 text-xs font-bold" style={{ color: 'var(--mg-text-body)' }}>
+            <span className="w-2.5 h-2.5 rounded-full animate-pulse shrink-0" style={{ backgroundColor: 'var(--mg-primary)' }} />
             <span>
               {selectedIds.length} {selectedIds.length === 1 ? 'voucher selecionado' : 'vouchers selecionados'}
             </span>
@@ -1041,13 +1045,13 @@ export default function Users() {
           <div className="flex items-center gap-2.5">
             <button 
               onClick={() => setSelectedIds([])}
-              className="py-2 px-3.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 shadow-xs cursor-pointer transition-colors"
+              className="mg-btn mg-btn-secondary text-xs"
             >
               Limpar
             </button>
             <button 
               onClick={handlePrintSelected}
-              className="py-2 px-4 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs cursor-pointer transition-colors"
+              className="mg-btn mg-btn-primary text-xs"
             >
               🖨️ Imprimir Selecionados
             </button>
