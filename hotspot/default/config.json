@@ -123,7 +123,7 @@
     "connectedCountNumber": "42"
   },
   "customCode": {
-    "customCss": "body button.btn-login.btn-login { border: 4px solid red !important; }"
+    "customCss": ""
   },
   "bg": {
     "type": "default",

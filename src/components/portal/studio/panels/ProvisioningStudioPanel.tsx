@@ -12,7 +12,6 @@ import {
   Zap, 
   Wrench,
   RotateCcw,
-  Network,
   ChevronDown,
   ChevronUp
 } from 'lucide-react';

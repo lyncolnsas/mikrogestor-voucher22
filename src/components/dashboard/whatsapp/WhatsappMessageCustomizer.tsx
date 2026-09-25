@@ -1,13 +1,15 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useState, useCallback } from 'react';
 import {
   MessageSquare, Sparkles, RefreshCcw, Save, RotateCcw,
-  CheckCircle2, AlertCircle, Tag, Eye, Info, Send, Copy, Check,
+  CheckCircle2, AlertCircle, Tag, Eye, Info, Check,
   GitBranch, Clock, ArrowRight, Layers, Sliders, ToggleLeft, ToggleRight,
   ShieldCheck, Zap, UserCheck, ShoppingCart,
-  Image, Video, Music, FileText, Library, X, Trash2, Pencil
+  Image as ImageIcon, Video, Music, FileText, Library, X, Shuffle
 } from 'lucide-react';
+import { spinText, hasSpintax } from '@/utils/spintax';
 
 interface TriggerTag {
   tag: string;
@@ -95,7 +97,7 @@ export function WhatsappMessageCustomizer() {
   const [savingFlow, setSavingFlow] = useState(false);
   const [activeViewTab, setActiveViewTab] = useState<'flowchart' | 'templates'>('flowchart');
 
-  const fetchTemplates = () => {
+  const fetchTemplates = useCallback(() => {
     setLoading(true);
     fetch('/api/admin/whatsapp-messages')
       .then((r) => r.json())
@@ -137,7 +139,7 @@ export function WhatsappMessageCustomizer() {
       })
       .catch((err) => console.error('Erro ao carregar mensagens:', err))
       .finally(() => setLoading(false));
-  };
+  }, []);
 
   const fetchLibrary = useCallback(() => {
     setLibraryLoading(true);
@@ -156,9 +158,16 @@ export function WhatsappMessageCustomizer() {
   }, []);
 
   useEffect(() => {
-    fetchTemplates();
-    fetchLibrary();
-  }, []);
+    let ignore = false;
+    const run = async () => {
+      if (!ignore) {
+        await fetchTemplates();
+        await fetchLibrary();
+      }
+    };
+    run();
+    return () => { ignore = true; };
+  }, [fetchTemplates, fetchLibrary]);
 
   // Quando o usuário troca de modo (Pago x Free), atualiza o item selecionado para o primeiro daquele modo
   const handleModeChange = (mode: 'paid' | 'free') => {
@@ -369,7 +378,7 @@ export function WhatsappMessageCustomizer() {
     if (type === 'video') return <Video className="w-4 h-4" />;
     if (type === 'audio') return <Music className="w-4 h-4" />;
     if (type === 'document') return <FileText className="w-4 h-4" />;
-    return <Image className="w-4 h-4" />;
+    return <ImageIcon className="w-4 h-4" />;
   };
 
   const categories = [
@@ -380,15 +389,18 @@ export function WhatsappMessageCustomizer() {
     { id: 'chatbot', label: 'Chatbot' },
   ];
 
-  // Preview com simulação das tags
+  const [previewSeed, setPreviewSeed] = useState(0);
+
+  // Preview com simulação das tags e Spintax
   const renderPreview = (text: string, tags: TriggerTag[]) => {
     let preview = text;
     tags.forEach((t) => {
       const regex = new RegExp(t.tag.replace(/[{}]/g, '\\$&'), 'gi');
       preview = preview.replace(regex, t.example);
     });
-    return preview;
+    return spinText(preview);
   };
+
 
 
   if (loading) {
@@ -1004,6 +1016,30 @@ export function WhatsappMessageCustomizer() {
                 </div>
               </div>
 
+              {/* Spintax Anti-Ban Helper */}
+              <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-200/80 text-xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-indigo-900 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                    Blindagem Anti-Ban (Spintax Dinâmico)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const spintaxSample = '{Olá|Oi|E aí|Tudo bem}, {cliente}!';
+                      const current = editedTemplates[selectedTrigger.key] || '';
+                      handleTemplateChange(selectedTrigger.key, current ? `${current}\n${spintaxSample}` : spintaxSample);
+                    }}
+                    className="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 bg-white hover:bg-indigo-100/80 px-2 py-0.5 rounded-md border border-indigo-200 transition-colors cursor-pointer"
+                  >
+                    + Inserir Exemplo
+                  </button>
+                </div>
+                <p className="text-[11px] text-indigo-800/90 leading-relaxed">
+                  Use variações entre chaves com barra vertical como <code className="bg-white px-1.5 py-0.5 rounded border border-indigo-200 font-mono font-bold text-indigo-900">{'{Olá|Oi|Opa}'}</code>. Cada cliente receberá uma saudação ou frase diferente de forma 100% automática, impedindo que a IA da Meta detecte padrões repetitivos!
+                </p>
+              </div>
+
               {/* Editor Textarea */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider block">
@@ -1148,16 +1184,29 @@ export function WhatsappMessageCustomizer() {
 
               {/* Live Preview (Visualização em tempo real simulando tela do WhatsApp) */}
               <div className="pt-4 border-t border-slate-100 space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-800">
-                  <Eye className="w-4 h-4 text-emerald-600" />
-                  Simulação de Envio no WhatsApp (Preview com dados reais):
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-800">
+                    <Eye className="w-4 h-4 text-emerald-600" />
+                    Simulação de Envio no WhatsApp (Preview com dados reais):
+                  </div>
+                  {hasSpintax(editedTemplates[selectedTrigger.key] ?? selectedTrigger.currentTemplate) && (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewSeed(s => s + 1)}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors cursor-pointer w-fit"
+                      title="Gera outra variação de texto simulada via Spintax Anti-Ban"
+                    >
+                      <Shuffle className="w-3.5 h-3.5" />
+                      Sortear Variação Spintax
+                    </button>
+                  )}
                 </div>
 
                 <div
                   className="rounded-2xl p-4 border border-emerald-900/10 shadow-inner"
                   style={{ backgroundColor: '#E5DDD5' }}
                 >
-                  <div className="max-w-md bg-white rounded-2xl rounded-tl-xs p-3.5 shadow-sm text-xs text-slate-900 space-y-1.5 font-sans leading-relaxed whitespace-pre-wrap border border-black/5">
+                  <div key={previewSeed} className="max-w-md bg-white rounded-2xl rounded-tl-xs p-3.5 shadow-sm text-xs text-slate-900 space-y-1.5 font-sans leading-relaxed whitespace-pre-wrap border border-black/5 animate-fade-in">
                     {renderPreview(
                       editedTemplates[selectedTrigger.key] ?? selectedTrigger.currentTemplate,
                       selectedTrigger.availableTags

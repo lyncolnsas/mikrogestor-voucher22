@@ -1,0 +1,56 @@
+/* ==========================================================================
+   MIKROGESTOR — MANIFESTO GERAL DE DESIGN SYSTEM & ARQUITETURA EM CAMADAS
+   ==========================================================================
+   
+   🗺️ MAPA DE PÁGINAS & ARQUIVOS CSS DEDICADOS:
+   
+   • Visão Geral (/dashboard)                 --> src/styles/pages/dashboard.css
+   • Central de Vouchers (/dashboard/users)   --> src/styles/pages/users.css
+   • Planos / Perfis (/dashboard/profiles)    --> src/styles/pages/profiles.css
+   • Configurar Portal (/dashboard/portal)    --> src/styles/pages/portal.css
+   • Financeiro / Vendas (/dashboard/finance) --> src/styles/pages/finance.css
+   • WhatsApp & Anti-Ban (/dashboard/whatsapp)--> src/styles/pages/whatsapp.css
+   • Tráfego, DHCP, PPPoE (/dashboard/traffic)--> src/styles/pages/network.css
+   • Segurança & Acesso (/dashboard/security) --> src/styles/pages/security.css
+   • VPN WireGuard (/dashboard/vpn)           --> src/styles/pages/vpn.css
+   • Login Administrativo (/login)            --> src/styles/pages/login.css
+   • Menu Lateral (Sidebar)                   --> src/styles/layout/sidebar.css
+   • Cabeçalhos & Topbar Mobile               --> src/styles/layout/header.css
+   • Fundo, Canvas & Scrollbars               --> src/styles/layout/canvas.css
+   • PALETA DE CORES (ALTERE AQUI TUDO)       --> src/styles/tokens/colors.css
+   • FONTES & TIPOGRAFIA                      --> src/styles/tokens/typography.css
+   • SOMBRAS & ELEVAÇÕES                      --> src/styles/tokens/shadows.css
+   • ANIMAÇÕES & LEDS                         --> src/styles/tokens/animations.css
+   
+   ========================================================================== */
+
+/* ── CAMADA 1: DESIGN TOKENS ── */
+@import "./tokens/colors.css";
+@import "./tokens/typography.css";
+@import "./tokens/shadows.css";
+@import "./tokens/animations.css";
+
+/* ── CAMADA 2: COMPONENTES UNIVERSAIS ── */
+@import "./components/buttons.css";
+@import "./components/cards.css";
+@import "./components/inputs.css";
+@import "./components/tables.css";
+@import "./components/badges.css";
+@import "./components/tabs.css";
+
+/* ── CAMADA 3: ESTRUTURAS GLOBAIS DE LAYOUT ── */
+@import "./layout/sidebar.css";
+@import "./layout/header.css";
+@import "./layout/canvas.css";
+
+/* ── CAMADA 4: FOLHAS ESPECÍFICAS DE PÁGINAS ── */
+@import "./pages/dashboard.css";
+@import "./pages/users.css";
+@import "./pages/profiles.css";
+@import "./pages/portal.css";
+@import "./pages/finance.css";
+@import "./pages/whatsapp.css";
+@import "./pages/network.css";
+@import "./pages/security.css";
+@import "./pages/vpn.css";
+@import "./pages/login.css";

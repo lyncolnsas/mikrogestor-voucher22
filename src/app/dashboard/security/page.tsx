@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import RouterOffline from '@/components/RouterOffline';
 
 export default function SecurityControl() {
@@ -60,7 +59,7 @@ export default function SecurityControl() {
       } else {
         alert('Erro: ' + data.message);
       }
-    } catch (e) { alert('Erro ao desbloquear cliente'); }
+    } catch { alert('Erro ao desbloquear cliente'); }
     finally { setUnblockingId(null); }
   };
 
@@ -80,7 +79,7 @@ export default function SecurityControl() {
       } else {
         alert('Erro: ' + data.message);
       }
-    } catch (e) { alert('Erro ao bloquear'); }
+    } catch { alert('Erro ao bloquear'); }
     finally { setBlockSubmitting(false); }
   };
 
@@ -117,7 +116,7 @@ export default function SecurityControl() {
       } else {
         alert('Erro: ' + data.message);
       }
-    } catch (e) { alert('Erro ao liberar cliente'); }
+    } catch { alert('Erro ao liberar cliente'); }
     finally { setUnlockingLeadId(null); }
   };
 
@@ -206,7 +205,7 @@ export default function SecurityControl() {
       setHost('');
       setComment('');
       fetchWalledGardenRules();
-    } catch (err) {
+    } catch {
       setWalledLoading(false);
     }
   };
@@ -238,7 +237,7 @@ export default function SecurityControl() {
       });
       alert(`Servidor ${targetIp} (MAC: ${targetMac || 'N/A'}) liberado com sucesso no Walled Garden e IP Bindings!`);
       fetchWalledGardenRules();
-    } catch (err) {
+    } catch {
       alert('Erro ao liberar servidor.');
       setWalledLoading(false);
     }
@@ -253,7 +252,7 @@ export default function SecurityControl() {
         body: JSON.stringify({ id })
       });
       fetchWalledGardenRules();
-    } catch (err) {
+    } catch {
       setWalledLoading(false);
     }
   };
@@ -276,7 +275,7 @@ export default function SecurityControl() {
       } else {
         alert('Erro ao criar regra: ' + data.message);
       }
-    } catch (err) {
+    } catch {
       alert('Erro ao criar regra de bloqueio.');
     } finally {
       setTimeLoading(false);
@@ -359,72 +358,56 @@ export default function SecurityControl() {
   }
 
   return (
-    <main className="w-full p-4 md:p-6 max-w-6xl mx-auto space-y-6 animate-fade-in text-slate-800">
+    <main className="mg-page-container max-w-6xl mx-auto">
       {/* Page Header */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
+      <header className="mg-page-header-row">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/60 px-2 py-0.5 rounded tracking-wider uppercase">
+            <span className="mg-badge-danger">
               Firewall & Acessos
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">
+          <h1 className="mg-page-title">
             Segurança e Acessos
           </h1>
-          <p className="text-xs md:text-sm text-slate-600 font-medium mt-0.5">
+          <p className="mg-page-subtitle">
             Gerencie firewalls, sites liberados pré-login no Hotspot e bloqueio por palavras-chave
           </p>
         </div>
       </header>
 
       {/* Tabs Menu */}
-      <div className="flex flex-wrap gap-2 bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 p-1.5 rounded-xl w-fit shadow-xs">
+      <nav className="mg-tabs-container">
         <button
           onClick={() => setActiveTab('walled-garden')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-            activeTab === 'walled-garden'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-slate-700/60'
-          }`}
+          className={`mg-tab-item ${activeTab === 'walled-garden' ? 'active' : ''}`}
         >
           🌐 Sites Walled Garden
         </button>
         <button
           onClick={() => setActiveTab('time-block')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-            activeTab === 'time-block'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-slate-700/60'
-          }`}
+          className={`mg-tab-item ${activeTab === 'time-block' ? 'active' : ''}`}
         >
           🕒 Bloqueio de Horário
         </button>
         <button
           onClick={() => setActiveTab('keywords')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-            activeTab === 'keywords'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-slate-700/60'
-          }`}
+          className={`mg-tab-item ${activeTab === 'keywords' ? 'active' : ''}`}
         >
           🚫 Palavras-Chave
         </button>
         <button
           onClick={() => { setActiveTab('blacklist'); fetchBlockedClients(); fetchTrialLeads(); }}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-            activeTab === 'blacklist'
-              ? 'bg-red-600 text-white shadow-sm'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-slate-700/60'
-          }`}
+          className={`mg-tab-item ${activeTab === 'blacklist' ? 'active' : ''}`}
         >
           🔒 Bloqueios & Carência
           {(blockedClients.length + trialLeads.length) > 0 && (
-            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
-              activeTab === 'blacklist' ? 'bg-white/20 text-white' : 'bg-red-100 text-red-700'
-            }`}>{blockedClients.length + trialLeads.length}</span>
+            <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-500">
+              {blockedClients.length + trialLeads.length}
+            </span>
           )}
         </button>
-      </div>
+      </nav>
 
       {/* Tab Content Cabinet */}
       <div className="space-y-6">

@@ -14,10 +14,8 @@ import {
   ZoomIn, 
   ZoomOut, 
   Wifi, 
-  ExternalLink,
   Lock,
   UserCheck,
-  Radio,
   LayoutTemplate,
   FolderOpen
 } from 'lucide-react';

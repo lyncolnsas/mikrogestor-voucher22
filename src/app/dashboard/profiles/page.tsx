@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import RouterOffline from '@/components/RouterOffline';
 import Link from 'next/link';
 
@@ -27,7 +27,7 @@ export default function ProfilesManage() {
   const [ppool, setPpool] = useState('none');
   const [parent, setParent] = useState('none');
 
-  const fetchProfiles = async () => {
+  const fetchProfiles = useCallback(async () => {
     try {
       const res = await fetch('/api/hotspot/profiles');
       
@@ -62,11 +62,18 @@ export default function ProfilesManage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchProfiles();
-  }, []);
+    let ignore = false;
+    const run = async () => {
+      if (!ignore) {
+        await fetchProfiles();
+      }
+    };
+    run();
+    return () => { ignore = true; };
+  }, [fetchProfiles]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,7 +115,7 @@ export default function ProfilesManage() {
       } else {
         alert('Erro ao salvar perfil: ' + data.message);
       }
-    } catch (e) {
+    } catch {
       alert('Erro na conexão com a API.');
     } finally {
       setCreating(false);
@@ -127,15 +134,15 @@ export default function ProfilesManage() {
 
   if (routerError) {
     return (
-      <main className="p-4 md:p-6 space-y-6 animate-fade-in text-slate-800 dark:text-slate-200">
-        <header className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+      <main className="mg-page-container">
+        <header className="mg-card p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
             <div>
-              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded tracking-wider uppercase">
+              <span className="mg-badge-warning">
                 Hotspot // Erro de Roteamento
               </span>
-              <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white mt-1">
+              <h1 className="mg-page-title mt-1">
                 Perfis de Acesso (Profiles)
               </h1>
             </div>
@@ -143,26 +150,26 @@ export default function ProfilesManage() {
         </header>
 
         {/* Diagnostic module box */}
-        <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-          <div className="flex items-center gap-2 px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
-            <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">AUDITORIA DE SERVIÇOS DO ROTEADOR</span>
+        <div className="mg-card overflow-hidden">
+          <div className="mg-card-header">
+            <span className="font-mono text-xs font-bold uppercase" style={{ color: 'var(--mg-text-muted)' }}>AUDITORIA DE SERVIÇOS DO ROTEADOR</span>
           </div>
           
           <div className="p-6 md:p-8 space-y-6">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-              <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60">
-                <span className="text-amber-600 text-2xl">⚠️</span>
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 border border-amber-500/30 bg-amber-500/10">
+                <span className="text-amber-500 text-2xl">⚠️</span>
               </div>
               <div className="space-y-3 text-center md:text-left flex-1">
-                <h3 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider">Hotspot não configurado no Roteador</h3>
-                <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed max-w-xl font-medium">
+                <h3 className="text-base font-bold uppercase tracking-wider" style={{ color: 'var(--mg-text-heading)' }}>Hotspot não configurado no Roteador</h3>
+                <p className="text-xs leading-relaxed max-w-xl font-medium" style={{ color: 'var(--mg-text-muted)' }}>
                   O roteador está conectado com sucesso, porém o servidor de hotspot e seus serviços correlatos não foram localizados. É necessário provisioná-los antes de gerenciar planos.
                 </p>
-                <div className="bg-slate-100 dark:bg-[#0e1524] border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs text-amber-800 dark:text-amber-400 font-mono">
+                <div className="mg-alert mg-alert-warning font-mono text-xs">
                   {routerError}
                 </div>
                 <div className="pt-2">
-                  <Link href="/dashboard/portal?tab=provisioning" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all">
+                  <Link href="/dashboard/portal?tab=provisioning" className="mg-btn mg-btn-warning inline-flex items-center gap-2">
                     ⚙️ Provisionar Hotspot Agora
                   </Link>
                 </div>
@@ -175,19 +182,19 @@ export default function ProfilesManage() {
   }
 
   return (
-    <main className="w-full p-4 md:p-6 space-y-6 animate-fade-in text-slate-800 dark:text-slate-200">
+    <main className="mg-page-container">
       {/* Page Header */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+      <header className="mg-page-header-row">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800/80 px-2 py-0.5 rounded tracking-wider uppercase">
+            <span className="mg-badge-primary">
               Gerenciador de Perfis & Planos
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+          <h1 className="mg-page-title">
             Planos / Perfis
           </h1>
-          <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium mt-0.5">
+          <p className="mg-page-subtitle">
             Gerencie perfis de acesso e limites de velocidade no MikroTik
           </p>
         </div>
@@ -196,32 +203,32 @@ export default function ProfilesManage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Form Container */}
-        <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden lg:col-span-2">
-          <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-[#161e31]">
-            <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Novo Perfil de Acesso</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Defina limites, validade e valores para os vouchers</p>
+        <div className="mg-card overflow-hidden lg:col-span-2">
+          <div className="mg-card-header">
+            <h2 className="mg-card-title">Novo Perfil de Acesso</h2>
+            <p className="mg-card-subtitle">Defina limites, validade e valores para os vouchers</p>
           </div>
 
           <form onSubmit={handleCreate} className="p-6 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nome do Plano</label>
+                <label className="mg-label">Nome do Plano</label>
                 <input 
                   type="text" 
                   value={name} 
                   onChange={(e) => setName(e.target.value.replace(/\s/g, '-'))} 
                   required 
                   placeholder="Ex: 1-Hora-R$2" 
-                  className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#0e1524] focus:border-blue-600 rounded-xl p-2.5 text-xs font-medium text-slate-900 dark:text-slate-100 outline-none shadow-sm placeholder:text-slate-400 dark:placeholder:text-slate-500" 
+                  className="mg-input" 
                 />
               </div>
               
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">IP Pool (Address Pool)</label>
+                <label className="mg-label">IP Pool (Address Pool)</label>
                 <select 
                   value={ppool} 
                   onChange={(e) => setPpool(e.target.value)} 
-                  className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#0e1524] focus:border-blue-600 rounded-xl p-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none shadow-sm"
+                  className="mg-select"
                 >
                   <option value="none">none (Padrão do Hotspot)</option>
                   {pools.map((p, idx) => <option key={`${p}-${idx}`} value={p}>{p}</option>)}
@@ -229,35 +236,35 @@ export default function ProfilesManage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Limite de Velocidade (Rate Limit)</label>
+                <label className="mg-label">Limite de Velocidade (Rate Limit)</label>
                 <input 
                   type="text" 
                   value={rateLimit} 
                   onChange={(e) => setRateLimit(e.target.value)} 
                   placeholder="Ex: 512k/2M ou 1M/5M" 
-                  className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#0e1524] focus:border-blue-600 rounded-xl p-2.5 text-xs font-bold text-slate-900 dark:text-slate-100 uppercase outline-none shadow-sm placeholder:text-slate-400 dark:placeholder:text-slate-500" 
+                  className="mg-input uppercase font-bold" 
                 />
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-none font-medium">Upload/Download. Vazio para ilimitado.</p>
+                <p className="text-[11px] mt-1 leading-none font-medium" style={{ color: 'var(--mg-text-muted)' }}>Upload/Download. Vazio para ilimitado.</p>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Usuários Simultâneos (Shared)</label>
+                <label className="mg-label">Usuários Simultâneos (Shared)</label>
                 <input 
                   type="number" 
                   min="1" 
                   value={sharedUsers} 
                   onChange={(e) => setSharedUsers(e.target.value)} 
                   required
-                  className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#0e1524] focus:border-blue-600 rounded-xl p-2.5 text-xs font-medium text-slate-900 dark:text-slate-100 outline-none shadow-sm" 
+                  className="mg-input" 
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Modo de Expiração</label>
+                <label className="mg-label">Modo de Expiração</label>
                 <select 
                   value={expmode} 
                   onChange={(e) => setExpmode(e.target.value)} 
-                  className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#0e1524] focus:border-blue-600 rounded-xl p-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none shadow-sm"
+                  className="mg-select"
                 >
                   <option value="0">Nenhum (Voucher não expira)</option>
                   <option value="rem">Remover (Apaga voucher expirado)</option>
@@ -270,26 +277,26 @@ export default function ProfilesManage() {
               {expmode !== '0' ? (
                 <>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Validade (Validity)</label>
+                    <label className="mg-label">Validade (Validity)</label>
                     <input 
                       type="text" 
                       value={validity} 
                       onChange={(e) => setValidity(e.target.value)} 
                       required 
                       placeholder="Ex: 1d, 12h, 30m" 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#0e1524] focus:border-blue-600 rounded-xl p-2.5 text-xs font-medium text-slate-900 dark:text-slate-100 outline-none shadow-sm placeholder:text-slate-400 dark:placeholder:text-slate-500" 
+                      className="mg-input" 
                     />
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-none font-medium">Duração após o primeiro login.</p>
+                    <p className="text-[11px] mt-1 leading-none font-medium" style={{ color: 'var(--mg-text-muted)' }}>Duração após o primeiro login.</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Período de Graça</label>
+                    <label className="mg-label">Período de Graça</label>
                     <input 
                       type="text" 
                       value={graceperiod} 
                       onChange={(e) => setGraceperiod(e.target.value)} 
                       required 
                       placeholder="Ex: 5m" 
-                      className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#0e1524] focus:border-blue-600 rounded-xl p-2.5 text-xs font-medium text-slate-900 dark:text-slate-100 outline-none shadow-sm" 
+                      className="mg-input" 
                     />
                   </div>
                 </>
@@ -298,7 +305,7 @@ export default function ProfilesManage() {
               )}
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Preço de Custo (R$)</label>
+                <label className="mg-label">Preço de Custo (R$)</label>
                 <input 
                   type="number" 
                   step="0.01" 
@@ -306,12 +313,12 @@ export default function ProfilesManage() {
                   value={price} 
                   onChange={(e) => setPrice(e.target.value)} 
                   required
-                  className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#0e1524] focus:border-blue-600 rounded-xl p-2.5 text-xs font-medium text-slate-900 dark:text-slate-100 outline-none shadow-sm" 
+                  className="mg-input" 
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Preço de Venda (R$)</label>
+                <label className="mg-label">Preço de Venda (R$)</label>
                 <input 
                   type="number" 
                   step="0.01" 
@@ -319,16 +326,16 @@ export default function ProfilesManage() {
                   value={sprice} 
                   onChange={(e) => setSprice(e.target.value)} 
                   required
-                  className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#0e1524] focus:border-blue-600 rounded-xl p-2.5 text-xs font-medium text-slate-900 dark:text-slate-100 outline-none shadow-sm" 
+                  className="mg-input" 
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Vincular ao MAC (Lock User)</label>
+                <label className="mg-label">Vincular ao MAC (Lock User)</label>
                 <select 
                   value={lockunlock} 
                   onChange={(e) => setLockunlock(e.target.value)} 
-                  className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#0e1524] focus:border-blue-600 rounded-xl p-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none shadow-sm"
+                  className="mg-select"
                 >
                   <option value="Disable">Desativado (Multi-aparelho)</option>
                   <option value="Enable">Ativado (Trava no primeiro login)</option>
@@ -336,11 +343,11 @@ export default function ProfilesManage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Fila Pai (Parent Queue)</label>
+                <label className="mg-label">Fila Pai (Parent Queue)</label>
                 <select 
                   value={parent} 
                   onChange={(e) => setParent(e.target.value)} 
-                  className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:bg-white dark:focus:bg-[#0e1524] focus:border-blue-600 rounded-xl p-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none shadow-sm"
+                  className="mg-select"
                 >
                   <option value="none">none (Nenhuma Fila Pai)</option>
                   {queues.map((q, idx) => <option key={`${q}-${idx}`} value={q}>{q}</option>)}
@@ -348,11 +355,11 @@ export default function ProfilesManage() {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+            <div className="pt-4 border-t border-[var(--mg-card-border)]">
               <button 
                 type="submit" 
                 disabled={creating} 
-                className="w-full py-3 px-4 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                className="mg-btn mg-btn-primary w-full"
               >
                 {creating ? 'Salvando Configurações...' : 'Salvar Perfil de Acesso'}
               </button>
@@ -361,24 +368,24 @@ export default function ProfilesManage() {
         </div>
 
         {/* Readme Panel */}
-        <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden h-fit lg:col-span-1">
-          <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-[#161e31]">
-            <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Documentação</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Parâmetros de configuração</p>
+        <div className="mg-card overflow-hidden h-fit lg:col-span-1">
+          <div className="mg-card-header">
+            <h2 className="mg-card-title">Documentação</h2>
+            <p className="mg-card-subtitle">Parâmetros de configuração</p>
           </div>
           
           <div className="p-6 space-y-4 text-xs">
-            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider pb-1.5 border-b border-slate-200 dark:border-slate-800">
+            <h3 className="font-extrabold text-sm uppercase tracking-wider pb-1.5 border-b border-[var(--mg-card-border)]" style={{ color: 'var(--mg-text-heading)' }}>
               Guia Rápido
             </h3>
             
-            <div className="space-y-4 leading-relaxed text-slate-600 dark:text-slate-400 font-medium">
+            <div className="space-y-4 leading-relaxed font-medium" style={{ color: 'var(--mg-text-muted)' }}>
               <div>
-                <strong className="text-blue-700 dark:text-blue-400 block mb-1 font-bold">1. NOME DO PLANO:</strong>
+                <strong className="block mb-1 font-bold" style={{ color: 'var(--mg-primary)' }}>1. NOME DO PLANO:</strong>
                 <p>Evite espaços em branco. O sistema substitui automaticamente espaços vazios por hífens (`-`).</p>
               </div>
               <div>
-                <strong className="text-blue-700 dark:text-blue-400 block mb-1 font-bold">2. FORMATO DE VALIDADE:</strong>
+                <strong className="block mb-1 font-bold" style={{ color: 'var(--mg-primary)' }}>2. FORMATO DE VALIDADE:</strong>
                 <p>Duração total da navegação a partir do primeiro login.</p>
                 <ul className="list-disc pl-4 mt-2 space-y-1">
                   <li><strong>30m</strong> = 30 minutos</li>
@@ -388,8 +395,8 @@ export default function ProfilesManage() {
                 </ul>
               </div>
               <div>
-                <strong className="text-blue-700 dark:text-blue-400 block mb-1 font-bold">3. MODOS DE REGISTRO:</strong>
-                <p>Opte por registros contendo <strong>"Registrar"</strong> para habilitar gravação persistente de transações financeiras em scripts de log no MikroTik, garantindo relatórios completos.</p>
+                <strong className="block mb-1 font-bold" style={{ color: 'var(--mg-primary)' }}>3. MODOS DE REGISTRO:</strong>
+                <p>Opte por registros contendo <strong>&quot;Registrar&quot;</strong> para habilitar gravação persistente de transações financeiras em scripts de log no MikroTik, garantindo relatórios completos.</p>
               </div>
             </div>
           </div>
@@ -397,46 +404,46 @@ export default function ProfilesManage() {
       </div>
 
       {/* Profiles List */}
-      <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-[#161e31] flex justify-between items-center">
+      <div className="mg-card overflow-hidden">
+        <div className="mg-card-header flex justify-between items-center">
           <div>
-            <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Perfis Cadastrados no MikroTik</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Planos ativos e configurados no roteador</p>
+            <h2 className="mg-card-title">Perfis Cadastrados no MikroTik</h2>
+            <p className="mg-card-subtitle">Planos ativos e configurados no roteador</p>
           </div>
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800/80 bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 tracking-wider uppercase">
+          <span className="mg-badge-primary">
             {profiles.length} PERFIS
           </span>
         </div>
 
         <div className="p-4">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+          <div className="mg-table-wrap">
+            <table className="mg-table">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 font-bold uppercase tracking-wider text-[11px]">
-                  <th className="px-6 py-3.5">Nome (Profile)</th>
-                  <th className="px-6 py-3.5">Usuários Simultâneos</th>
-                  <th className="px-6 py-3.5">Banda (Rate Limit)</th>
-                  <th className="px-6 py-3.5 text-right">Pool de IPs</th>
+                <tr>
+                  <th>Nome (Profile)</th>
+                  <th>Usuários Simultâneos</th>
+                  <th>Banda (Rate Limit)</th>
+                  <th className="text-right">Pool de IPs</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-[#111726]">
+              <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400 italic font-medium">
+                    <td colSpan={4} className="text-center italic font-medium" style={{ color: 'var(--mg-text-muted)', padding: '2rem' }}>
                       Carregando profiles cadastrados...
                     </td>
                   </tr>
                 ) : profiles.map((p, index) => (
-                  <tr key={`${p.id || p.name}-${index}`} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-blue-600 dark:text-blue-400 text-sm">{p.name}</td>
-                    <td className="px-6 py-4 text-slate-900 dark:text-slate-200 font-medium">{p['shared-users'] || '1'}</td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-mono">{p['rate-limit'] || 'Ilimitada'}</td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-mono text-right">{p['address-pool'] || 'none'}</td>
+                  <tr key={`${p.id || p.name}-${index}`}>
+                    <td className="font-bold text-sm" style={{ color: 'var(--mg-primary)' }}>{p.name}</td>
+                    <td className="font-medium" style={{ color: 'var(--mg-text-body)' }}>{p['shared-users'] || '1'}</td>
+                    <td className="font-mono" style={{ color: 'var(--mg-text-muted)' }}>{p['rate-limit'] || 'Ilimitada'}</td>
+                    <td className="font-mono text-right" style={{ color: 'var(--mg-text-muted)' }}>{p['address-pool'] || 'none'}</td>
                   </tr>
                 ))}
                 {(!loading && profiles.length === 0) && (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400 italic font-medium">
+                    <td colSpan={4} className="text-center italic font-medium" style={{ color: 'var(--mg-text-muted)', padding: '2rem' }}>
                       Nenhum perfil de Hotspot encontrado.
                     </td>
                   </tr>

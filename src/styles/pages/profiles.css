@@ -1,0 +1,31 @@
+/* ==========================================================================
+   MIKROGESTOR — PÁGINA: PLANOS & PERFIS HOTSPOT (/dashboard/profiles)
+   ========================================================================== */
+
+.mg-plan-card {
+  background-color: var(--mg-card-bg);
+  border: 1px solid var(--mg-card-border);
+  border-radius: var(--mg-radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.mg-plan-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--mg-primary);
+  box-shadow: var(--mg-shadow-card-hover);
+}
+
+.mg-plan-speed-badge {
+  background-color: var(--mg-primary-light);
+  color: var(--mg-primary);
+  border: 1px solid var(--mg-primary-border);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--mg-radius-sm);
+  font-family: var(--mg-font-mono);
+  font-weight: var(--mg-weight-bold);
+  font-size: var(--mg-text-xs);
+}

@@ -1,15 +1,12 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { 
   Megaphone, 
   Upload, 
   Trash2, 
   Eye, 
   Clock, 
-  Layers, 
-  ExternalLink,
-  Sparkles,
   FolderOpen
 } from 'lucide-react';
 
@@ -36,8 +33,6 @@ export default function AdsStudioPanel({
   onPreviewAd,
   onOpenMediaPicker,
 }: AdsStudioPanelProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const carouselItems = Array.isArray(ad?.items) ? ad.items : [];
 
   return (
@@ -139,6 +134,7 @@ export default function AdsStudioPanel({
                   {(ad.type === 'video' || /\.(mp4|webm|mov)(\?.*)?$/i.test(ad.mediaUrl)) ? (
                     <video src={ad.mediaUrl} muted playsInline autoPlay loop className="w-full h-full object-cover" />
                   ) : (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={ad.mediaUrl} alt="Ad Preview" className="w-full h-full object-contain" />
                   )}
                   <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
@@ -258,6 +254,7 @@ export default function AdsStudioPanel({
                           {(item.type === 'video' || /\.(mp4|webm|mov)(\?.*)?$/i.test(item.url)) ? (
                             <video src={item.url} muted playsInline autoPlay loop className="w-full h-full object-cover" />
                           ) : (
+                            /* eslint-disable-next-line @next/next/no-img-element */
                             <img src={item.url} alt={`Slot ${slot}`} className="w-full h-full object-contain" />
                           )}
                         </div>

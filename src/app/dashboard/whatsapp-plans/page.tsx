@@ -1,9 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+interface WhatsappPlan {
+  id: string;
+  title: string;
+  profile: string;
+  price: number;
+  uptimeLimit: string;
+  active: boolean;
+}
 
 export default function WhatsappPlansPage() {
-  const [plans, setPlans] = useState<any[]>([]);
+  const [plans, setPlans] = useState<WhatsappPlan[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [title, setTitle] = useState('');
@@ -12,18 +21,18 @@ export default function WhatsappPlansPage() {
   const [uptimeLimit, setUptimeLimit] = useState('1d 00:00:00');
   const [active, setActive] = useState(true);
 
-  useEffect(() => {
-    fetchPlans();
-  }, []);
-
-  const fetchPlans = async () => {
+  const fetchPlans = useCallback(async () => {
     try {
       const res = await fetch('/api/whatsapp-plans');
       if (res.ok) setPlans(await res.json());
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchPlans();
+  }, [fetchPlans]);
 
   const addPlan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +51,7 @@ export default function WhatsappPlansPage() {
     setProfile('');
     setPrice('0');
     setUptimeLimit('1d 00:00:00');
+    setActive(true);
     fetchPlans();
   };
 
@@ -51,7 +61,7 @@ export default function WhatsappPlansPage() {
     fetchPlans();
   };
 
-  const toggleActive = async (plan: any) => {
+  const toggleActive = async (plan: WhatsappPlan) => {
     await fetch(`/api/whatsapp-plans/${plan.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -147,6 +157,19 @@ export default function WhatsappPlansPage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                id="plan-active-check"
+                type="checkbox"
+                checked={active}
+                onChange={e => setActive(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <label htmlFor="plan-active-check" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                Plano ativo para comercialização imediata
+              </label>
             </div>
 
             <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition-colors mt-2 shadow-sm text-xs cursor-pointer">

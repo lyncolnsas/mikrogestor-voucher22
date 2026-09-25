@@ -1,0 +1,22 @@
+/* ==========================================================================
+   MIKROGESTOR — PÁGINA: REDE & TRÁFEGO (/traffic, /ppp, /dhcp)
+   ========================================================================== */
+
+.mg-interface-traffic-card {
+  background-color: var(--mg-card-bg);
+  border: 1px solid var(--mg-card-border);
+  border-radius: var(--mg-radius-lg);
+  padding: 1.25rem;
+}
+
+.mg-traffic-rx {
+  color: var(--mg-success);
+  font-family: var(--mg-font-mono);
+  font-weight: var(--mg-weight-extrabold);
+}
+
+.mg-traffic-tx {
+  color: var(--mg-primary);
+  font-family: var(--mg-font-mono);
+  font-weight: var(--mg-weight-extrabold);
+}

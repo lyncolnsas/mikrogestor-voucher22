@@ -1,15 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Send, 
   X, 
-  Cpu, 
   CheckCircle2, 
   AlertCircle, 
-  Download, 
-  HelpCircle,
-  HardDrive
+  Download
 } from 'lucide-react';
 
 interface DeployStudioModalProps {

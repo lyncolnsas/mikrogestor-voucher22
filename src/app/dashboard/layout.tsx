@@ -69,16 +69,19 @@ const NAV_SECTIONS = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mg-theme') as 'light' | 'dark' | null;
+      if (saved) return saved;
+    }
+    return 'light';
+  });
 
-  // Load theme from localStorage and sync data-theme + dark class
+  // Sync data-theme + dark class
   useEffect(() => {
-    const saved = localStorage.getItem('mg-theme') as 'light' | 'dark' | null;
-    const initial = saved || 'light';
-    setTheme(initial);
-    document.documentElement.setAttribute('data-theme', initial);
-    document.documentElement.classList.toggle('dark', initial === 'dark');
-  }, []);
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
 
   const toggleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : 'light';
@@ -154,8 +157,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         ].join(' ')}
       >
         {/* Brand */}
-        <div className="flex items-center gap-3 px-5 py-5 border-b border-[#262a3d]">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shrink-0 shadow-md shadow-blue-500/25">
+        <div className="mg-sidebar-brand">
+          <div className="mg-sidebar-logo-icon">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071a9 9 0 0112.14 0M1.394 9h.01m21.196 0h.01" />
             </svg>
@@ -175,7 +178,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {NAV_SECTIONS.map(section => (
             <div key={section.label} className="mb-2">
               {/* Section label */}
-              <div className="px-5 pt-3 pb-1 text-[11px] font-black uppercase tracking-widest text-slate-300">
+              <div className="mg-sidebar-section-label">
                 {section.label}
               </div>
 
@@ -187,22 +190,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     key={item.href}
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className={`flex items-center gap-3 mx-2.5 px-3 py-2.5 rounded-xl text-[13.5px] transition-all relative group ${
-                      active
-                        ? 'bg-blue-600 text-white font-black shadow-md shadow-blue-500/30'
-                        : 'text-slate-100 hover:text-white hover:bg-white/15 font-bold'
-                    }`}
+                    className={`mg-nav-link ${active ? 'active' : ''}`}
                     style={{ textDecoration: 'none' }}
                   >
                     {/* Active bar */}
-                    {active && (
-                      <span className="absolute left-0 top-1/4 h-1/2 w-[3px] rounded-r bg-white" />
-                    )}
+                    {active && <span className="mg-nav-link-indicator" />}
                     <Icon d={ICONS[item.icon as keyof typeof ICONS]} active={active} />
                     <span className="truncate">{item.label}</span>
-                    {active && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full shrink-0 bg-white shadow-[0_0_8px_#ffffff]" />
-                    )}
+                    {active && <span className="mg-nav-link-dot" />}
                   </Link>
                 );
               })}
@@ -211,9 +206,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         {/* Footer — user + logout */}
-        <div className="p-3 border-t border-[#262a3d] bg-[#161927]">
+        <div className="mg-sidebar-footer">
           <div className="flex items-center gap-2.5 px-2 mb-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 bg-blue-500/15 border border-blue-500/25 text-blue-400">
+            <div className="mg-sidebar-avatar-badge">
               ADM
             </div>
             <div className="flex-1 min-w-0">
@@ -236,7 +231,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[11px] font-bold transition-all text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-[#262a3d] hover:border-rose-500/30 cursor-pointer"
+            className="mg-sidebar-logout-btn"
           >
             <Icon d={ICONS.logout} />
             Sair do Painel

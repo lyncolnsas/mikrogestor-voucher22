@@ -1,0 +1,146 @@
+/* ==========================================================================
+   MIKROGESTOR — DESIGN TOKENS: PALETA DE CORES (LIGHT / DARK)
+   ==========================================================================
+   Para alterar qualquer cor do sistema inteiro no futuro, basta mudar os valores
+   neste único arquivo. Todas as páginas e componentes consomem estas variáveis.
+   ========================================================================== */
+
+:root,
+[data-theme="light"] {
+  /* ── 1. Superfícies & Fundo ── */
+  --mg-app-bg: #f4f6fa;
+  --mg-card-bg: #ffffff;
+  --mg-card-bg-subtle: #f8fafc;
+  --mg-card-border: #e2e8f0;
+  --mg-card-border-subtle: #f1f5f9;
+
+  /* ── 2. Tipografia & Hierarquia de Texto ── */
+  --mg-text-heading: #090d16;
+  --mg-text-body: #1e293b;
+  --mg-text-muted: #475569;
+  --mg-text-subtle: #64748b;
+
+  /* ── 3. Marca & Ação Primária ── */
+  --mg-primary: #2563eb;
+  --mg-primary-hover: #1d4ed8;
+  --mg-primary-active: #1e40af;
+  --mg-primary-text: #ffffff;
+  --mg-primary-light: #eff6ff;
+  --mg-primary-border: #bfdbfe;
+
+  /* ── 4. Formulários & Controles ── */
+  --mg-input-bg: #ffffff;
+  --mg-input-bg-focus: #ffffff;
+  --mg-input-border: #cbd5e1;
+  --mg-input-border-focus: #2563eb;
+  --mg-input-text: #090d16;
+  --mg-input-placeholder: #94a3b8;
+
+  /* ── 5. Tabelas ── */
+  --mg-table-th-bg: #f1f5f9;
+  --mg-table-th-text: #090d16;
+  --mg-table-row-hover: #f8fafc;
+  --mg-table-row-divide: #e2e8f0;
+  --mg-table-text: #1e293b;
+
+  /* ── 6. Menu Lateral (Sidebar) & Header ── */
+  --mg-sidebar-bg: #0f1322;
+  --mg-sidebar-border: #1e2538;
+  --mg-sidebar-text: #cbd5e1;
+  --mg-sidebar-text-hover: #ffffff;
+  --mg-sidebar-text-active: #ffffff;
+  --mg-sidebar-item-active-bg: #2563eb;
+  --mg-sidebar-footer-bg: #161927;
+
+  /* ── 7. Cores de Estado & Feedback ── */
+  --mg-success: #16a34a;
+  --mg-success-bg: #f0fdf4;
+  --mg-success-border: #bbf7d0;
+  --mg-success-text: #166534;
+
+  --mg-danger: #e11d48;
+  --mg-danger-bg: #fff1f2;
+  --mg-danger-border: #fecdd3;
+  --mg-danger-text: #9f1239;
+
+  --mg-warning: #d97706;
+  --mg-warning-bg: #fffbeb;
+  --mg-warning-border: #fde68a;
+  --mg-warning-text: #92400e;
+
+  --mg-info: #0284c7;
+  --mg-info-bg: #f0f9ff;
+  --mg-info-border: #bae6fd;
+  --mg-info-text: #075985;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MODO ESCURO (DARK THEME)
+   ══════════════════════════════════════════════════════════════════════════ */
+:is([data-theme="dark"], .dark) {
+  /* ── 1. Superfícies & Fundo ── */
+  --mg-app-bg: #090d16;
+  --mg-card-bg: #111726;
+  --mg-card-bg-subtle: #161e31;
+  --mg-card-border: #1e293b;
+  --mg-card-border-subtle: #192237;
+
+  /* ── 2. Tipografia & Hierarquia de Texto ── */
+  --mg-text-heading: #f8fafc;
+  --mg-text-body: #f1f5f9;
+  --mg-text-muted: #cbd5e1;
+  --mg-text-subtle: #94a3b8;
+
+  /* ── 3. Marca & Ação Primária ── */
+  --mg-primary: #3b82f6;
+  --mg-primary-hover: #2563eb;
+  --mg-primary-active: #1d4ed8;
+  --mg-primary-text: #ffffff;
+  --mg-primary-light: rgba(59, 130, 246, 0.15);
+  --mg-primary-border: rgba(59, 130, 246, 0.35);
+
+  /* ── 4. Formulários & Controles ── */
+  --mg-input-bg: #0e1524;
+  --mg-input-bg-focus: #141d30;
+  --mg-input-border: #334155;
+  --mg-input-border-focus: #3b82f6;
+  --mg-input-text: #f8fafc;
+  --mg-input-placeholder: #64748b;
+
+  /* ── 5. Tabelas ── */
+  --mg-table-th-bg: #1e2538;
+  --mg-table-th-text: #f8fafc;
+  --mg-table-row-hover: #161e31;
+  --mg-table-row-divide: #2d3748;
+  --mg-table-text: #f1f5f9;
+
+  /* ── 6. Menu Lateral (Sidebar) & Header ── */
+  --mg-sidebar-bg: #0d111d;
+  --mg-sidebar-border: #1a2236;
+  --mg-sidebar-text: #cbd5e1;
+  --mg-sidebar-text-hover: #f8fafc;
+  --mg-sidebar-text-active: #ffffff;
+  --mg-sidebar-item-active-bg: #2563eb;
+  --mg-sidebar-footer-bg: #0a0d17;
+
+  /* ── 7. Cores de Estado & Feedback ── */
+  --mg-success: #22c55e;
+  --mg-success-bg: rgba(34, 197, 94, 0.15);
+  --mg-success-border: rgba(34, 197, 94, 0.35);
+  --mg-success-text: #4ade80;
+
+  --mg-danger: #f43f5e;
+  --mg-danger-bg: rgba(244, 63, 94, 0.15);
+  --mg-danger-border: rgba(244, 63, 94, 0.35);
+  --mg-danger-text: #fb7185;
+
+  --mg-warning: #f59e0b;
+  --mg-warning-bg: rgba(245, 158, 11, 0.15);
+  --mg-warning-border: rgba(245, 158, 11, 0.35);
+  --mg-warning-text: #fbbf24;
+
+  --mg-info: #38bdf8;
+  --mg-info-bg: rgba(56, 189, 248, 0.15);
+  --mg-info-border: rgba(56, 189, 248, 0.35);
+  --mg-info-text: #7dd3fc;
+}

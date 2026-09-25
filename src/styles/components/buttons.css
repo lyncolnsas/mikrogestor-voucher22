@@ -1,0 +1,143 @@
+/* ==========================================================================
+   MIKROGESTOR — COMPONENTES: BOTÕES
+   ========================================================================== */
+
+/* ── Botão Base ── */
+.mg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--mg-font-sans);
+  font-size: var(--mg-text-xs);
+  font-weight: var(--mg-weight-bold);
+  padding: 0.625rem 1.125rem;
+  border-radius: var(--mg-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.25;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.mg-btn:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.mg-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ── Modificadores de Tamanho ── */
+.mg-btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: var(--mg-text-2xs);
+  border-radius: var(--mg-radius-sm);
+}
+
+.mg-btn-lg {
+  padding: 0.875rem 1.75rem;
+  font-size: var(--mg-text-base);
+  border-radius: var(--mg-radius-lg);
+}
+
+/* ── Botão Primário ── */
+.mg-btn-primary {
+  background-color: var(--mg-primary);
+  color: var(--mg-primary-text);
+  box-shadow: var(--mg-shadow-primary);
+}
+
+.mg-btn-primary:hover:not(:disabled) {
+  background-color: var(--mg-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--mg-shadow-primary-hover);
+}
+
+/* ── Botão Secundário / Neutro ── */
+.mg-btn-secondary {
+  background-color: var(--mg-card-bg);
+  color: var(--mg-text-body);
+  border-color: var(--mg-card-border);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-btn-secondary:hover:not(:disabled) {
+  background-color: var(--mg-card-bg-subtle);
+  color: var(--mg-text-heading);
+  border-color: var(--mg-input-border);
+}
+
+/* ── Botão de Sucesso ── */
+.mg-btn-success {
+  background-color: var(--mg-success);
+  color: #ffffff;
+}
+
+.mg-btn-success:hover:not(:disabled) {
+  filter: brightness(0.92);
+  transform: translateY(-1px);
+}
+
+/* ── Botão de Perigo / Exclusão ── */
+.mg-btn-danger {
+  background-color: var(--mg-danger);
+  color: #ffffff;
+}
+
+.mg-btn-danger:hover:not(:disabled) {
+  filter: brightness(0.92);
+  transform: translateY(-1px);
+}
+
+.mg-btn-danger-subtle {
+  background-color: transparent;
+  color: var(--mg-danger);
+  border-color: transparent;
+}
+
+.mg-btn-danger-subtle:hover:not(:disabled) {
+  background-color: var(--mg-danger-bg);
+  border-color: var(--mg-danger-border);
+}
+
+/* ── Botão de Alerta ── */
+.mg-btn-warning {
+  background-color: var(--mg-warning);
+  color: #ffffff;
+}
+
+.mg-btn-warning:hover:not(:disabled) {
+  filter: brightness(0.92);
+  transform: translateY(-1px);
+}
+
+/* ── Botão Ícone Rápido (Quadrado / Circular) ── */
+.mg-btn-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--mg-radius-md);
+  background-color: var(--mg-card-bg);
+  border: 1px solid var(--mg-card-border);
+  color: var(--mg-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mg-btn-icon:hover {
+  background-color: var(--mg-card-bg-subtle);
+  color: var(--mg-text-heading);
+}
+
+.mg-btn-icon-sm {
+  width: 1.75rem;
+  height: 1.75rem;
+}

@@ -52,7 +52,7 @@ export default function AdminSettings() {
         setMaxUsers(data.data.MAX_HOTSPOT_USERS || '0');
         setAdminPhone(data.data.ADMIN_WHATSAPP_PHONE || '');
       }
-    } catch (e) {}
+    } catch {}
 
     // Busca usuário atual autenticado
     try {
@@ -62,7 +62,7 @@ export default function AdminSettings() {
         setCurrentUsername(data.currentUser.username);
         setUsername(data.currentUser.username);
       }
-    } catch (e) {}
+    } catch {}
 
     // Busca status dos tokens de emergência
     try {
@@ -71,7 +71,7 @@ export default function AdminSettings() {
       if (data.success) {
         setTokenStatus({ available: data.available, used: data.used });
       }
-    } catch (e) {}
+    } catch {}
   };
 
   const handleSaveAdminPhone = async () => {
@@ -88,7 +88,7 @@ export default function AdminSettings() {
       } else {
         alert('Erro ao salvar telefone.');
       }
-    } catch (e) {
+    } catch {
       alert('Erro de conexão ao salvar telefone.');
     } finally {
       setSavingPhone(false);
@@ -117,7 +117,7 @@ export default function AdminSettings() {
       } else {
         alert(data.message || 'Erro ao gerar tokens.');
       }
-    } catch (e) {
+    } catch {
       alert('Erro de conexão ao gerar tokens de emergência.');
     } finally {
       setGeneratingTokens(false);
@@ -138,7 +138,7 @@ export default function AdminSettings() {
       if (data.success) {
         setFreeWifiMode(newValue);
       }
-    } catch (e) {} finally {
+    } catch {} finally {
       setSavingFreeWifi(false);
     }
   };
@@ -155,7 +155,7 @@ export default function AdminSettings() {
       if (data.success) {
         alert('Limite atualizado!');
       }
-    } catch (e) {
+    } catch {
       alert('Erro ao salvar limite.');
     } finally {
       setSavingMaxUsers(false);
@@ -177,8 +177,15 @@ export default function AdminSettings() {
   };
 
   useEffect(() => {
-    fetchRouters();
-    fetchSystemConfig();
+    let ignore = false;
+    const init = async () => {
+      if (ignore) return;
+      await fetchRouters();
+      if (ignore) return;
+      await fetchSystemConfig();
+    };
+    init();
+    return () => { ignore = true; };
   }, []);
 
   const handleScanNetwork = async () => {
@@ -194,7 +201,7 @@ export default function AdminSettings() {
       } else {
         alert('Erro ao escanear a rede: ' + data.error);
       }
-    } catch (err) {
+    } catch {
       alert('Erro de conexão ao escanear a rede.');
     } finally {
       setScanning(false);
@@ -225,11 +232,11 @@ export default function AdminSettings() {
       const data = await res.json();
       if (data.success) {
         alert(data.message || 'Credenciais atualizadas com sucesso! Você será redirecionado para a tela de login.');
-        window.location.href = '/';
+        window.location.assign('/');
       } else {
         alert(data.message || 'Erro ao atualizar credenciais.');
       }
-    } catch (err) {
+    } catch {
       alert('Erro de conexão ao salvar.');
     } finally {
       setSaving(false);
@@ -251,7 +258,7 @@ export default function AdminSettings() {
         setShowRouterForm(false);
         fetchRouters();
       }
-    } catch (err) {
+    } catch {
       alert('Erro de conexão ao salvar router.');
     }
   };
@@ -267,7 +274,7 @@ export default function AdminSettings() {
       const data = await res.json();
       if (data.success) fetchRouters();
       else alert(data.message);
-    } catch (err) {
+    } catch {
       alert('Erro ao excluir.');
     }
   };
@@ -284,11 +291,11 @@ export default function AdminSettings() {
       const data = await res.json();
       if (data.success) {
         alert('Conectado com sucesso a ' + router.name + '!');
-        window.location.href = '/dashboard';
+        window.location.assign('/dashboard');
       } else {
         alert('Erro ao conectar: ' + data.message);
       }
-    } catch (e) {
+    } catch {
       alert('Erro de rede ao conectar.');
     } finally {
       setConnectingId(null);
@@ -430,7 +437,7 @@ export default function AdminSettings() {
                     </div>
                     <div className="space-y-1">
                       <p className="text-slate-950 text-sm font-black">Nenhum Roteador Cadastrado</p>
-                      <p className="text-slate-700 text-xs font-semibold leading-normal">Cadastre um MikroTik no botão "+ Adicionar Roteador" acima para inicializar a integração do painel.</p>
+                      <p className="text-slate-700 text-xs font-semibold leading-normal">Cadastre um MikroTik no botão &quot;+ Adicionar Roteador&quot; acima para inicializar a integração do painel.</p>
                     </div>
                     <span className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full border bg-amber-100 text-amber-900 border-amber-300">
                       BANCO: {dbStatus}

@@ -1,17 +1,11 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Eye, 
   RotateCcw, 
-  Sparkles, 
-  ShieldCheck, 
-  Volume2, 
-  VolumeX, 
-  X, 
-  ChevronLeft, 
-  ChevronRight,
-  Maximize2
+  X
 } from 'lucide-react';
 
 interface StudioCanvasProps {
@@ -40,18 +34,16 @@ export default function StudioCanvas({
   const [simulatedTimer, setSimulatedTimer] = useState(0);
   const [simulatedActiveIndex, setSimulatedActiveIndex] = useState(0);
   const [simulatorMuted, setSimulatorMuted] = useState(true);
-  const [mediaLoaded, setMediaLoaded] = useState(true);
   const activeVideoRef = useRef<HTMLVideoElement | null>(null);
 
   // Iniciar vídeo imediatamente sem telas de espera ou pausas acidentais
   useEffect(() => {
-    setMediaLoaded(true);
     if (!showSimulatedAd) {
       if (activeVideoRef.current) {
         try {
           activeVideoRef.current.pause();
           activeVideoRef.current.currentTime = 0;
-        } catch (err) {}
+        } catch {}
       }
       return;
     }
@@ -135,20 +127,26 @@ export default function StudioCanvas({
   // Handle ad countdown
   useEffect(() => {
     if (!showSimulatedAd || !ad?.timerEnabled) {
-      setSimulatedTimer(0);
-      return;
+      const frame = requestAnimationFrame(() => setSimulatedTimer(0));
+      return () => cancelAnimationFrame(frame);
     }
-    setSimulatedTimer(ad.timerDuration || 5);
-    const interval = setInterval(() => {
-      setSimulatedTimer(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
+    let interval: ReturnType<typeof setInterval>;
+    const frame = requestAnimationFrame(() => {
+      setSimulatedTimer(ad.timerDuration || 5);
+      interval = setInterval(() => {
+        setSimulatedTimer(prev => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      if (interval) clearInterval(interval);
+    };
   }, [showSimulatedAd, ad?.timerEnabled, ad?.timerDuration]);
 
   // Handle carousel auto-play com salvaguarda para vídeos (nunca fica estático)
@@ -283,18 +281,14 @@ export default function StudioCanvas({
                               loop={ad.type !== 'carousel' || carouselItems.length <= 1}
                               playsInline
                               onLoadedMetadata={(e) => {
-                                setMediaLoaded(true);
                                 e.currentTarget.play().catch(() => {});
                               }}
                               onLoadedData={(e) => {
-                                setMediaLoaded(true);
                                 e.currentTarget.play().catch(() => {});
                               }}
                               onCanPlay={(e) => {
-                                setMediaLoaded(true);
                                 e.currentTarget.play().catch(() => {});
                               }}
-                              onPlaying={() => setMediaLoaded(true)}
                               onPause={(e) => {
                                 // No banner único (sem carrossel), garante que o vídeo continue reproduzindo sem travar ao tocar
                                 const target = e.currentTarget;
@@ -306,13 +300,12 @@ export default function StudioCanvas({
                                 try {
                                   e.currentTarget.pause();
                                   e.currentTarget.currentTime = 0;
-                                } catch (err) {}
+                                } catch {}
                                 if (ad.type === 'carousel' && carouselItems.length > 1) {
                                   setSimulatedActiveIndex(prev => (prev + 1) % carouselItems.length);
                                 }
                               }}
                               onError={() => {
-                                setMediaLoaded(true);
                                 if (ad.type === 'carousel' && carouselItems.length > 1) {
                                   setTimeout(() => {
                                     setSimulatedActiveIndex(prev => (prev + 1) % carouselItems.length);

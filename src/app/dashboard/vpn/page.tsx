@@ -6,7 +6,6 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import {
   Shield,
   Plus,
@@ -15,12 +14,9 @@ import {
   Download,
   Trash2,
   RefreshCw,
-  Terminal,
-  Server,
   Wifi,
   ExternalLink,
   AlertTriangle,
-  ArrowRight,
   Lock,
   Globe,
   Smartphone,
@@ -30,7 +26,6 @@ import {
   CheckCircle2,
   Info,
   Sparkles,
-  Key,
   Eye,
   EyeOff,
 } from "lucide-react";
@@ -254,8 +249,9 @@ function CreateTunnelModal({
         password: data.password,
       });
       onSuccess();
-    } catch (err: any) {
-      setError(err?.message || "Falha na comunicação com o servidor.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Falha na comunicação com o servidor.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -673,8 +669,9 @@ function CreatePeerModal({ onClose, onSuccess }: CreatePeerModalProps) {
       }
 
       onSuccess();
-    } catch (err: any) {
-      setError(err?.message || "Falha na comunicação ao criar peer.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Falha na comunicação ao criar peer.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -738,9 +735,9 @@ function CreatePeerModal({ onClose, onSuccess }: CreatePeerModalProps) {
                 </label>
                 <div className="grid grid-cols-3 gap-2.5">
                   {[
-                    { id: "windows", label: "Windows PC", icon: Monitor, desc: "Winbox nativo" },
-                    { id: "android", label: "Celular Android", icon: Smartphone, desc: "QR Code" },
-                    { id: "ios", label: "iPhone / iPad", icon: Smartphone, desc: "QR Code" },
+                    { id: "windows" as const, label: "Windows PC", icon: Monitor, desc: "Winbox nativo" },
+                    { id: "android" as const, label: "Celular Android", icon: Smartphone, desc: "QR Code" },
+                    { id: "ios" as const, label: "iPhone / iPad", icon: Smartphone, desc: "QR Code" },
                   ].map((dev) => {
                     const Icon = dev.icon;
                     const selected = deviceType === dev.id;
@@ -748,7 +745,7 @@ function CreatePeerModal({ onClose, onSuccess }: CreatePeerModalProps) {
                       <button
                         key={dev.id}
                         type="button"
-                        onClick={() => setDeviceType(dev.id as any)}
+                        onClick={() => setDeviceType(dev.id)}
                         className={`p-3 rounded-2xl border text-left flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
                           selected
                             ? "bg-blue-50/80 border-blue-500 text-blue-900 shadow-xs ring-2 ring-blue-500/20"
@@ -1129,10 +1126,41 @@ export default function VpnPage() {
   }, []);
 
   useEffect(() => {
-    loadStatus();
-    const interval = setInterval(loadStatus, 30000);
-    return () => clearInterval(interval);
-  }, [loadStatus]);
+    let isSubscribed = true;
+    const fetchStatus = async () => {
+      try {
+        const [statusRes, routersRes, peersRes] = await Promise.all([
+          fetch("/api/vpn/status"),
+          fetch("/api/system/routers").catch(() => null),
+          fetch("/api/vpn/peers").catch(() => null),
+        ]);
+
+        if (statusRes.ok && isSubscribed) {
+          const data = await statusRes.json();
+          setVpnRouters(data.routers ?? []);
+        }
+        if (routersRes?.ok && isSubscribed) {
+          const data = await routersRes.json();
+          setAllRouters(data?.routers ?? []);
+        }
+        if (peersRes?.ok && isSubscribed) {
+          const data = await peersRes.json();
+          setPeers(data?.peers ?? []);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (isSubscribed) setLoading(false);
+      }
+    };
+
+    void fetchStatus();
+    const interval = setInterval(fetchStatus, 30000);
+    return () => {
+      isSubscribed = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   const revokeRouter = async (routerId: string, routerName: string) => {
     if (!confirm(`Revogar acesso VPN do roteador '${routerName}'? O MikroTik perderá a conexão com a plataforma.`)) return;
@@ -1164,13 +1192,14 @@ export default function VpnPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        alert(data.message || "Erro ao sincronizar certificado SSL.");
+        alert(data.message || `Erro ao sincronizar certificado SSL do roteador '${routerName}'.`);
       } else {
-        alert(data.message || "SSL sincronizado com sucesso!");
+        alert(data.message || `SSL do roteador '${routerName}' sincronizado com sucesso!`);
         await loadStatus();
       }
-    } catch (e: any) {
-      alert("Falha na comunicação ao sincronizar SSL: " + (e?.message || e));
+    } catch (e: unknown) {
+      const errorMsg = e instanceof Error ? e.message : String(e);
+      alert(`Falha na comunicação ao sincronizar SSL do roteador '${routerName}': ${errorMsg}`);
     } finally {
       setSyncingSsl(null);
     }
@@ -1182,21 +1211,21 @@ export default function VpnPage() {
   const totalConnected = connectedRouters + connectedPeers;
 
   return (
-    <main className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 animate-fade-in">
+    <main className="mg-page-container max-w-6xl mx-auto">
       {/* ── Top Header ────────────────────────────────────────────── */}
-      <header className="bg-white border border-slate-200/80 shadow-sm rounded-3xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <header className="mg-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]" />
-            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">
+            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--mg-primary)' }}>
               REMOTE ACCESS // WIREGUARD VPN GATEWAY
             </span>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Shield className="w-6 h-6 text-blue-600" />
+          <h1 className="mg-page-title flex items-center gap-2.5">
+            <Shield className="w-6 h-6 text-blue-500" />
             VPN Control
           </h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="mg-page-subtitle mt-0.5">
             Gerenciamento de túneis seguros para MikroTiks, computadores e celulares com acesso direto ao Winbox
           </p>
         </div>
@@ -1205,7 +1234,7 @@ export default function VpnPage() {
           <button
             type="button"
             onClick={() => setShowCreatePeerModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-indigo-500/20 transition-all cursor-pointer transform hover:-translate-y-0.5"
+            className="mg-btn mg-btn-secondary inline-flex items-center gap-2 text-xs uppercase tracking-wider"
           >
             <Laptop className="w-4 h-4" />
             <span>+ Conectar PC / Celular</span>
@@ -1217,7 +1246,7 @@ export default function VpnPage() {
               setSelectedForConfig(null);
               setShowCreateModal(true);
             }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-blue-500/25 transition-all cursor-pointer transform hover:-translate-y-0.5"
+            className="mg-btn mg-btn-primary inline-flex items-center gap-2 text-xs uppercase tracking-wider"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>+ Novo MikroTik</span>

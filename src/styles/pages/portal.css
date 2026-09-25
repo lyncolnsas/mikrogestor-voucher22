@@ -1,0 +1,29 @@
+/* ==========================================================================
+   MIKROGESTOR — PÁGINA: CONFIGURAÇÃO DO PORTAL & STUDIO (/dashboard/portal)
+   ========================================================================== */
+
+.mg-portal-preview-frame {
+  max-width: 380px;
+  width: 100%;
+  aspect-ratio: 9 / 19.5;
+  border-radius: 40px;
+  border: 10px solid #1e293b;
+  box-shadow: var(--mg-shadow-modal);
+  overflow: hidden;
+  background-color: #000;
+  position: relative;
+}
+
+.mg-studio-tool-card {
+  background-color: var(--mg-card-bg);
+  border: 1px solid var(--mg-card-border);
+  border-radius: var(--mg-radius-lg);
+  padding: 1.25rem;
+}
+
+.mg-preset-dot {
+  width: 1rem;
+  height: 1rem;
+  border-radius: var(--mg-radius-full);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}

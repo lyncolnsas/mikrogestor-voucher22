@@ -1,12 +1,12 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, 
   Sparkles, 
   Send, 
-  RefreshCw, 
   CheckCircle2, 
   AlertCircle, 
   Settings2, 
@@ -45,7 +45,6 @@ export default function SorteadorPage() {
   const [isRolling, setIsRolling] = useState(false);
   const [rollingCandidate, setRollingCandidate] = useState<Lead | null>(null);
   const [winner, setWinner] = useState<Lead | null>(null);
-  const [winnerHistory, setWinnerHistory] = useState<Lead[]>([]);
   
   // WhatsApp Message config
   const [whatsappMsg, setWhatsappMsg] = useState(
@@ -58,7 +57,7 @@ export default function SorteadorPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Fetch leads
-  const fetchEligibleLeads = async () => {
+  const fetchEligibleLeads = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -74,11 +73,18 @@ export default function SorteadorPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [onlyUndrawn]);
 
   useEffect(() => {
-    fetchEligibleLeads();
-  }, [onlyUndrawn]);
+    let ignore = false;
+    const run = async () => {
+      if (!ignore) {
+        await fetchEligibleLeads();
+      }
+    };
+    run();
+    return () => { ignore = true; };
+  }, [fetchEligibleLeads]);
 
   // Confetti Particle System
   const triggerConfetti = () => {
@@ -118,7 +124,6 @@ export default function SorteadorPage() {
       });
     }
 
-    let animationFrameId: number;
     const startTime = Date.now();
 
     const animate = () => {
@@ -144,7 +149,7 @@ export default function SorteadorPage() {
       });
 
       if (elapsed < 4000) {
-        animationFrameId = requestAnimationFrame(animate);
+        requestAnimationFrame(animate);
       } else {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
@@ -253,7 +258,7 @@ export default function SorteadorPage() {
           error: data.messageError || 'Instância do WhatsApp não está conectada no momento.' 
         });
       }
-    } catch (e: any) {
+    } catch {
       setMsgStatus({ success: false, error: 'Falha de comunicação ao disparar mensagem.' });
     } finally {
       setSendingMsg(false);
@@ -393,6 +398,13 @@ export default function SorteadorPage() {
             </div>
           </div>
         </div>
+
+        {error && (
+          <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
 
         {/* ── STAGE 1: ROLLING SUSPENSE ANIMATION ── */}
         {isRolling && (

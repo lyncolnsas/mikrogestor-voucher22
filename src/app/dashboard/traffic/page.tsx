@@ -61,25 +61,28 @@ export default function TrafficMonitor() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    let ignore = false;
     const fetchInterfaces = async () => {
       try {
         const res = await fetch('/api/traffic');
         if (res.status === 401) {
-          setNotConnected(true);
+          if (!ignore) setNotConnected(true);
           return;
         }
         const data = await res.json();
-        if (data.success && data.type === 'interfaces') {
+        if (data.success && data.type === 'interfaces' && !ignore) {
           setInterfaces(data.data);
           if (data.data.length > 0) setSelectedIface(data.data[0].name);
           setNotConnected(false);
         }
       } catch {
         // Ignorar erros na listagem inicial
+      } finally {
+        if (!ignore) setMounted(true);
       }
     };
     fetchInterfaces();
-    setMounted(true);
+    return () => { ignore = true; };
   }, []);
 
   useEffect(() => {

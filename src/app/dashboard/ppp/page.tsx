@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import RouterOffline from '@/components/RouterOffline';
 
 export default function PPPoESecrets() {
@@ -23,7 +22,7 @@ export default function PPPoESecrets() {
           setSecrets(data.data);
           setNotConnected(false);
         }
-      } catch (e) {} finally {
+      } catch {} finally {
         setLoading(false);
       }
     };

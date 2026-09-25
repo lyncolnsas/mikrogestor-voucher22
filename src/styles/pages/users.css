@@ -1,0 +1,23 @@
+/* ==========================================================================
+   MIKROGESTOR — PÁGINA: CENTRAL DE VOUCHERS & ACESSO (/dashboard/users)
+   ========================================================================== */
+
+.mg-voucher-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--mg-card-bg);
+  border: 1px solid var(--mg-card-border);
+  border-radius: var(--mg-radius-lg);
+  padding: 0.75rem 1rem;
+}
+
+.mg-voucher-row-selected {
+  background-color: var(--mg-primary-light) !important;
+}
+
+.mg-batch-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}

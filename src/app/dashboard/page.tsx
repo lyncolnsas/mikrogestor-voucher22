@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
   ResponsiveContainer,
@@ -9,11 +9,8 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  LineChart,
-  Line,
   BarChart,
   Bar,
-  Cell,
 } from 'recharts';
 import {
   TrendingUp,
@@ -21,10 +18,7 @@ import {
   Users,
   Cpu,
   ArrowUpRight,
-  MoreHorizontal,
   Wifi,
-  Clock,
-  CheckCircle2,
   AlertCircle,
   Plus,
   ArrowUp,
@@ -45,13 +39,8 @@ export default function Dashboard() {
 
   const [error, setError] = useState('');
   const [notConnected, setNotConnected] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const res = await fetch('/api/dashboard/stats');
       if (res.status === 401) { setNotConnected(true); setLoading(false); return; }
@@ -63,35 +52,46 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchStats();
-    const interval = setInterval(fetchStats, 10000);
-    return () => clearInterval(interval);
-  }, []);
+    let ignore = false;
+    const run = async () => {
+      if (!ignore) {
+        await fetchStats();
+      }
+    };
+    run();
+    const interval = setInterval(() => {
+      if (!ignore) fetchStats();
+    }, 10000);
+    return () => {
+      ignore = true;
+      clearInterval(interval);
+    };
+  }, [fetchStats]);
 
   const totalMemory = stats?.totalMemory || 1;
   const freeMemory = stats?.freeMemory || 0;
   const memUsedPercent = Math.min(100, Math.max(0, Math.round(((totalMemory - freeMemory) / totalMemory) * 100)));
 
   return (
-    <main className="p-4 md:p-8 flex flex-col gap-6 max-w-7xl mx-auto w-full">
+    <main className="mg-page-container">
 
       {/* ── TOP GREETING BAR ────────────────────────────────────────────── */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+      <header className="mg-page-header-row">
+        <div className="mg-page-header">
+          <h1 className="mg-page-title">
             Olá, Bem-vindo de volta! 👋
           </h1>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
+          <p className="mg-page-subtitle">
             Monitoramento e controle de vendas e telemetria MikroTik em tempo real
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           {stats && (
-            <div className="hidden lg:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-[#111726] border border-slate-200 dark:border-slate-800 shadow-sm text-xs font-semibold text-slate-700 dark:text-slate-200">
+            <div className="hidden lg:flex items-center gap-2 px-3.5 py-2 rounded-xl mg-card text-xs font-semibold">
               <span className={`w-2 h-2 rounded-full ${stats.offline ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`} />
               <span>{stats.identity}</span>
               <span className="text-slate-300 dark:text-slate-700">|</span>
@@ -103,7 +103,7 @@ export default function Dashboard() {
 
           <Link
             href="/dashboard/users?tab=batch"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 cursor-pointer"
+            className="mg-btn mg-btn-primary"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             Gerar Vouchers
@@ -113,8 +113,8 @@ export default function Dashboard() {
 
       {/* ── ERROR BANNER ──────────────────────────────────────────────── */}
       {error && !stats && (
-        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 flex items-center gap-3 text-sm font-semibold">
-          <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
+        <div className="mg-alert mg-alert-danger">
+          <AlertCircle className="w-5 h-5 shrink-0" />
           <span>Erro no sistema: {error}</span>
         </div>
       )}
@@ -209,13 +209,7 @@ export default function Dashboard() {
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
             {/* CARD 1: TOTAL SALES (TEAL / EMERALD) */}
-            <div
-              className="p-5 flex items-center justify-between relative overflow-hidden group rounded-2xl text-white"
-              style={{
-                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                boxShadow: '0 10px 24px -4px rgba(5, 150, 105, 0.4)',
-              }}
-            >
+            <div className="mg-stat-card mg-stat-teal group">
               <div className="flex flex-col justify-between h-full z-10">
                 <span className="text-xs font-black uppercase tracking-wider text-white">
                   Total Sales
@@ -232,21 +226,13 @@ export default function Dashboard() {
                   <span>este mês</span>
                 </div>
               </div>
-              <div 
-                className="w-11 h-11 rounded-full flex items-center justify-center shadow-md shrink-0 text-emerald-700 bg-white group-hover:scale-110 transition-transform"
-              >
+              <div className="mg-stat-icon-badge text-emerald-700">
                 <ArrowUpRight className="w-6 h-6 stroke-[2.5]" />
               </div>
             </div>
 
             {/* CARD 2: TOTAL PURCHASES (VIBRANT BLUE) */}
-            <div
-              className="p-5 flex items-center justify-between relative overflow-hidden group rounded-2xl text-white"
-              style={{
-                background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
-                boxShadow: '0 10px 24px -4px rgba(29, 78, 216, 0.4)',
-              }}
-            >
+            <div className="mg-stat-card mg-stat-blue group">
               <div className="flex flex-col justify-between h-full z-10">
                 <span className="text-xs font-black uppercase tracking-wider text-white">
                   Total Purchases
@@ -263,21 +249,13 @@ export default function Dashboard() {
                   <span>este mês</span>
                 </div>
               </div>
-              <div 
-                className="w-11 h-11 rounded-full flex items-center justify-center shadow-md shrink-0 text-blue-700 bg-white group-hover:scale-110 transition-transform"
-              >
+              <div className="mg-stat-icon-badge text-blue-700">
                 <ShoppingBag className="w-5 h-5 stroke-[2.2]" />
               </div>
             </div>
 
             {/* CARD 3: TOTAL ORDERS (CARMIM / ROSE) */}
-            <div
-              className="p-5 flex items-center justify-between relative overflow-hidden group rounded-2xl text-white"
-              style={{
-                background: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)',
-                boxShadow: '0 10px 24px -4px rgba(225, 29, 72, 0.4)',
-              }}
-            >
+            <div className="mg-stat-card mg-stat-rose group">
               <div className="flex flex-col justify-between h-full z-10">
                 <span className="text-xs font-black uppercase tracking-wider text-white">
                   Total Orders
@@ -294,21 +272,13 @@ export default function Dashboard() {
                   <span>{stats.totalUsersCount} cadastrados</span>
                 </div>
               </div>
-              <div 
-                className="w-11 h-11 rounded-full flex items-center justify-center shadow-md shrink-0 text-rose-700 bg-white group-hover:scale-110 transition-transform"
-              >
+              <div className="mg-stat-icon-badge text-rose-700">
                 <Users className="w-5 h-5 stroke-[2.2]" />
               </div>
             </div>
 
             {/* CARD 4: TOTAL GROWTH / HARDWARE (SOLAR ORANGE) */}
-            <div
-              className="p-5 flex items-center justify-between relative overflow-hidden group rounded-2xl text-white"
-              style={{
-                background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-                boxShadow: '0 10px 24px -4px rgba(234, 88, 12, 0.4)',
-              }}
-            >
+            <div className="mg-stat-card mg-stat-orange group">
               <div className="flex flex-col justify-between h-full z-10">
                 <span className="text-xs font-black uppercase tracking-wider text-white">
                   Total Growth
@@ -325,9 +295,7 @@ export default function Dashboard() {
                   <span>CPU Load</span>
                 </div>
               </div>
-              <div 
-                className="w-11 h-11 rounded-full flex items-center justify-center shadow-md shrink-0 text-amber-700 bg-white group-hover:scale-110 transition-transform"
-              >
+              <div className="mg-stat-icon-badge text-amber-700">
                 <TrendingUp className="w-6 h-6 stroke-[2.5]" />
               </div>
             </div>

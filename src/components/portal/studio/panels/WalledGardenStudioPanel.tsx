@@ -9,20 +9,17 @@ import {
   Plus, 
   Trash2, 
   RefreshCw, 
-  ExternalLink,
   Zap
 } from 'lucide-react';
 
 interface WalledGardenStudioPanelProps {
   bg: any;
-  social: any;
+  social?: any;
   onRefreshTrigger?: () => void;
 }
 
 export default function WalledGardenStudioPanel({
   bg,
-  social,
-  onRefreshTrigger,
 }: WalledGardenStudioPanelProps) {
   const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,15 +49,18 @@ export default function WalledGardenStudioPanel({
       if (data.success) {
         setEntries(data.entries || []);
       }
-    } catch (err) {
-      console.error('Erro ao buscar Walled Garden:', err);
+    } catch {
+      // Ignorar erro de conexão ou timeout
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchWalledGarden();
+    const frame = requestAnimationFrame(() => {
+      fetchWalledGarden();
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const handleAddHost = async (hostToAdd?: string) => {

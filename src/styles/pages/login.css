@@ -1,0 +1,64 @@
+/* ==========================================================================
+   MIKROGESTOR — PÁGINA: AUTENTICAÇÃO ADMINISTRATIVA (/)
+   ========================================================================== */
+
+.mg-login-canvas {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--mg-app-bg);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.mg-login-card {
+  width: 100%;
+  max-width: 420px;
+  background-color: var(--mg-card-bg);
+  border: 1px solid var(--mg-card-border);
+  border-radius: var(--mg-radius-xl);
+  padding: 2rem;
+  box-shadow: var(--mg-shadow-modal);
+  position: relative;
+  z-index: 10;
+}
+
+.mg-login-logo-box {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--mg-radius-lg);
+  background: linear-gradient(135deg, var(--mg-primary) 0%, #6366f1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  box-shadow: var(--mg-shadow-primary);
+  color: #ffffff;
+}
+
+.mg-login-title {
+  font-size: var(--mg-text-xl);
+  font-weight: var(--mg-weight-black);
+  color: var(--mg-text-heading);
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.mg-login-subtitle {
+  font-size: var(--mg-text-xs);
+  font-weight: var(--mg-weight-medium);
+  color: var(--mg-text-muted);
+  text-align: center;
+  margin-top: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.mg-otp-badge-box {
+  padding: 0.875rem;
+  border-radius: var(--mg-radius-md);
+  background-color: var(--mg-card-bg-subtle);
+  border: 1px solid var(--mg-card-border);
+  text-align: center;
+}

@@ -1,0 +1,21 @@
+/* ==========================================================================
+   MIKROGESTOR — PÁGINA: SEGURANÇA & CONTROLE DE ACESSO (/dashboard/security)
+   ========================================================================== */
+
+.mg-firewall-rule-card {
+  background-color: var(--mg-card-bg);
+  border: 1px solid var(--mg-card-border);
+  border-radius: var(--mg-radius-lg);
+  padding: 1.25rem;
+}
+
+.mg-blacklist-badge {
+  background-color: var(--mg-danger-bg);
+  color: var(--mg-danger-text);
+  border: 1px solid var(--mg-danger-border);
+  font-family: var(--mg-font-mono);
+  font-weight: var(--mg-weight-bold);
+  font-size: var(--mg-text-xs);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--mg-radius-sm);
+}

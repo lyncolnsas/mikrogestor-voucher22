@@ -1,0 +1,66 @@
+/* ==========================================================================
+   MIKROGESTOR — PÁGINA: VISÃO GERAL (/dashboard)
+   ========================================================================== */
+
+/* ── Stat Metric Cards ── */
+.mg-stat-card {
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--mg-radius-lg);
+  color: #ffffff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mg-stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.mg-stat-teal {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 10px 24px -4px rgba(5, 150, 105, 0.4);
+}
+
+.mg-stat-blue {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  box-shadow: 0 10px 24px -4px rgba(29, 78, 216, 0.4);
+}
+
+.mg-stat-rose {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  box-shadow: 0 10px 24px -4px rgba(225, 29, 72, 0.4);
+}
+
+.mg-stat-orange {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  box-shadow: 0 10px 24px -4px rgba(234, 88, 12, 0.4);
+}
+
+.mg-stat-icon-badge {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--mg-radius-full);
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.mg-stat-card:hover .mg-stat-icon-badge {
+  transform: scale(1.1);
+}
+
+/* Gráficos Recharts Tooltip */
+.recharts-default-tooltip {
+  background-color: var(--mg-card-bg) !important;
+  border-color: var(--mg-card-border) !important;
+  border-radius: var(--mg-radius-md) !important;
+  box-shadow: var(--mg-shadow-modal) !important;
+  color: var(--mg-text-heading) !important;
+}

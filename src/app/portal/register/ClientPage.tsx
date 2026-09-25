@@ -258,7 +258,7 @@ function LiveCanvasEffect({ effect, speed, brand, green, blue, brandDark }: { ef
           ctx.beginPath();
           for (let x = 0; x < canvas.width; x += 10) {
             const y = canvas.height * 0.5 + Math.sin(x * 0.005 + t + i) * 100 * Math.sin(t * 0.5);
-            i === 0 ? ctx.lineTo(x, y) : ctx.lineTo(x, y + i * 50);
+            ctx.lineTo(x, i === 0 ? y : y + i * 50);
           }
           ctx.strokeStyle = i === 0 ? brand : i === 1 ? green : blue;
           ctx.stroke();
@@ -1662,10 +1662,13 @@ export default function AutoCadastro({ initialConfig }: { initialConfig: any }) 
   const [isClientIframe, setIsClientIframe] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-    if (typeof window !== 'undefined') {
-      setIsClientIframe(window.self !== window.top);
-    }
+    const frame = requestAnimationFrame(() => {
+      setIsMounted(true);
+      if (typeof window !== 'undefined') {
+        setIsClientIframe(window.self !== window.top);
+      }
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const markTouched = (field: string) => {
@@ -1756,7 +1759,7 @@ export default function AutoCadastro({ initialConfig }: { initialConfig: any }) 
 
   // Configuração de Planos & Venda Pix com Grace Period de 15 Minutos (Desativado se Modo Evento / Wi-Fi Gratuito)
   const isFreeWifi = Boolean(initialConfig?.freeWifiMode);
-  const [plans, setPlans] = useState<any[]>(() => (isFreeWifi ? [] : (initialConfig?.plans || [])));
+  const [plans] = useState<any[]>(() => (isFreeWifi ? [] : (initialConfig?.plans || [])));
   const [saleMode, setSaleMode] = useState<boolean>(() => {
     if (isFreeWifi) return false;
     if (initialConfig?.saleMode !== undefined) return Boolean(initialConfig.saleMode);
@@ -2167,14 +2170,17 @@ export default function AutoCadastro({ initialConfig }: { initialConfig: any }) 
 
   // Keep ad timer and countdown in sync with ad configuration
   useEffect(() => {
-    if (ad && ad.type !== 'none' && ad.timerEnabled) {
-      const duration = typeof ad.timerDuration === 'number' && ad.timerDuration > 0 ? ad.timerDuration : 5;
-      setTimeLeft(duration);
-      setTimerActive(true);
-    } else {
-      setTimeLeft(0);
-      setTimerActive(false);
-    }
+    const handle = requestAnimationFrame(() => {
+      if (ad && ad.type !== 'none' && ad.timerEnabled) {
+        const duration = typeof ad.timerDuration === 'number' && ad.timerDuration > 0 ? ad.timerDuration : 5;
+        setTimeLeft(duration);
+        setTimerActive(true);
+      } else {
+        setTimeLeft(0);
+        setTimerActive(false);
+      }
+    });
+    return () => cancelAnimationFrame(handle);
   }, [ad?.type, ad?.timerEnabled, ad?.timerDuration, ad?.mediaUrl]);
 
   // Countdown Timer Effect for Advertisement

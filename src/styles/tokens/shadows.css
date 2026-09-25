@@ -1,0 +1,35 @@
+/* ==========================================================================
+   MIKROGESTOR — DESIGN TOKENS: SOMBRAS, ELEVAÇÕES E GLOWS
+   ========================================================================== */
+
+:root {
+  /* Sombras de Superfície */
+  --mg-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --mg-shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --mg-shadow-card-hover: 0 6px 16px -4px rgba(0, 0, 0, 0.06), 0 2px 6px -2px rgba(0, 0, 0, 0.04);
+  --mg-shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+
+  /* Sombras de Botão e Ação */
+  --mg-shadow-primary: 0 4px 14px 0 rgba(37, 99, 235, 0.25);
+  --mg-shadow-primary-hover: 0 6px 18px 0 rgba(37, 99, 235, 0.35);
+  --mg-shadow-sidebar-active: 0 4px 14px rgba(37, 99, 235, 0.45);
+
+  /* Glows de LEDs e Indicadores */
+  --mg-glow-green: 0 0 10px rgba(34, 197, 94, 0.5);
+  --mg-glow-amber: 0 0 10px rgba(245, 158, 11, 0.5);
+  --mg-glow-red: 0 0 10px rgba(239, 68, 68, 0.5);
+  --mg-glow-blue: 0 0 10px rgba(59, 130, 246, 0.5);
+
+  /* Raios de Borda (Radius) */
+  --mg-radius-sm: 0.5rem;    /* 8px */
+  --mg-radius-md: 0.75rem;   /* 12px */
+  --mg-radius-lg: 1rem;      /* 16px */
+  --mg-radius-xl: 1.25rem;   /* 20px */
+  --mg-radius-full: 9999px;
+}
+
+:is([data-theme="dark"], .dark) {
+  --mg-shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  --mg-shadow-card-hover: 0 6px 20px -2px rgba(0, 0, 0, 0.5);
+  --mg-shadow-primary: 0 4px 14px 0 rgba(59, 130, 246, 0.3);
+}

@@ -69,31 +69,6 @@ function formatDuration(uptimeLimit: string | null): string {
   return uptimeLimit;
 }
 
-function parseUptimeToSeconds(uptime: string | null): number {
-  if (!uptime || uptime === 'none') return 0;
-  const dayMatch = uptime.match(/(\d+)d\s+(\d+):(\d+):(\d+)/);
-  if (dayMatch) {
-    const [, d, h, m, s] = dayMatch.map(Number);
-    return d * 86400 + h * 3600 + m * 60 + s;
-  }
-  const timeMatch = uptime.match(/(\d+):(\d+):(\d+)/);
-  if (timeMatch) {
-    const [, h, m, s] = timeMatch.map(Number);
-    return h * 3600 + m * 60 + s;
-  }
-  return 0;
-}
-
-function secondsToDisplay(secs: number): string {
-  if (secs <= 0) return '00:00:00';
-  const d = Math.floor(secs / 86400);
-  const h = Math.floor((secs % 86400) / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = secs % 60;
-  if (d > 0) return `${d}d ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-}
-
 function formatPrice(price: number): string {
   return price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
@@ -123,33 +98,22 @@ function Spinner() {
   );
 }
 
-function CountdownTimer({ activatedAt, uptimeLimit }: { activatedAt: string | null; uptimeLimit: string | null }) {
-  const [secs, setSecs] = useState(0);
-
-  useEffect(() => {
-    if (!activatedAt || !uptimeLimit) return;
-    const total = parseUptimeToSeconds(uptimeLimit);
-    const calc = () => {
-      const elapsed = Math.floor((Date.now() - new Date(activatedAt).getTime()) / 1000);
-      setSecs(Math.max(0, total - elapsed));
-    };
-    calc();
-    const t = setInterval(calc, 1000);
-    return () => clearInterval(t);
-  }, [activatedAt, uptimeLimit]);
-
-  const total = parseUptimeToSeconds(uptimeLimit);
-  const pct = total > 0 ? Math.min(100, ((total - secs) / total) * 100) : 0;
-
+function WifiBanner({ networkName }: { networkName: string }) {
   return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: 32, fontWeight: 700, fontFamily: 'monospace', color: secs > 300 ? '#10b981' : '#ef4444', letterSpacing: 2 }}>
-        {secondsToDisplay(secs)}
-      </div>
-      <div style={{ marginTop: 8, height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${pct}%`, background: secs > 300 ? '#10b981' : '#ef4444', borderRadius: 3, transition: 'width 1s linear' }} />
-      </div>
-      <div style={{ marginTop: 4, fontSize: 11, color: '#94a3b8' }}>Tempo restante</div>
+    <div style={{
+      background: 'rgba(245,158,11,0.1)',
+      border: '1px solid rgba(245,158,11,0.3)',
+      borderRadius: 10,
+      padding: '10px 14px',
+      fontSize: 12,
+      color: '#fbbf24',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 20,
+    }}>
+      <span>📶</span>
+      <span>Este portal funciona apenas conectado ao <strong>{networkName}</strong>.</span>
     </div>
   );
 }
@@ -159,16 +123,15 @@ function CountdownTimer({ activatedAt, uptimeLimit }: { activatedAt: string | nu
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface Props {
-  dnsName: string;
+  dnsName?: string;
   networkName: string;
 }
 
-export default function PlanosClientPage({ dnsName, networkName }: Props) {
+export default function PlanosClientPage({ networkName }: Props) {
   const [view, setView] = useState<View>('buy');
   const [loginTab, setLoginTab] = useState<LoginTab>('credentials');
   const [customer, setCustomer] = useState<CustomerData | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [freeWifiMode, setFreeWifiMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -266,9 +229,6 @@ export default function PlanosClientPage({ dnsName, networkName }: Props) {
       const json = await res.json();
       if (json.success) {
         setPlans(json.data);
-        if (json.freeWifiMode) {
-           setFreeWifiMode(true);
-        }
       }
     })();
   }, [view, plans.length]);
@@ -556,26 +516,6 @@ export default function PlanosClientPage({ dnsName, networkName }: Props) {
     },
   };
 
-  // ── WiFi Alert Banner ─────────────────────────────────────────────────────
-
-  const WifiBanner = () => (
-    <div style={{
-      background: 'rgba(245,158,11,0.1)',
-      border: '1px solid rgba(245,158,11,0.3)',
-      borderRadius: 10,
-      padding: '10px 14px',
-      fontSize: 12,
-      color: '#fbbf24',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      marginBottom: 20,
-    }}>
-      <span>📶</span>
-      <span>Este portal funciona apenas conectado ao <strong>{networkName}</strong>.</span>
-    </div>
-  );
-
   // ── View: LOGIN ────────────────────────────────────────────────────────────
 
   if (view === 'login') return (
@@ -588,7 +528,7 @@ export default function PlanosClientPage({ dnsName, networkName }: Props) {
           <p style={s.subtitle}>Acesse sua conta para gerenciar seus planos</p>
         </div>
 
-        <WifiBanner />
+        <WifiBanner networkName={networkName} />
 
         <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 22 }}>
           <button style={s.tab(loginTab === 'credentials')} onClick={() => setLoginTab('credentials')}>
@@ -688,7 +628,7 @@ export default function PlanosClientPage({ dnsName, networkName }: Props) {
           </button>
         </div>
 
-        <WifiBanner />
+        <WifiBanner networkName={networkName} />
 
         <button
           style={{ ...s.btn('primary'), marginBottom: 24 }}
@@ -904,6 +844,7 @@ export default function PlanosClientPage({ dnsName, networkName }: Props) {
         {pendingPayment?.pixQrCodeBase64 ? (
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
             <div style={{ background: '#fff', padding: 16, borderRadius: 16 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`data:image/png;base64,${pendingPayment.pixQrCodeBase64}`}
                 alt="QR Code Pix"

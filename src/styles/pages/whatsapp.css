@@ -1,0 +1,33 @@
+/* ==========================================================================
+   MIKROGESTOR — PÁGINA: WHATSAPP & PROTEÇÃO ANTI-BAN (/dashboard/whatsapp)
+   ========================================================================== */
+
+.mg-qr-card {
+  background-color: var(--mg-card-bg);
+  border: 1px solid var(--mg-card-border);
+  border-radius: var(--mg-radius-xl);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: var(--mg-shadow-card);
+}
+
+.mg-antiban-shield-box {
+  background-color: var(--mg-card-bg-subtle);
+  border: 1px solid var(--mg-card-border);
+  border-radius: var(--mg-radius-lg);
+  padding: 1.25rem;
+}
+
+.mg-spintax-badge {
+  background-color: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--mg-radius-sm);
+  font-family: var(--mg-font-mono);
+  font-size: var(--mg-text-xs);
+  font-weight: var(--mg-weight-bold);
+}

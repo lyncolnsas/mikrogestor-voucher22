@@ -1,0 +1,151 @@
+/* ==========================================================================
+   MIKROGESTOR — COMPONENTES: CARDS & SUPERFÍCIES
+   ========================================================================== */
+
+/* ── Container Geral de Página ── */
+.mg-page-container {
+  width: 100%;
+  max-width: 80rem; /* 1280px */
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .mg-page-container {
+    padding: 1.5rem 2rem;
+  }
+}
+
+/* ── Cabeçalho de Página ── */
+.mg-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .mg-page-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+}
+
+.mg-page-title {
+  font-size: var(--mg-text-2xl);
+  font-weight: var(--mg-weight-black);
+  color: var(--mg-text-heading);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.mg-page-subtitle {
+  font-size: var(--mg-text-xs);
+  font-weight: var(--mg-weight-medium);
+  color: var(--mg-text-muted);
+  line-height: 1.4;
+}
+
+/* ── Cards de Conteúdo ── */
+.mg-card {
+  background-color: var(--mg-card-bg);
+  border: 1px solid var(--mg-card-border);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-card);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mg-card:hover {
+  box-shadow: var(--mg-shadow-card-hover);
+}
+
+.mg-card-subtle {
+  background-color: var(--mg-card-bg-subtle);
+  border: 1px solid var(--mg-card-border-subtle);
+  border-radius: var(--mg-radius-md);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.mg-card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--mg-card-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.mg-card-body {
+  padding: 1.25rem 1.5rem;
+}
+
+.mg-card-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--mg-card-border-subtle);
+  background-color: var(--mg-card-bg-subtle);
+  border-bottom-left-radius: var(--mg-radius-lg);
+  border-bottom-right-radius: var(--mg-radius-lg);
+}
+
+.mg-card-title {
+  color: var(--mg-text-heading);
+  font-size: var(--mg-text-base);
+  font-weight: var(--mg-weight-extrabold);
+  letter-spacing: -0.015em;
+}
+
+.mg-card-desc {
+  color: var(--mg-text-muted);
+  font-size: var(--mg-text-xs);
+  font-weight: var(--mg-weight-medium);
+}
+
+/* ── Banners de Alerta & Feedback ── */
+.mg-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--mg-radius-lg);
+  font-size: var(--mg-text-sm);
+  font-weight: var(--mg-weight-semibold);
+  border: 1px solid transparent;
+}
+
+.mg-alert-success {
+  background-color: var(--mg-success-bg);
+  color: var(--mg-success-text);
+  border-color: var(--mg-success-border);
+}
+
+.mg-alert-danger,
+.mg-alert-error {
+  background-color: var(--mg-danger-bg);
+  color: var(--mg-danger-text);
+  border-color: var(--mg-danger-border);
+}
+
+.mg-alert-warning {
+  background-color: var(--mg-warning-bg);
+  color: var(--mg-warning-text);
+  border-color: var(--mg-warning-border);
+}
+
+.mg-alert-info {
+  background-color: var(--mg-info-bg);
+  color: var(--mg-info-text);
+  border-color: var(--mg-info-border);
+}
+
+/* ── Divisores ── */
+.mg-divider {
+  height: 1px;
+  width: 100%;
+  background-color: var(--mg-card-border-subtle);
+  margin: 1rem 0;
+}

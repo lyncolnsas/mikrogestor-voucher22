@@ -64,7 +64,7 @@ export default function SystemLogin() {
           return;
         }
         // Login direto efetuado com sucesso (cookie já emitido)
-        window.location.href = '/dashboard';
+        window.location.assign('/dashboard');
         return;
       }
 
@@ -107,12 +107,12 @@ export default function SystemLogin() {
       const data = await res.json().catch(() => null);
 
       if (res.ok && data?.success) {
-        window.location.href = '/dashboard';
+        window.location.assign('/dashboard');
         return;
       }
 
       setError(data?.message || 'Código inválido ou expirado.');
-    } catch (err) {
+    } catch {
       setError('Erro de conexão ao validar o código.');
     } finally {
       setLoading(false);
@@ -140,12 +140,12 @@ export default function SystemLogin() {
       const data = await res.json().catch(() => null);
 
       if (res.ok && data?.success) {
-        window.location.href = '/dashboard';
+        window.location.assign('/dashboard');
         return;
       }
 
       setError(data?.message || 'Token de emergência inválido ou já utilizado.');
-    } catch (err) {
+    } catch {
       setError('Erro de conexão ao validar token de emergência.');
     } finally {
       setLoading(false);
@@ -153,46 +153,39 @@ export default function SystemLogin() {
   };
 
   return (
-    <main
-      className="aurora-scene min-h-screen flex items-center justify-center p-4 overflow-hidden"
-      style={{ background: '#0c0c18' }}
-    >
-      {/* ── Aurora Blobs ───────────────────────────────────────────────── */}
-      <div className="aurora-blob blob-indigo"
-        style={{ width: '520px', height: '520px', top: '-160px', left: '-160px', animationDelay: '0s' }} />
-      <div className="aurora-blob blob-cyan aurora-blob-reverse"
-        style={{ width: '420px', height: '420px', bottom: '-130px', right: '-130px', animationDelay: '-5s' }} />
-      <div className="aurora-blob blob-violet"
-        style={{ width: '340px', height: '340px', top: '-80px', left: '50%', transform: 'translateX(-50%)', animationDelay: '-3s', opacity: 0.55 }} />
+    <main className="mg-login-canvas">
+      {/* ── Background Aura Glow ── */}
+      <div
+        className="aurora-blob blob-indigo"
+        style={{ width: '520px', height: '520px', top: '-160px', left: '-160px', animationDelay: '0s', opacity: 0.25 }}
+      />
+      <div
+        className="aurora-blob blob-cyan aurora-blob-reverse"
+        style={{ width: '420px', height: '420px', bottom: '-130px', right: '-130px', animationDelay: '-5s', opacity: 0.2 }}
+      />
 
-      {/* ── Login Card ─────────────────────────────────────────────────── */}
-      <div className="w-full max-w-sm bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-8 backdrop-blur-md animate-fade-in z-10">
+      {/* ── Login Card ── */}
+      <div className="mg-login-card animate-fade-in">
         
         {/* Logo & Brand */}
         <div className="flex flex-col items-center mb-6">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
-            style={{
-              background: 'linear-gradient(135deg, #2563eb 0%, #06b6d4 100%)',
-              boxShadow: '0 8px 32px rgba(37,99,235,0.4), 0 2px 8px rgba(6,182,212,0.25)',
-            }}
-          >
+          <div className="mg-login-logo-box">
             <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071a9 9 0 0112.14 0M1.394 9h.01m21.196 0h.01" />
             </svg>
           </div>
 
-          <h1 className="text-2xl font-black tracking-tight text-white">
-            Mikro<span className="text-blue-400">Gestor</span>
+          <h1 className="mg-login-title">
+            Mikro<span style={{ color: 'var(--mg-primary)' }}>Gestor</span>
           </h1>
-          <p className="text-xs font-semibold text-slate-300 mt-0.5">
+          <p className="mg-login-subtitle">
             Hotspot Gateway v2.0 • Proteção 2FA
           </p>
 
           {/* Status pill */}
-          <div className="flex items-center gap-2 mt-3 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#22c55e]" />
-            <span className="text-[10px] font-bold tracking-wider uppercase text-emerald-300">
+          <div className="flex items-center gap-2 mt-1 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[10px] font-bold tracking-wider uppercase text-emerald-400">
               {step === 'CREDENTIALS' ? 'Acesso Seguro' : step === 'OTP_WHATSAPP' ? 'Autenticação 2FA' : 'Modo de Emergência'}
             </span>
           </div>
@@ -200,17 +193,17 @@ export default function SystemLogin() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-4 px-3.5 py-2.5 rounded-xl flex items-center gap-2.5 bg-rose-500/20 border border-rose-500/50">
-            <span className="w-2 h-2 rounded-full bg-rose-400 shrink-0" />
-            <span className="text-xs font-bold text-rose-200">{error}</span>
+          <div className="mg-alert mg-alert-danger mb-4">
+            <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+            <span className="text-xs font-bold">{error}</span>
           </div>
         )}
 
         {/* Success / Info Message */}
         {successInfo && (
-          <div className="mb-4 px-3.5 py-2.5 rounded-xl flex items-center gap-2.5 bg-blue-500/20 border border-blue-500/40">
-            <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
-            <span className="text-xs font-semibold text-blue-200">{successInfo}</span>
+          <div className="mg-alert mg-alert-info mb-4">
+            <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+            <span className="text-xs font-semibold">{successInfo}</span>
           </div>
         )}
 
@@ -218,7 +211,7 @@ export default function SystemLogin() {
         {step === 'CREDENTIALS' && (
           <form onSubmit={handleCredentialsSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-1.5">
+              <label className="mg-label">
                 Usuário
               </label>
               <input
@@ -228,20 +221,21 @@ export default function SystemLogin() {
                 value={user}
                 onChange={(e) => setUser(e.target.value)}
                 placeholder="ex: admin"
-                className="w-full bg-slate-800 border border-slate-600 focus:border-blue-500 text-white rounded-xl px-4 py-2.5 text-sm font-semibold outline-none transition-all placeholder:text-slate-500"
+                className="mg-input"
                 autoComplete="username"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider">
+                <label className="mg-label !mb-0">
                   Senha
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
+                  className="text-[11px] font-semibold cursor-pointer hover:underline"
+                  style={{ color: 'var(--mg-primary)' }}
                 >
                   {showPass ? 'Ocultar' : 'Mostrar'}
                 </button>
@@ -254,7 +248,7 @@ export default function SystemLogin() {
                   value={pass}
                   onChange={(e) => setPass(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-slate-800 border border-slate-600 focus:border-blue-500 text-white rounded-xl px-4 py-2.5 text-sm font-semibold outline-none transition-all placeholder:text-slate-500 pr-10"
+                  className="mg-input pr-10"
                   autoComplete="current-password"
                 />
               </div>
@@ -264,7 +258,7 @@ export default function SystemLogin() {
               id="login-submit"
               type="submit"
               disabled={loading}
-              className="w-full mt-3 py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="mg-btn mg-btn-primary w-full mt-2"
             >
               {loading ? (
                 <>
@@ -289,16 +283,16 @@ export default function SystemLogin() {
         {/* ── TELA 2: Código OTP via WhatsApp ── */}
         {step === 'OTP_WHATSAPP' && (
           <form onSubmit={handleOtpSubmit} className="space-y-4">
-            <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 text-center">
+            <div className="mg-otp-badge-box">
               <span className="text-2xl mb-1 block">📱</span>
-              <p className="text-xs text-slate-300">
+              <p className="text-xs" style={{ color: 'var(--mg-text-muted)' }}>
                 Enviamos um código de 6 dígitos via WhatsApp para:
               </p>
-              <p className="text-xs font-bold text-blue-400 mt-0.5">{maskedPhone}</p>
+              <p className="text-xs font-bold mt-0.5" style={{ color: 'var(--mg-primary)' }}>{maskedPhone}</p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-1.5 text-center">
+              <label className="mg-label text-center">
                 Código de Verificação (6 dígitos)
               </label>
               <input
@@ -309,7 +303,7 @@ export default function SystemLogin() {
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                 placeholder="123456"
-                className="w-full text-center tracking-[0.5em] text-xl font-mono bg-slate-800 border border-slate-600 focus:border-blue-500 text-white rounded-xl px-4 py-3 outline-none transition-all placeholder:tracking-normal placeholder:font-sans placeholder:text-slate-500 placeholder:text-sm"
+                className="mg-input text-center tracking-[0.5em] text-xl font-mono"
                 autoFocus
               />
             </div>
@@ -318,7 +312,7 @@ export default function SystemLogin() {
               id="otp-submit"
               type="submit"
               disabled={loading || otpCode.length < 6}
-              className="w-full mt-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="mg-btn mg-btn-success w-full mt-2"
             >
               {loading ? (
                 <>
@@ -338,11 +332,12 @@ export default function SystemLogin() {
               )}
             </button>
 
-            <div className="flex flex-col gap-2 pt-2 border-t border-slate-800 text-center">
+            <div className="flex flex-col gap-2 pt-3 border-t border-[var(--mg-card-border)] text-center">
               <button
                 type="button"
                 onClick={() => { setStep('CREDENTIALS'); setOtpCode(''); }}
-                className="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="text-xs hover:underline cursor-pointer"
+                style={{ color: 'var(--mg-text-muted)' }}
               >
                 ← Voltar e alterar credenciais
               </button>
@@ -351,7 +346,7 @@ export default function SystemLogin() {
                 <button
                   type="button"
                   onClick={() => { setStep('EMERGENCY_TOKEN'); setError(''); }}
-                  className="text-xs text-amber-400 hover:text-amber-300 transition-colors font-medium flex items-center justify-center gap-1 cursor-pointer"
+                  className="text-xs text-amber-500 hover:underline font-medium flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <span>📴 WhatsApp inacessível? Usar Token de Emergência</span>
                 </button>
@@ -363,18 +358,18 @@ export default function SystemLogin() {
         {/* ── TELA 3: Token Offline de Emergência ── */}
         {step === 'EMERGENCY_TOKEN' && (
           <form onSubmit={handleEmergencySubmit} className="space-y-4">
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-center">
+            <div className="mg-alert mg-alert-warning text-center flex-col">
               <span className="text-2xl mb-1 block">🚨</span>
-              <p className="text-xs text-amber-200 font-bold">
+              <p className="text-xs font-bold">
                 Modo de Recuperação Offline
               </p>
-              <p className="text-[11px] text-amber-300/80 mt-1 leading-relaxed">
+              <p className="text-[11px] mt-1 leading-relaxed opacity-90">
                 Utilize um dos tokens pré-gerados salvos no seu grupo seguro ou guardados offline.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-1.5 text-center">
+              <label className="mg-label text-center">
                 Token de Emergência
               </label>
               <input
@@ -384,7 +379,7 @@ export default function SystemLogin() {
                 value={emergencyToken}
                 onChange={(e) => setEmergencyToken(e.target.value.toUpperCase())}
                 placeholder="EMG-XXXX-XXXX"
-                className="w-full text-center font-mono text-base uppercase bg-slate-800 border border-slate-600 focus:border-amber-500 text-amber-300 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-slate-500 placeholder:text-sm"
+                className="mg-input text-center font-mono text-base uppercase"
                 autoFocus
               />
             </div>
@@ -393,7 +388,7 @@ export default function SystemLogin() {
               id="emergency-submit"
               type="submit"
               disabled={loading || !emergencyToken.trim()}
-              className="w-full mt-2 py-3 px-4 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="mg-btn mg-btn-warning w-full mt-2"
             >
               {loading ? (
                 <>
@@ -413,11 +408,12 @@ export default function SystemLogin() {
               )}
             </button>
 
-            <div className="flex flex-col gap-2 pt-2 border-t border-slate-800 text-center">
+            <div className="flex flex-col gap-2 pt-3 border-t border-[var(--mg-card-border)] text-center">
               <button
                 type="button"
                 onClick={() => { setStep('CREDENTIALS'); setEmergencyToken(''); setError(''); }}
-                className="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="text-xs hover:underline cursor-pointer"
+                style={{ color: 'var(--mg-text-muted)' }}
               >
                 ← Voltar para login normal
               </button>
@@ -426,7 +422,7 @@ export default function SystemLogin() {
         )}
 
         {/* Footer */}
-        <p className="text-center text-[11px] font-medium text-slate-500 mt-6">
+        <p className="text-center text-[11px] font-medium mt-6" style={{ color: 'var(--mg-text-muted)' }}>
           MikroGestor © 2026 — Hotspot Gateway Enterprise
         </p>
       </div>

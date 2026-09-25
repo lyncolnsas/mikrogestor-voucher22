@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useHistory } from '@/hooks/useHistory';
 import StudioTopBar from '@/components/portal/studio/StudioTopBar';
 import StudioNavRail, { StudioTab } from '@/components/portal/studio/StudioNavRail';
@@ -52,9 +52,10 @@ interface Colors {
 
 const COLOR_PRESETS = [
   {
-    name: '🎓 FAP • Educação',
+    id: 'fap-dark',
+    name: '🎓 FAP • Dark Campus',
     icon: '🎓',
-    desc: 'Identidade oficial FAP com azul marinho, dourado e logo A animado',
+    desc: 'Identidade oficial FAP com azul marinho, dourado e fundo escuro',
     colors: {
       brand: '#002B49',
       brandDark: '#001726',
@@ -78,6 +79,7 @@ const COLOR_PRESETS = [
     }
   },
   {
+    id: 'cyber-electric',
     name: 'Cyber Electric',
     icon: '⚡',
     desc: 'Visual futurista escuro com ciano e azul elétrico',
@@ -104,6 +106,7 @@ const COLOR_PRESETS = [
     }
   },
   {
+    id: 'ocean-sapphire',
     name: 'Ocean Sapphire',
     icon: '🌊',
     desc: 'Tons marinhos modernos com vidro fosco e azul royal',
@@ -130,6 +133,7 @@ const COLOR_PRESETS = [
     }
   },
   {
+    id: 'emerald-tech',
     name: 'Emerald Tech',
     icon: '🍃',
     desc: 'Verde esmeralda refinado e acabamento dark minimalista',
@@ -156,6 +160,7 @@ const COLOR_PRESETS = [
     }
   },
   {
+    id: 'sunset-ember',
     name: 'Sunset Ember',
     icon: '🔥',
     desc: 'Gradiente quente de alta energia com âmbar e laranja',
@@ -182,6 +187,7 @@ const COLOR_PRESETS = [
     }
   },
   {
+    id: 'clean-corporate',
     name: 'Clean Corporate',
     icon: '⚪',
     desc: 'Visual corporativo claro, cristalino e de alta legibilidade',
@@ -208,29 +214,30 @@ const COLOR_PRESETS = [
     }
   },
   {
-    name: 'FAP • Educação Adventista',
-    icon: '🎓',
-    desc: 'Visual acadêmico com azul marinho, dourado e logo animado em vetor',
+    id: 'fap-gold',
+    name: '🏛️ FAP • Classic Gold',
+    icon: '🏛️',
+    desc: 'Visual acadêmico com dourado institucional e contraste balanceado',
     colors: {
-      brand: '#002B49',
-      brandDark: '#001726',
-      bg: '#001726',
-      ink: '#002B49',
-      muted: '#4b5563',
-      blue: '#F39200',
-      loginButtonText: '#001726',
-      green: '#002B49',
-      registerButtonText: '#ffffff',
-      trialButtonBg: '#10b981',
-      trialButtonText: '#ffffff',
-      cardBg: '#ffffff',
+      brand: '#F39200',
+      brandDark: '#c97800',
+      bg: '#0a1622',
+      ink: '#ffffff',
+      muted: '#cbd5e1',
+      blue: '#002B49',
+      loginButtonText: '#ffffff',
+      green: '#F39200',
+      registerButtonText: '#001726',
+      trialButtonBg: '#F39200',
+      trialButtonText: '#001726',
+      cardBg: '#001f35',
       cardBorder: '#F39200',
-      inputBg: '#fafafa',
-      inputText: '#001726',
-      inputBorder: '#cbd5e1',
-      inputPlaceholder: '#64748b',
-      glassOpacity: 100,
-      glassBlur: 0
+      inputBg: '#071018',
+      inputText: '#ffffff',
+      inputBorder: '#1e3a5f',
+      inputPlaceholder: '#94a3b8',
+      glassOpacity: 95,
+      glassBlur: 12
     }
   }
 ];
@@ -265,9 +272,6 @@ export default function PortalEditor() {
   // Mobile View Mode: 'preview' (Canvas) vs 'editor' (Inspector)
   const [mobileViewMode, setMobileViewMode] = useState<'preview' | 'editor'>('preview');
 
-  // Router connection state
-  const [isRouterConnected, setIsRouterConnected] = useState(true);
-
   // Deploy Modal
   const [isDeployOpen, setIsDeployOpen] = useState(false);
   const [ftpPort, setFtpPort] = useState('21');
@@ -288,44 +292,6 @@ export default function PortalEditor() {
     slot?: number;
     title: string;
   }>({ type: 'general', title: 'Gerenciador de Mídias' });
-
-  const handleOpenMediaPicker = (target: {
-    type: 'ad_single' | 'ad_slot' | 'bg' | 'logo' | 'general';
-    slot?: number;
-    title: string;
-  }) => {
-    setMediaModalTarget(target);
-    setIsMediaModalOpen(true);
-  };
-
-  const handleSelectMedia = (file: MediaFile) => {
-    if (mediaModalTarget.type === 'ad_single') {
-      setAd((prev: any) => ({
-        ...prev,
-        mediaUrl: file.url,
-        type: prev.type === 'carousel' ? 'carousel' : file.type
-      }));
-    } else if (mediaModalTarget.type === 'ad_slot' && mediaModalTarget.slot) {
-      const slot = mediaModalTarget.slot;
-      setAd((prev: any) => {
-        const items = Array.isArray(prev.items) ? [...prev.items] : [];
-        while (items.length < slot) items.push({ url: '', type: 'image', targetUrl: '' });
-        items[slot - 1] = {
-          url: file.url,
-          type: file.type,
-          targetUrl: items[slot - 1]?.targetUrl || ''
-        };
-        return { ...prev, items };
-      });
-    } else if (mediaModalTarget.type === 'bg') {
-      setBg({
-        type: file.type === 'video' ? 'video' : 'image',
-        url: file.url
-      });
-    } else if (mediaModalTarget.type === 'logo') {
-      setLogoPreviewUrl(file.url + '?t=' + Date.now());
-    }
-  };
 
   // Core settings states
   const [businessName, setBusinessName] = useState('Super Wi-Fi');
@@ -459,6 +425,8 @@ export default function PortalEditor() {
     customCss: ''
   });
 
+  const [isRouterConnected, setIsRouterConnected] = useState(false);
+
   const [fields, setFields] = useState<FieldsConfig>({
     usernameEnabled: false,
     usernameRequired: true,
@@ -583,9 +551,15 @@ export default function PortalEditor() {
   }, []);
 
   useEffect(() => {
+    let ignore = false;
     if (activeTab === 'provisioning') {
-      fetchInterfaces();
+      (async () => {
+        if (!ignore) {
+          await fetchInterfaces();
+        }
+      })();
     }
+    return () => { ignore = true; };
   }, [activeTab, fetchInterfaces]);
 
   const handleFixApiRule = async () => {
@@ -614,6 +588,7 @@ export default function PortalEditor() {
     if (!provSelectedWan) return;
     setProvStage('running');
     setProvErrorMsg('');
+    setProvReconnectStatus('Executando provisionamento...');
 
     const initialSteps = [
       { name: 'bridge_create', label: '[ BRIDGE ] Criar/Verificar Bridge LAN', status: 'running', message: 'Configurando bridge...' },
@@ -648,14 +623,17 @@ export default function PortalEditor() {
       if (data.success) {
         setProvStage('done');
         setProvSummary(data.summary || null);
+        setProvReconnectStatus('Provisionamento concluído com sucesso');
         fetchInterfaces();
       } else {
         setProvStage('error');
         setProvErrorMsg(data.message || 'Falha no provisionamento.');
+        setProvReconnectStatus('Erro no provisionamento');
       }
     } catch (e: any) {
       setProvStage('error');
       setProvErrorMsg(e?.message || 'Erro de conexão com o servidor.');
+      setProvReconnectStatus('Erro de conexão');
     }
   };
 
@@ -672,6 +650,7 @@ export default function PortalEditor() {
           if (c.systemUrl) setSystemUrl(c.systemUrl);
           if (c.colors) setColors((prev: any) => ({ ...prev, ...c.colors }));
           if (c.effects) setEffects((prev: any) => ({ ...prev, ...c.effects }));
+          if (c.studio) setStudio((prev: any) => ({ ...prev, ...c.studio }));
           if (c.social) setSocial((prev: any) => ({ ...prev, ...c.social }));
           if (c.badges) setBadges((prev: any) => ({ ...prev, ...c.badges }));
           if (c.customCode) setCustomCode((prev: any) => ({ ...prev, ...c.customCode }));
@@ -702,13 +681,26 @@ export default function PortalEditor() {
           if (c.trialLinkText !== undefined) setTrialLinkText(c.trialLinkText);
           if (c.trialModalTitle !== undefined) setTrialModalTitle(c.trialModalTitle);
           if (c.trialModalMessage !== undefined) setTrialModalMessage(c.trialModalMessage);
+          if (c.trialModalConfirmText !== undefined) setTrialModalConfirmText(c.trialModalConfirmText);
+          if (c.trialModalCancelText !== undefined) setTrialModalCancelText(c.trialModalCancelText);
+          setLogoPreviewUrl(`/api/portal/logo?template=${template}&t=` + Date.now());
         }
       } catch (err) {
         console.warn('Erro ao carregar configurações do portal:', err);
       }
     };
 
+    const checkRouterStatus = async () => {
+      try {
+        const res = await fetch('/api/hotspot/profiles');
+        const data = await res.json();
+        if (data.success) setIsRouterConnected(true);
+      } catch {}
+    };
+
     loadInitialConfig();
+    checkRouterStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [template]);
 
   // Alterna o modo operacional mestre do sistema (sincroniza /api/config/system e /api/admin/whatsapp-messages)
@@ -738,7 +730,7 @@ export default function PortalEditor() {
     }
   };
 
-  // Carregar templates disponíveis
+  // Carregar templates disponíveis com restauração de continuidade (último deploy ou editado)
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
@@ -746,12 +738,27 @@ export default function PortalEditor() {
         const data = await res.json();
         if (data.success && Array.isArray(data.templates) && data.templates.length > 0) {
           setAvailableTemplates(data.templates);
+
+          // Continuidade com base no localStorage ou no último deploy salvo no MikroTik
+          const savedLocal = typeof window !== 'undefined' ? localStorage.getItem('mikrogestor_active_template') : null;
+          const preferredTemplate = (savedLocal && data.templates.includes(savedLocal))
+            ? savedLocal
+            : (data.lastDeployedTemplate && data.templates.includes(data.lastDeployedTemplate))
+              ? data.lastDeployedTemplate
+              : (data.lastEditedTemplate && data.templates.includes(data.lastEditedTemplate))
+                ? data.lastEditedTemplate
+                : null;
+
+          if (preferredTemplate && preferredTemplate !== template) {
+            setTemplate(preferredTemplate);
+          }
         }
       } catch (e) {
         console.warn('Erro ao carregar lista de templates:', e);
       }
     };
     fetchTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sync with live iframe
@@ -817,6 +824,16 @@ export default function PortalEditor() {
     return () => window.removeEventListener('message', handleMessage);
   }, [broadcastLivePreview]);
 
+  // Seleção e persistência do template ativo
+  const handleSelectTemplate = (newTpl: string) => {
+    setTemplate(newTpl);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('mikrogestor_active_template', newTpl);
+      } catch {}
+    }
+  };
+
   // Handlers for Save and Deploy
   const handleSaveConfig = async () => {
     setSaving(true);
@@ -852,10 +869,17 @@ export default function PortalEditor() {
           trialLinkText,
           trialModalTitle,
           trialModalMessage,
+          trialModalConfirmText,
+          trialModalCancelText,
         })
       });
       const data = await res.json();
       if (data.success) {
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('mikrogestor_active_template', template);
+          } catch {}
+        }
         broadcastLivePreview();
         alert('✅ Configurações salvas localmente com sucesso!');
       } else {
@@ -906,6 +930,8 @@ export default function PortalEditor() {
           trialLinkText,
           trialModalTitle,
           trialModalMessage,
+          trialModalConfirmText,
+          trialModalCancelText,
         })
       });
 
@@ -918,11 +944,16 @@ export default function PortalEditor() {
       const data = await res.json();
 
       if (data.success) {
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('mikrogestor_active_template', template);
+          } catch {}
+        }
         setDeployModalResult({ type: 'success', message: data.message });
       } else {
         setDeployModalResult({ type: 'error', message: data.message || 'Erro no Deploy' });
       }
-    } catch (err: any) {
+    } catch {
       setDeployModalResult({ type: 'error', message: 'Falha na comunicação com o roteador.' });
     } finally {
       setDeploying(false);
@@ -936,6 +967,45 @@ export default function PortalEditor() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleOpenMediaPicker = (target: {
+    type: 'ad_single' | 'ad_slot' | 'bg' | 'logo' | 'general';
+    slot?: number;
+    title: string;
+  }) => {
+    setMediaModalTarget(target);
+    setIsMediaModalOpen(true);
+  };
+
+  const handleSelectMedia = (file: MediaFile) => {
+    if (mediaModalTarget.type === 'ad_single') {
+      setAd((prev: any) => ({
+        ...prev,
+        mediaUrl: file.url,
+        type: prev.type === 'carousel' ? 'carousel' : file.type
+      }));
+    } else if (mediaModalTarget.type === 'ad_slot' && mediaModalTarget.slot) {
+      const slot = mediaModalTarget.slot;
+      setAd((prev: any) => {
+        const items = Array.isArray(prev.items) ? [...prev.items] : [];
+        while (items.length < slot) items.push({ url: '', type: 'image', targetUrl: '' });
+        items[slot - 1] = {
+          url: file.url,
+          type: file.type,
+          targetUrl: items[slot - 1]?.targetUrl || ''
+        };
+        return { ...prev, items };
+      });
+    } else if (mediaModalTarget.type === 'bg') {
+      setBg({
+        type: file.type === 'video' ? 'video' : 'image',
+        url: file.url
+      });
+    } else if (mediaModalTarget.type === 'logo') {
+      const ts = Date.now();
+      setLogoPreviewUrl(file.url + '?t=' + ts);
+    }
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1107,7 +1177,7 @@ export default function PortalEditor() {
         isRouterConnected={isRouterConnected}
         onReplayAnimation={handleReplayAnimation}
         template={template}
-        setTemplate={setTemplate}
+        setTemplate={handleSelectTemplate}
         availableTemplates={availableTemplates}
         onOpenMediaLibrary={() => handleOpenMediaPicker({ type: 'general', title: 'Gerenciador de Mídias & Limpeza da VPS' })}
       />
@@ -1184,6 +1254,8 @@ export default function PortalEditor() {
               setBg={setBg}
               effects={effects}
               setEffects={setEffects}
+              studio={studio}
+              setStudio={setStudio}
               colorPresets={COLOR_PRESETS}
               nicheEffects={NICHE_EFFECTS}
               logoPreviewUrl={logoPreviewUrl}
@@ -1193,7 +1265,7 @@ export default function PortalEditor() {
               bgUploadLoading={bgUploadLoading}
               onBgRemove={handleBgRemove}
               template={template}
-              setTemplate={setTemplate}
+              setTemplate={handleSelectTemplate}
               availableTemplates={availableTemplates}
               onOpenMediaPicker={handleOpenMediaPicker}
             />

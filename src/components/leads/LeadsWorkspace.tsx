@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import {
   BarChart,
@@ -29,15 +30,11 @@ interface LeadsWorkspaceProps {
 }
 
 export default function LeadsWorkspace({
-  embedded = false,
-  activeHubTab = 'leads',
-  onTabChange,
   hideHeader = false
 }: LeadsWorkspaceProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [mounted, setMounted] = useState(false);
 
   // Time & Demographic sub-tabs
   const [timeTab, setTimeTab] = useState<'month' | 'week' | 'hour'>('month');
@@ -51,12 +48,7 @@ export default function LeadsWorkspace({
   const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
   const [syncingAvatars, setSyncingAvatars] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    fetchLeads();
-  }, []);
-
-  const fetchLeads = async () => {
+  const fetchLeads = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -72,7 +64,18 @@ export default function LeadsWorkspace({
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    const run = async () => {
+      if (!ignore) {
+        await fetchLeads();
+      }
+    };
+    run();
+    return () => { ignore = true; };
+  }, [fetchLeads]);
 
   const handleDeleteLead = async (id: string) => {
     if (!window.confirm('Deseja realmente deletar este lead? Esta ação também removerá o usuário do hotspot no MikroTik.')) {
@@ -246,7 +249,7 @@ export default function LeadsWorkspace({
 
       return true;
     });
-  }, [data?.leads, search, dateFilter]);
+  }, [data, search, dateFilter]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredLeads.length / pageSize));
@@ -261,7 +264,7 @@ export default function LeadsWorkspace({
     if (demoTab === 'gender') return data.demographics.gender || [];
     if (demoTab === 'device') return data.demographics.devices || [];
     return data.demographics.age || [];
-  }, [data?.demographics, demoTab]);
+  }, [data, demoTab]);
 
   return (
     <div className="space-y-6 animate-fade-in relative pb-12">

@@ -227,7 +227,7 @@ export async function GET(request: Request) {
       } else {
         rules.push('html body #btnSignup, html body .btn-cad, html body .btn-register { display: flex !important; visibility: visible !important; width: 100% !important; }');
         rules.push('html body .actions { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: ' + cardGapVal + 'px !important; margin-top: ' + cardGapVal + 'px !important; width: 100% !important; }');
-        rules.push('@media (max-width: 360px) { html body .actions { grid-template-columns: 1fr !important; } }');
+        rules.push('@media (max-width: 480px) { html body .actions { grid-template-columns: 1fr !important; gap: 8px !important; } }');
       }
 
       var btnGroupSelector = isRegEnabled ? (btnSelector + ', ' + btnCadSelector + ', ' + btnTrialSelector) : (btnSelector + ', ' + btnTrialSelector);
@@ -236,7 +236,9 @@ export async function GET(request: Request) {
         rules.push(btnGroupSelector + ' { border-radius: ' + st.btnRadiusTL + 'px ' + st.btnRadiusTR + 'px ' + st.btnRadiusBR + 'px ' + st.btnRadiusBL + 'px !important; }');
       }
       if (st.btnHeight && st.btnHeight > 0) {
-        rules.push(btnGroupSelector + ' { height: ' + st.btnHeight + 'px !important; min-height: ' + st.btnHeight + 'px !important; display: flex !important; align-items: center !important; justify-content: center !important; }');
+        rules.push(btnGroupSelector + ' { height: ' + st.btnHeight + 'px !important; min-height: ' + st.btnHeight + 'px !important; display: flex !important; align-items: center !important; justify-content: center !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; padding: 0 8px !important; }');
+      } else {
+        rules.push(btnGroupSelector + ' { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; padding: 0 8px !important; }');
       }
       if (st.btnFontSize) {
         rules.push(btnGroupSelector + ' { font-size: ' + st.btnFontSize + 'px !important; }');
@@ -296,7 +298,7 @@ export async function GET(request: Request) {
       }
 
       rules.push('@keyframes mgShimmerSweep { 0% { left: -60%; } 20%, 100% { left: 160%; } }');
-      rules.push('@keyframes mgPulseGlow { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37,99,235,0.4); } 50% { transform: scale(1.02); box-shadow: 0 0 15px 4px rgba(37,99,235,0.6); } }');
+      rules.push('@keyframes mgPulseGlow { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 ' + brand + '40; } 50% { transform: scale(1.02); box-shadow: 0 0 15px 4px ' + brand + '80; } }');
       rules.push('@keyframes mgTitleGrad { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }');
       rules.push('@keyframes mgGridMove { 0% { background-position: 0 0, 0 0, 0 0; } 100% { background-position: 0 0, 0 0, 0 80px; } }');
       rules.push('@keyframes mgAuroraFloat { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(15%, 15%) scale(1.15) rotate(20deg); } 100% { transform: translate(-10%, 25%) scale(0.9) rotate(-15deg); } }');
@@ -790,7 +792,7 @@ export async function GET(request: Request) {
           trialContainer = document.createElement('div');
           trialContainer.id = 'trial-container';
           if (footerEl) {
-            footerEl.prepend(trialContainer);
+            footerEl.parentNode.insertBefore(trialContainer, footerEl);
           } else {
             boxEl.appendChild(trialContainer);
           }
@@ -800,50 +802,45 @@ export async function GET(request: Request) {
         if (config.trialEnabled === false) {
           trialContainer.style.setProperty('display', 'none', 'important');
         } else {
-          trialContainer.style.setProperty('display', 'flex', 'important');
-          trialContainer.style.setProperty('flex-direction', 'column', 'important');
-          trialContainer.style.setProperty('align-items', 'center', 'important');
-          trialContainer.style.setProperty('width', '100%', 'important');
-          trialContainer.style.setProperty('margin-top', '15px', 'important');
+          trialContainer.style.setProperty('display', 'block', 'important');
+          trialContainer.style.setProperty('text-align', 'center', 'important');
+          trialContainer.style.setProperty('font-size', '11px', 'important');
+          trialContainer.style.setProperty('margin-top', '12px', 'important');
+          trialContainer.style.setProperty('color', 'var(--muted)', 'important');
           
-          var trialMsgDiv = trialContainer.querySelector('.trial-label, div, p');
-          var trialBtn = trialContainer.querySelector('.btn-trial, button, a');
+          var tText = config.trialText !== undefined ? config.trialText : 'Acesso de teste disponível, ';
+          var tLinkText = config.trialLinkText !== undefined ? config.trialLinkText : 'clique aqui';
+          var tConfirm = config.trialModalMsg || config.trialModalMessage || 'Confirmar acesso de teste?';
 
-          if (!trialMsgDiv) {
-            trialMsgDiv = document.createElement('div');
-            trialMsgDiv.className = 'trial-label';
-            trialMsgDiv.style.cssText = 'font-size:13px; color:var(--text-muted, #6b7280); margin-bottom: 6px;';
-            trialContainer.prepend(trialMsgDiv);
-          }
-          if (!trialBtn) {
-            trialBtn = document.createElement('button');
-            trialBtn.type = 'button';
-            trialBtn.className = 'btn btn-trial';
-            trialBtn.style.cssText = 'background-color: var(--trialButtonBg, #059669); color: var(--trialButtonText, #ffffff); width: 100%; border-radius: 8px; padding: 10px; font-weight: bold; cursor: pointer; border: none; font-size: 14px;';
-            trialBtn.onclick = function() {
-              if (typeof window.openTrialModal === 'function') {
-                window.openTrialModal();
-              } else {
-                var modal = document.getElementById('trialModal') || document.getElementById('trial-modal');
-                if (modal) {
-                  modal.classList.add('open');
-                  modal.style.display = 'flex';
-                }
+          var trialLink = trialContainer.querySelector('a');
+          if (!trialLink) {
+            trialLink = document.createElement('a');
+            trialLink.href = 'javascript:void(0)';
+            trialLink.style.cssText = 'color: var(--blue); text-decoration: underline; font-weight: 600;';
+            trialLink.onclick = function() {
+              if (confirm(tConfirm)) {
+                if (typeof confirmTrialLogin === 'function') confirmTrialLogin();
               }
             };
-            trialContainer.appendChild(trialBtn);
+            trialContainer.appendChild(trialLink);
           }
+          trialLink.innerText = tLinkText;
 
-          if (trialMsgDiv) {
-            trialMsgDiv.innerText = config.trialText !== undefined ? config.trialText : 'Acesso de teste disponível, ';
+          // Remove nós de texto soltos para evitar qualquer duplicação
+          var childNodes = Array.prototype.slice.call(trialContainer.childNodes);
+          childNodes.forEach(function(node) {
+            if (node.nodeType === 3) {
+              node.parentNode && node.parentNode.removeChild(node);
+            }
+          });
+
+          var labelSpan = trialContainer.querySelector('.trial-label');
+          if (!labelSpan) {
+            labelSpan = document.createElement('span');
+            labelSpan.className = 'trial-label';
+            trialContainer.insertBefore(labelSpan, trialLink);
           }
-          if (trialBtn) {
-            trialBtn.innerText = config.trialLinkText !== undefined ? config.trialLinkText : 'clique aqui';
-            trialBtn.style.setProperty('display', 'flex', 'important');
-            trialBtn.style.setProperty('width', '100%', 'important');
-            trialBtn.style.setProperty('align-items', 'center', 'important');
-            trialBtn.style.setProperty('justify-content', 'center', 'important');
-          }
+          labelSpan.innerText = tText;
         }
       }
 

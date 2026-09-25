@@ -3,10 +3,7 @@
 import React from 'react';
 import { 
   FileSpreadsheet, 
-  CheckSquare, 
-  Square, 
   ShieldCheck, 
-  Sparkles, 
   Type, 
   User, 
   Phone, 
@@ -19,7 +16,7 @@ import { FieldsConfig } from '@/components/portal/RegistrationInspector';
 
 interface LeadsFieldsStudioPanelProps {
   fields: FieldsConfig;
-  setFields: React.Dispatch<React.SetStateAction<FieldsConfig>>;
+  setFields?: React.Dispatch<React.SetStateAction<FieldsConfig>>;
   handleFieldToggle: (key: keyof FieldsConfig) => void;
   handleFieldLabelChange: (val: string) => void;
   enabled: boolean;
@@ -36,7 +33,6 @@ interface LeadsFieldsStudioPanelProps {
 
 export default function LeadsFieldsStudioPanel({
   fields,
-  setFields,
   handleFieldToggle,
   handleFieldLabelChange,
   enabled,

@@ -1,0 +1,27 @@
+/* ==========================================================================
+   MIKROGESTOR — PÁGINA: VPN WIREGUARD (/dashboard/vpn)
+   ========================================================================== */
+
+.mg-vpn-peer-card {
+  background-color: var(--mg-card-bg);
+  border: 1px solid var(--mg-card-border);
+  border-radius: var(--mg-radius-lg);
+  padding: 1.25rem 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.mg-vpn-peer-card:hover {
+  border-color: var(--mg-primary);
+  box-shadow: var(--mg-shadow-card-hover);
+}
+
+.mg-vpn-ip-pill {
+  font-family: var(--mg-font-mono);
+  font-size: var(--mg-text-xs);
+  font-weight: var(--mg-weight-bold);
+  background-color: var(--mg-primary-light);
+  color: var(--mg-primary);
+  border: 1px solid var(--mg-primary-border);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--mg-radius-sm);
+}

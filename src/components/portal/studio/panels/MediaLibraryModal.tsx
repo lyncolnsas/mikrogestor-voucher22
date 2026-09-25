@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
@@ -108,11 +109,13 @@ export default function MediaLibraryModal({
   };
 
   useEffect(() => {
-    if (isOpen) {
-      fetchMedia();
+    if (!isOpen) return;
+    const frame = requestAnimationFrame(() => {
       setSelectedFileName(null);
       setConfirmClearAll(false);
-    }
+      fetchMedia();
+    });
+    return () => cancelAnimationFrame(frame);
   }, [isOpen]);
 
   const handleUploadFile = async (file: File) => {

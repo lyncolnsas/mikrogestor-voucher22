@@ -1327,7 +1327,22 @@ ${jsEffects}
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const template = searchParams.get('template') || 'default';
+    const requestedTemplate = searchParams.get('template');
+    
+    let lastDeployedTemplate = null;
+    let lastEditedTemplate = null;
+    try {
+      const [depRecord, editRecord] = await Promise.all([
+        prisma.systemConfig.findUnique({ where: { key: 'LAST_DEPLOYED_TEMPLATE' } }),
+        prisma.systemConfig.findUnique({ where: { key: 'LAST_EDITED_TEMPLATE' } })
+      ]);
+      if (depRecord?.value) lastDeployedTemplate = depRecord.value;
+      if (editRecord?.value) lastEditedTemplate = editRecord.value;
+    } catch (e) {
+      console.warn('Erro ao ler LAST_DEPLOYED_TEMPLATE / LAST_EDITED_TEMPLATE:', e);
+    }
+
+    const template = requestedTemplate || lastDeployedTemplate || lastEditedTemplate || 'default';
     const { CONFIG_PATH } = getPaths(template);
 
     const defaultPortalUrl = getMaskedPortalUrl();
@@ -1391,6 +1406,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ 
       success: true, 
+      template,
+      lastDeployedTemplate,
+      lastEditedTemplate,
       config: {
         ...config,
         systemFreeWifiMode,
@@ -1419,6 +1437,17 @@ export async function POST(request: Request) {
 
     // Save configuration
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(newConfig, null, 2), 'utf8');
+
+    // Registrar template de trabalho para continuidade permanente
+    try {
+      await prisma.systemConfig.upsert({
+        where: { key: 'LAST_EDITED_TEMPLATE' },
+        update: { value: template },
+        create: { key: 'LAST_EDITED_TEMPLATE', value: template }
+      });
+    } catch (e) {
+      console.warn('Falha ao registrar LAST_EDITED_TEMPLATE no DB:', e);
+    }
 
     if (newConfig.systemUrl) {
       await prisma.systemConfig.upsert({
@@ -1803,6 +1832,7 @@ ${newConfig.enabled !== false ? `.actions { display: grid !important; grid-templ
   -webkit-appearance: none; appearance: none; border: 0; height: var(--btn-height, 44px); min-height: var(--btn-height, 44px); border-radius: var(--btn-radius-tl, 10px); cursor: pointer; font-weight: var(--btn-font-weight, 600);
   font-size: var(--btn-font-size, 13px); letter-spacing: 0.3px; font-family: var(--font-family); width: 100%; display: flex !important; align-items: center; justify-content: center; gap: 6px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08); transition: filter 0.15s ease, transform 0.1s, box-shadow 0.15s; touch-action: manipulation; text-decoration: none;
+  white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; padding: 0 8px !important;
 }
 .btn:hover { filter: brightness(0.94); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 .btn:active { transform: translateY(1px); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -1976,7 +2006,7 @@ ${newConfig.enabled !== false ? `.actions { display: grid !important; grid-templ
       const trialConfirmMsg = newConfig.trialModalMessage || 'Confirmar acesso de teste?';
 
       const trialContainerRegex = /(<!--\s*MIKROGESTOR_TRIAL_BLOCK\s*-->)[\s\S]*?(<!--\s*END_MIKROGESTOR_TRIAL_BLOCK\s*-->)/i;
-      const trialHtml = `<!-- MIKROGESTOR_TRIAL_BLOCK -->\n<div id="trial-container" style="display: ${trialDisplay}; text-align: center; font-size: 11px; margin-top: 12px; color: var(--muted);">\n$$(if trial == 'yes')\n${trialText}<a href="javascript:void(0)" onclick="if(confirm('${trialConfirmMsg}')) confirmTrialLogin()" style="color: var(--blue); text-decoration: underline; font-weight: 600;">${trialLinkText}</a>.\n$$(endif)\n</div>\n<!-- END_MIKROGESTOR_TRIAL_BLOCK -->`;
+      const trialHtml = `<!-- MIKROGESTOR_TRIAL_BLOCK -->\n<div id="trial-container" style="display: ${trialDisplay}; text-align: center; font-size: 11px; margin-top: 12px; color: var(--muted);">\n$$(if trial == 'yes')\n<span class="trial-label">${trialText}</span><a href="javascript:void(0)" onclick="if(confirm('${trialConfirmMsg}')) confirmTrialLogin()" style="color: var(--blue); text-decoration: underline; font-weight: 600;">${trialLinkText}</a>.\n$$(endif)\n</div>\n<!-- END_MIKROGESTOR_TRIAL_BLOCK -->`;
 
       if (trialContainerRegex.test(html)) {
          html = html.replace(trialContainerRegex, trialHtml);

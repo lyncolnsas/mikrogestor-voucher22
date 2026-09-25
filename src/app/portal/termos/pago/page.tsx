@@ -89,7 +89,7 @@ export default function TermosPagoPage() {
                   <li>Confirme que o ícone Wi-Fi está conectado na rede do estabelecimento.</li>
                   <li>Abra o navegador (Chrome, Safari, Firefox).</li>
                   <li>Acesse <strong className="text-white">http://neverssl.com</strong> — isso forçará a abertura da tela de login do Hotspot.</li>
-                  <li>Caso seja solicitado, clique em <strong className="text-white">"Conectar"</strong> ou insira seu telefone cadastrado.</li>
+                  <li>Caso seja solicitado, clique em <strong className="text-white">&quot;Conectar&quot;</strong> ou insira seu telefone cadastrado.</li>
                 </ol>
               </div>
             </div>

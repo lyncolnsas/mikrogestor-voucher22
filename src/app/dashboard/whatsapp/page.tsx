@@ -4,11 +4,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   Bot, Save, ShieldCheck, Link as LinkIcon,
-  RefreshCcw, Trash2, Plus, Phone, Wifi, WifiOff,
+  RefreshCcw, Trash2, Plus, Phone, WifiOff,
   QrCode, CheckCircle2, AlertTriangle, Zap, LogOut, RotateCw,
-  Eye, MessageSquare, Clock, Layers, Timer, MousePointerClick, Pause,
-  ToggleLeft, ToggleRight, X, Smartphone, Activity, Server, ArrowRight,
-  Sliders, MessageCircle, Users, FolderPlus, Check, Search, Library
+  Eye, MessageSquare, Clock, Layers, MousePointerClick, Pause,
+  X, Smartphone, Activity,
+  Users, FolderPlus, Check, Search, Library
 } from 'lucide-react';
 import { WhatsappMessageCustomizer } from '@/components/dashboard/whatsapp/WhatsappMessageCustomizer';
 
@@ -105,7 +105,7 @@ function MaskingCard({
   color = 'sky',
   children,
 }: {
-  icon: any;
+  icon: React.ElementType;
   title: string;
   description: string;
   enabled: boolean;
@@ -165,7 +165,6 @@ function MaskingCard({
 export default function WhatsappConnection() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [savingMask, setSavingMask] = useState(false);
   const [feedback, setFeedback] = useState<{ success: boolean; message: string } | null>(null);
 
   const [instances, setInstances] = useState<WhatsappInstance[]>([]);
@@ -185,6 +184,8 @@ export default function WhatsappConnection() {
 
   // Masking config state
   const [masking, setMasking] = useState<MaskingConfig>(DEFAULT_MASKING);
+  const [savingMask, setSavingMask] = useState(false);
+  const [savedMaskSuccess, setSavedMaskSuccess] = useState(false);
 
   // New instance modal state (Baileys)
   const [isPairingModalOpen, setIsPairingModalOpen] = useState(false);
@@ -427,28 +428,6 @@ export default function WhatsappConnection() {
     }
   };
 
-  const handleSaveMasking = async () => {
-    setSavingMask(true);
-    try {
-      const res = await fetch('/api/admin/whatsapp-masking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(masking)
-      });
-      const data = await res.json();
-      if (res.ok) {
-        if (data.config) setMasking(data.config);
-        showFeedback(true, 'Configurações de mascaramento salvas com sucesso!');
-      } else {
-        showFeedback(false, data.error || 'Erro ao salvar mascaramento.');
-      }
-    } catch {
-      showFeedback(false, 'Erro ao comunicar com o servidor.');
-    } finally {
-      setSavingMask(false);
-    }
-  };
-
   const handleSaveVerifyToken = async () => {
     if (!verifyToken.trim()) {
       showFeedback(false, 'Preencha o Webhook Verify Token.');
@@ -503,7 +482,53 @@ export default function WhatsappConnection() {
     }
   };
 
-  const patchMasking = (patch: Partial<MaskingConfig>) => setMasking(prev => ({ ...prev, ...patch }));
+  const patchMasking = async (patch: Partial<MaskingConfig>) => {
+    const updated = { ...masking, ...patch };
+    setMasking(updated);
+    setSavingMask(true);
+    try {
+      const res = await fetch('/api/admin/whatsapp-masking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch)
+      });
+      const data = await res.json();
+      if (data.success && data.config) {
+        setMasking(data.config);
+        setSavedMaskSuccess(true);
+        setTimeout(() => setSavedMaskSuccess(false), 2500);
+      }
+    } catch (e) {
+      console.error('Erro ao sincronizar mascaramento:', e);
+    } finally {
+      setSavingMask(false);
+    }
+  };
+
+  const handleSaveMasking = async () => {
+    setSavingMask(true);
+    try {
+      const res = await fetch('/api/admin/whatsapp-masking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(masking)
+      });
+      const data = await res.json();
+      if (data.success && data.config) {
+        setMasking(data.config);
+        setSavedMaskSuccess(true);
+        setTimeout(() => setSavedMaskSuccess(false), 3000);
+        showFeedback(true, 'Configurações de proteção anti-ban salvas e ativas em todos os números!');
+      } else {
+        showFeedback(false, data.error || 'Erro ao salvar mascaramento');
+      }
+    } catch (e) {
+      console.error('Erro ao salvar mascaramento anti-ban:', e);
+      showFeedback(false, 'Falha de comunicação ao salvar anti-ban');
+    } finally {
+      setSavingMask(false);
+    }
+  };
 
   const baileysInstances = instances.filter(i => (i.engine || 'baileys') === 'baileys');
   const metaInstances = instances.filter(i => i.engine === 'meta');
@@ -534,10 +559,10 @@ export default function WhatsappConnection() {
   ].filter(Boolean).length : 0;
 
   return (
-    <main className="w-full p-4 md:p-8 space-y-8 animate-fade-in max-w-6xl mx-auto">
+    <main className="mg-page-container max-w-6xl mx-auto">
 
       {/* ── HEADER ─────────────────────────────────────────── */}
-      <header className="bg-white border border-slate-200/90 shadow-sm rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <header className="mg-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className={`w-2.5 h-2.5 rounded-full ${
@@ -546,11 +571,11 @@ export default function WhatsappConnection() {
               modeInfo.mode === 'baileys' ? 'bg-sky-500 shadow-[0_0_8px_#0ea5e9]' :
               'bg-slate-400'
             }`} />
-            <span className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
+            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--mg-text-muted)' }}>
               WHATSAPP HUB // DUAL-ENGINE HÍBRIDO & MULTI-INSTÂNCIA
             </span>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+          <h1 className="mg-page-title flex items-center gap-3">
             Central de WhatsApp
             <span className={`text-xs px-2.5 py-1 rounded-full font-bold border uppercase tracking-wider ${
               modeInfo.mode === 'hybrid' ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/60' :
@@ -564,32 +589,28 @@ export default function WhatsappConnection() {
                '○ Motores Desativados'}
             </span>
           </h1>
-          <p className="text-xs text-slate-600 mt-1 max-w-3xl leading-relaxed">
+          <p className="mg-page-subtitle mt-1 max-w-3xl leading-relaxed">
             Opere a API Oficial da Meta e o WhatsApp Web Baileys simultaneamente ou de forma isolada. Suporte a múltiplos aparelhos com rotação inteligente, Session Pinning e proteção anti-ban.
           </p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700">
+          <div className="px-4 py-2 rounded-xl border border-[var(--mg-card-border)] bg-[var(--mg-card-bg-subtle)] text-xs font-bold" style={{ color: 'var(--mg-text-heading)' }}>
             {baileysInstances.filter(i => i.status === 'connected').length} Baileys Online • {metaInstances.length} Meta Ativos
           </div>
         </div>
       </header>
 
       {/* ── TABS NAVIGATION ─────────────────────────────────── */}
-      <nav className="flex items-center gap-2 p-1.5 bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700 rounded-2xl w-full sm:w-fit shadow-xs">
+      <nav className="mg-tabs-container">
         <button
           type="button"
           onClick={() => setActiveTab('connections')}
-          className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            activeTab === 'connections'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm border border-slate-200/80 dark:border-slate-700 font-black'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
-          }`}
+          className={`mg-tab-item ${activeTab === 'connections' ? 'active' : ''}`}
         >
           <Smartphone className="w-4 h-4 text-sky-600" />
           <span>Conexões & Motores</span>
-          <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+          <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full border border-[var(--mg-card-border)] bg-[var(--mg-card-bg-subtle)]" style={{ color: 'var(--mg-text-muted)' }}>
             {instances.length}
           </span>
         </button>
@@ -597,15 +618,11 @@ export default function WhatsappConnection() {
         <button
           type="button"
           onClick={() => setActiveTab('messages')}
-          className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            activeTab === 'messages'
-              ? 'bg-white dark:bg-slate-900 text-emerald-950 dark:text-emerald-300 shadow-sm border border-emerald-300 dark:border-emerald-700 font-black'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
-          }`}
+          className={`mg-tab-item ${activeTab === 'messages' ? 'active' : ''}`}
         >
           <MessageSquare className="w-4 h-4 text-emerald-600" />
           <span>Personalização de Mensagens</span>
-          <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 font-extrabold">
+          <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 font-extrabold">
             NOVO
           </span>
         </button>
@@ -613,11 +630,7 @@ export default function WhatsappConnection() {
         <button
           type="button"
           onClick={() => setActiveTab('masking')}
-          className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            activeTab === 'masking'
-              ? 'bg-white dark:bg-slate-900 text-indigo-950 dark:text-indigo-300 shadow-sm border border-indigo-200 dark:border-indigo-700 font-black'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
-          }`}
+          className={`mg-tab-item ${activeTab === 'masking' ? 'active' : ''}`}
         >
           <ShieldCheck className="w-4 h-4 text-indigo-600" />
           <span>Proteção Anti-Ban</span>
@@ -1156,14 +1169,22 @@ export default function WhatsappConnection() {
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-200">
-                <p className="text-xs text-slate-600">Configurações aplicadas dinamicamente a todas as instâncias Baileys.</p>
+                <div className="flex items-center gap-3">
+                  <p className="text-xs text-slate-600">Configurações aplicadas dinamicamente a todas as instâncias Baileys.</p>
+                  {savedMaskSuccess && (
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5 animate-fade-in">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      Salvo e sincronizado com o Baileys!
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={handleSaveMasking}
                   disabled={savingMask}
                   className="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
                 >
-                  <Save className="w-4 h-4" />
+                  <Save className={`w-4 h-4 ${savingMask ? 'animate-spin' : ''}`} />
                   {savingMask ? 'Salvando...' : 'Salvar Mascaramento'}
                 </button>
               </div>

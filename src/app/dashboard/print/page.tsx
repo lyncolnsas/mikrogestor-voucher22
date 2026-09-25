@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
 export default function PrintVouchers() {
-  const [data, setData] = useState<{users: any[], profile: string, comment: string} | null>(null);
-  const [theme, setTheme] = useState('classic'); // classic, minimalist, dark, gamer
-
-  useEffect(() => {
-    const stored = sessionStorage.getItem('mikro_vouchers_print');
-    if (stored) {
-      setData(JSON.parse(stored));
+  const [data] = useState<{users: any[], profile: string, comment: string} | null>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('mikro_vouchers_print');
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {}
+      }
     }
-  }, []);
+    return null;
+  });
+  const [theme, setTheme] = useState('classic'); // classic, minimalist, dark, gamer
 
   if (!data) {
     return <div className="p-8 text-center text-slate-700 font-semibold">Nenhum voucher encontrado para impressão.</div>;

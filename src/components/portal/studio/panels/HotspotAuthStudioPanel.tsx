@@ -7,9 +7,6 @@ import {
   UserCheck, 
   Zap, 
   QrCode, 
-  HelpCircle, 
-  CheckCircle2, 
-  Layers,
   Sparkles,
   Info
 } from 'lucide-react';
@@ -33,10 +30,10 @@ interface HotspotAuthStudioPanelProps {
   setTrialText: (val: string) => void;
   trialLinkText: string;
   setTrialLinkText: (val: string) => void;
-  trialModalTitle: string;
-  setTrialModalTitle: (val: string) => void;
-  trialModalMessage: string;
-  setTrialModalMessage: (val: string) => void;
+  trialModalTitle?: string;
+  setTrialModalTitle?: (val: string) => void;
+  trialModalMessage?: string;
+  setTrialModalMessage?: (val: string) => void;
 }
 
 export default function HotspotAuthStudioPanel({
@@ -58,10 +55,6 @@ export default function HotspotAuthStudioPanel({
   setTrialText,
   trialLinkText,
   setTrialLinkText,
-  trialModalTitle,
-  setTrialModalTitle,
-  trialModalMessage,
-  setTrialModalMessage,
 }: HotspotAuthStudioPanelProps) {
 
   // Toggle single PIN mode vs Username+Password

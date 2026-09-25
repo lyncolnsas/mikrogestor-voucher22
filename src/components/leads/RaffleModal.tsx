@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface RaffleModalProps {
   onClose: () => void;
@@ -14,13 +14,9 @@ export default function RaffleModal({ onClose, onRaffleComplete }: RaffleModalPr
   const [winner, setWinner] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const [whatsappMsg, setWhatsappMsg] = useState('Parabéns [Nome]! Você acaba de ser sorteado!');
+  const [whatsappMsg] = useState('Parabéns [Nome]! Você acaba de ser sorteado!');
 
-  useEffect(() => {
-    fetchEligibleLeads();
-  }, []);
-
-  const fetchEligibleLeads = async () => {
+  const fetchEligibleLeads = useCallback(async () => {
     try {
       const res = await fetch('/api/leads/raffle/eligible');
       const data = await res.json();
@@ -34,7 +30,18 @@ export default function RaffleModal({ onClose, onRaffleComplete }: RaffleModalPr
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    const run = async () => {
+      if (!ignore) {
+        await fetchEligibleLeads();
+      }
+    };
+    run();
+    return () => { ignore = true; };
+  }, [fetchEligibleLeads]);
 
   const executeRaffle = async () => {
     if (leads.length === 0) return;
@@ -65,7 +72,7 @@ export default function RaffleModal({ onClose, onRaffleComplete }: RaffleModalPr
       } else {
         setError('Erro ao processar ganhador: ' + (data.error || 'Falha no servidor'));
       }
-    } catch (e) {
+    } catch {
       setError('Erro de conexão ao salvar ganhador.');
     } finally {
       setIsProcessing(false);

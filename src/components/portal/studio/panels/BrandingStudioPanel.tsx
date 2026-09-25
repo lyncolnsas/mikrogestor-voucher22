@@ -2,17 +2,13 @@
 
 import React, { useState } from 'react';
 import { 
-  Palette, 
-  Image as ImageIcon, 
-  Film, 
   Upload, 
   Sparkles, 
-  Check, 
   Sliders, 
-  AlertTriangle,
   Type,
   ShieldCheck,
-  FolderOpen
+  FolderOpen,
+  Box
 } from 'lucide-react';
 import { BrandConfig } from '@/components/portal/DynamicLogoEditor';
 
@@ -45,6 +41,8 @@ interface BrandingStudioPanelProps {
   setBg: React.Dispatch<React.SetStateAction<any>>;
   effects: any;
   setEffects: React.Dispatch<React.SetStateAction<any>>;
+  studio?: any;
+  setStudio?: React.Dispatch<React.SetStateAction<any>>;
   colorPresets: any[];
   nicheEffects: any[];
   logoPreviewUrl: string;
@@ -65,9 +63,10 @@ export default function BrandingStudioPanel({
   brand,
   setBrand,
   bg,
-  setBg,
   effects,
   setEffects,
+  studio,
+  setStudio,
   colorPresets,
   nicheEffects,
   logoPreviewUrl,
@@ -81,7 +80,7 @@ export default function BrandingStudioPanel({
   availableTemplates = ['default', 'FAP'],
   onOpenMediaPicker,
 }: BrandingStudioPanelProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'presets' | 'palette' | 'logo' | 'background'>('presets');
+  const [activeSubTab, setActiveSubTab] = useState<'presets' | 'layout' | 'palette' | 'logo' | 'background'>('presets');
 
   // Contrast check
   const buttonContrast = getContrastRatio(colors.blue || '#2563eb', colors.loginButtonText || '#ffffff');
@@ -90,18 +89,19 @@ export default function BrandingStudioPanel({
   return (
     <div className="flex flex-col h-full bg-white dark:bg-slate-900 overflow-y-auto p-4 space-y-5 select-none">
       {/* Subtabs for Branding */}
-      <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200 dark:border-slate-700/70">
+      <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200 dark:border-slate-700/70 overflow-x-auto scrollbar-none">
         {[
-          { id: 'presets', label: 'Temas Prontos' },
-          { id: 'palette', label: 'Cores & Contraste' },
+          { id: 'presets', label: 'Temas' },
+          { id: 'layout', label: 'Estruturas & Caixas' },
+          { id: 'palette', label: 'Cores' },
           { id: 'logo', label: 'Logotipo' },
-          { id: 'background', label: 'Plano de Fundo' },
+          { id: 'background', label: 'Fundo' },
         ].map(sub => (
           <button
             key={sub.id}
             type="button"
             onClick={() => setActiveSubTab(sub.id as any)}
-            className={`flex-1 text-xs font-semibold py-1.5 px-2 rounded-lg transition-all cursor-pointer text-center ${
+            className={`flex-1 text-xs font-semibold py-1.5 px-2 rounded-lg transition-all cursor-pointer text-center whitespace-nowrap ${
               activeSubTab === sub.id
                 ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-xs font-bold'
                 : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
@@ -169,7 +169,10 @@ export default function BrandingStudioPanel({
 
           <div className="grid grid-cols-1 gap-2.5">
             {colorPresets.map((preset) => {
-              const isSelected = colors.bg === preset.colors.bg && colors.brand === preset.colors.brand;
+              const isSelected = colors.bg === preset.colors.bg && 
+                colors.brand === preset.colors.brand && 
+                (preset.colors.cardBg ? colors.cardBg === preset.colors.cardBg : true) &&
+                (preset.colors.blue ? colors.blue === preset.colors.blue : true);
               return (
                 <button
                   key={preset.name}
@@ -213,7 +216,414 @@ export default function BrandingStudioPanel({
         </div>
       )}
 
-      {/* 2. PALETTE & CONTRAST TAB */}
+      {/* 2. ESTRUTURA & CAIXAS (LAYOUT) TAB */}
+      {activeSubTab === 'layout' && (
+        <div className="space-y-4">
+          {/* Formato e Geometria do Card Principal */}
+          <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <Box className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Caixa de Login (Card)</span>
+              </h4>
+            </div>
+
+            {/* Presets Rápidos de Formato */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                Formato do Card
+              </label>
+              <div className="grid grid-cols-4 gap-1.5 text-center">
+                {[
+                  { id: 'rounded', label: 'Arredondado', r: 20 },
+                  { id: 'pill', label: 'Pílula', r: 36 },
+                  { id: 'square', label: 'Reto', r: 4 },
+                  { id: 'scifi-cut', label: 'Sci-Fi', r: 0 }
+                ].map(s => {
+                  const isCur = effects.cardShape === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => {
+                        setEffects((prev: any) => ({ ...prev, cardShape: s.id }));
+                        if (setStudio) {
+                          setStudio((prev: any) => ({
+                            ...prev,
+                            cardRadiusTL: s.r,
+                            cardRadiusTR: s.r,
+                            cardRadiusBR: s.r,
+                            cardRadiusBL: s.r
+                          }));
+                        }
+                      }}
+                      className={`py-1.5 px-1 rounded-lg border text-[10px] font-bold transition-all cursor-pointer ${
+                        isCur
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/20'
+                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Sliders de Raio dos Cantos e Padding */}
+            {studio && setStudio && (
+              <>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-slate-700 dark:text-slate-300">Raio dos Cantos do Card</span>
+                    <span className="font-mono text-blue-600">{studio.cardRadiusTL || 20}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="40"
+                    value={studio.cardRadiusTL || 20}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value);
+                      setStudio((prev: any) => ({
+                        ...prev,
+                        cardRadiusTL: v,
+                        cardRadiusTR: v,
+                        cardRadiusBR: v,
+                        cardRadiusBL: v
+                      }));
+                    }}
+                    className="w-full accent-blue-600"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-slate-700 dark:text-slate-300">Padding Interno do Card</span>
+                    <span className="font-mono text-blue-600">{studio.cardPaddingTop || 24}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="12"
+                    max="44"
+                    value={studio.cardPaddingTop || 24}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value);
+                      setStudio((prev: any) => ({
+                        ...prev,
+                        cardPaddingTop: v,
+                        cardPaddingRight: v,
+                        cardPaddingBottom: v,
+                        cardPaddingLeft: v
+                      }));
+                    }}
+                    className="w-full accent-blue-600"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-slate-700 dark:text-slate-300">Espaço entre Linhas (Gap)</span>
+                    <span className="font-mono text-blue-600">{studio.cardGap || 14}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="8"
+                    max="32"
+                    value={studio.cardGap || 14}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value);
+                      setStudio((prev: any) => ({ ...prev, cardGap: v }));
+                    }}
+                    className="w-full accent-blue-600"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Efeitos de Vidro e Textura */}
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-700/60 space-y-2">
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-slate-700 dark:text-slate-300">Opacidade do Vidro</span>
+                  <span className="font-mono text-blue-600">{colors.glassOpacity !== undefined ? colors.glassOpacity : 90}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="100"
+                  value={colors.glassOpacity !== undefined ? colors.glassOpacity : 90}
+                  onChange={(e) => setColors((prev: any) => ({ ...prev, glassOpacity: parseInt(e.target.value) }))}
+                  className="w-full accent-blue-600"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-slate-700 dark:text-slate-300">Desfoque do Fundo (Blur)</span>
+                  <span className="font-mono text-blue-600">{colors.glassBlur !== undefined ? colors.glassBlur : 12}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="24"
+                  value={colors.glassBlur !== undefined ? colors.glassBlur : 12}
+                  onChange={(e) => setColors((prev: any) => ({ ...prev, glassBlur: parseInt(e.target.value) }))}
+                  className="w-full accent-blue-600"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!effects.cardGlowBorder}
+                    onChange={(e) => setEffects((prev: any) => ({ ...prev, cardGlowBorder: e.target.checked }))}
+                    className="w-4 h-4 accent-blue-600 rounded"
+                  />
+                  <span>Borda com Brilho</span>
+                </label>
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!effects.cardNoiseTexture}
+                    onChange={(e) => setEffects((prev: any) => ({ ...prev, cardNoiseTexture: e.target.checked }))}
+                    className="w-4 h-4 accent-blue-600 rounded"
+                  />
+                  <span>Textura de Vidro</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Linhas e Campos de Entrada (Inputs) */}
+          {studio && setStudio && (
+            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-3">
+              <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <Sliders className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                <span>Campos de Entrada (Linhas/Inputs)</span>
+              </h4>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-slate-700 dark:text-slate-300">Altura dos Campos</span>
+                  <span className="font-mono text-indigo-600">{studio.inputHeight || 44}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="38"
+                  max="56"
+                  value={studio.inputHeight || 44}
+                  onChange={(e) => setStudio((prev: any) => ({ ...prev, inputHeight: parseInt(e.target.value) }))}
+                  className="w-full accent-indigo-600"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-slate-700 dark:text-slate-300">Arredondamento dos Campos</span>
+                  <span className="font-mono text-indigo-600">{studio.inputRadius !== undefined ? studio.inputRadius : 10}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="24"
+                  value={studio.inputRadius !== undefined ? studio.inputRadius : 10}
+                  onChange={(e) => setStudio((prev: any) => ({ ...prev, inputRadius: parseInt(e.target.value) }))}
+                  className="w-full accent-indigo-600"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-slate-700 dark:text-slate-300">Borda dos Campos</span>
+                  <span className="font-mono text-indigo-600">{studio.inputBorderWidth || 1}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="3"
+                  value={studio.inputBorderWidth || 1}
+                  onChange={(e) => setStudio((prev: any) => ({ ...prev, inputBorderWidth: parseInt(e.target.value) }))}
+                  className="w-full accent-indigo-600"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Botões de Ação */}
+          {studio && setStudio && (
+            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-3">
+              <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <span>Botões de Ação</span>
+              </h4>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-slate-700 dark:text-slate-300">Altura dos Botões</span>
+                  <span className="font-mono text-amber-600">{studio.btnHeight || 46}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="38"
+                  max="58"
+                  value={studio.btnHeight || 46}
+                  onChange={(e) => setStudio((prev: any) => ({ ...prev, btnHeight: parseInt(e.target.value) }))}
+                  className="w-full accent-amber-600"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-slate-700 dark:text-slate-300">Arredondamento dos Botões</span>
+                  <span className="font-mono text-amber-600">{studio.btnRadiusTL !== undefined ? studio.btnRadiusTL : 12}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="30"
+                  value={studio.btnRadiusTL !== undefined ? studio.btnRadiusTL : 12}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value);
+                    setStudio((prev: any) => ({
+                      ...prev,
+                      btnRadiusTL: v,
+                      btnRadiusTR: v,
+                      btnRadiusBR: v,
+                      btnRadiusBL: v
+                    }));
+                  }}
+                  className="w-full accent-amber-600"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                  Peso da Fonte dos Botões
+                </label>
+                <div className="grid grid-cols-4 gap-1 text-center">
+                  {[
+                    { id: '500', label: 'Médio' },
+                    { id: '600', label: 'Semibold' },
+                    { id: '700', label: 'Bold' },
+                    { id: '800', label: 'Extrabold' }
+                  ].map(w => (
+                    <button
+                      key={w.id}
+                      type="button"
+                      onClick={() => setStudio((prev: any) => ({ ...prev, btnFontWeight: w.id }))}
+                      className={`py-1 rounded border text-[10px] font-bold transition-all cursor-pointer ${
+                        (studio.btnFontWeight || '600') === w.id
+                          ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      {w.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200 dark:border-slate-700/60">
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!effects.btnShimmer}
+                    onChange={(e) => setEffects((prev: any) => ({ ...prev, btnShimmer: e.target.checked }))}
+                    className="w-4 h-4 accent-amber-600 rounded"
+                  />
+                  <span>Efeito Shimmer (Luz)</span>
+                </label>
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!effects.btnPulse}
+                    onChange={(e) => setEffects((prev: any) => ({ ...prev, btnPulse: e.target.checked }))}
+                    className="w-4 h-4 accent-amber-600 rounded"
+                  />
+                  <span>Pulso Suave</span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Tipografia e Título */}
+          {studio && setStudio && (
+            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-3">
+              <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <Type className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Tipografia & Título</span>
+              </h4>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                  Família de Fonte Principal
+                </label>
+                <div className="grid grid-cols-3 gap-1 text-center">
+                  {['Inter', 'Outfit', 'Poppins', 'Montserrat', 'Roboto Mono'].map(f => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setStudio((prev: any) => ({ ...prev, fontFamily: f }))}
+                      className={`py-1 px-1 rounded border text-[10px] font-bold transition-all cursor-pointer ${
+                        (studio.fontFamily || 'Inter') === f
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
+                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-slate-700 dark:text-slate-300">Tamanho da Fonte do Título</span>
+                  <span className="font-mono text-blue-600">{studio.titleFontSize || 22}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="16"
+                  max="36"
+                  value={studio.titleFontSize || 22}
+                  onChange={(e) => setStudio((prev: any) => ({ ...prev, titleFontSize: parseInt(e.target.value) }))}
+                  className="w-full accent-blue-600"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                  Alinhamento do Título
+                </label>
+                <div className="grid grid-cols-3 gap-1 text-center">
+                  {[
+                    { id: 'left', label: 'Esquerda' },
+                    { id: 'center', label: 'Centro' },
+                    { id: 'right', label: 'Direita' }
+                  ].map(al => (
+                    <button
+                      key={al.id}
+                      type="button"
+                      onClick={() => setStudio((prev: any) => ({ ...prev, titleAlign: al.id }))}
+                      className={`py-1 rounded border text-[10px] font-bold transition-all cursor-pointer ${
+                        (studio.titleAlign || 'center') === al.id
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
+                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      {al.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 3. PALETTE & CONTRAST TAB */}
       {activeSubTab === 'palette' && (
         <div className="space-y-4">
           {/* WCAG Contrast Shield Card */}
@@ -289,6 +699,7 @@ export default function BrandingStudioPanel({
         <div className="space-y-4">
           <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex items-center gap-4">
             <div className="w-16 h-16 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-300 dark:border-slate-700 shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={logoPreviewUrl} alt="Logo" className="w-full h-full object-contain p-1" />
             </div>
             <div className="flex-1">

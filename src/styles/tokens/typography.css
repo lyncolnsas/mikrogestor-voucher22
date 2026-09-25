@@ -1,0 +1,37 @@
+/* ==========================================================================
+   MIKROGESTOR — DESIGN TOKENS: TIPOGRAFIA & FONTES
+   ========================================================================== */
+
+:root {
+  /* Famílias de Fontes */
+  --mg-font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  --mg-font-mono: 'Share Tech Mono', 'JetBrains Mono', monospace;
+
+  /* Escala de Tamanhos */
+  --mg-text-2xs: 0.625rem;  /* 10px */
+  --mg-text-xs:  0.75rem;   /* 12px */
+  --mg-text-sm:  0.8125rem; /* 13px */
+  --mg-text-base: 0.875rem; /* 14px */
+  --mg-text-md:  1rem;      /* 16px */
+  --mg-text-lg:  1.125rem;  /* 18px */
+  --mg-text-xl:  1.25rem;   /* 20px */
+  --mg-text-2xl: 1.5rem;    /* 24px */
+  --mg-text-3xl: 1.875rem;  /* 30px */
+
+  /* Pesos */
+  --mg-weight-normal: 400;
+  --mg-weight-medium: 500;
+  --mg-weight-semibold: 600;
+  --mg-weight-bold: 700;
+  --mg-weight-extrabold: 800;
+  --mg-weight-black: 900;
+}
+
+body {
+  font-family: var(--mg-font-sans);
+  color: var(--mg-text-body);
+}
+
+code, kbd, samp, pre {
+  font-family: var(--mg-font-mono);
+}

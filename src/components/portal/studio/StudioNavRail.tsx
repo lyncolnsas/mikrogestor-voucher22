@@ -9,8 +9,6 @@ import {
   Globe,
   Code2,
   Cpu,
-  CheckCircle2,
-  AlertCircle,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';

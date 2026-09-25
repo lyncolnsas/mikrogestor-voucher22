@@ -1,0 +1,28 @@
+/* ==========================================================================
+   MIKROGESTOR — ESTRUTURA GLOBAL: HEADER & TOPBAR MOBILE
+   ========================================================================== */
+
+.mg-mobile-header {
+  background-color: var(--mg-sidebar-bg);
+  border-bottom: 1px solid var(--mg-sidebar-border);
+}
+
+.mg-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.mg-page-title {
+  font-size: var(--mg-text-2xl);
+  font-weight: var(--mg-weight-black);
+  color: var(--mg-text-heading);
+  letter-spacing: -0.02em;
+}
+
+.mg-page-subtitle {
+  font-size: var(--mg-text-sm);
+  font-weight: var(--mg-weight-medium);
+  color: var(--mg-text-muted);
+}

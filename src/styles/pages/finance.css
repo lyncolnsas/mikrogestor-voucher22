@@ -1,0 +1,19 @@
+/* ==========================================================================
+   MIKROGESTOR — PÁGINA: FINANCEIRO & VENDAS (/dashboard/finance)
+   ========================================================================== */
+
+.mg-finance-kpi {
+  background-color: var(--mg-card-bg);
+  border: 1px solid var(--mg-card-border);
+  border-radius: var(--mg-radius-lg);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--mg-shadow-card);
+}
+
+.mg-currency-val {
+  font-family: var(--mg-font-sans);
+  font-size: var(--mg-text-2xl);
+  font-weight: var(--mg-weight-black);
+  color: var(--mg-text-heading);
+  letter-spacing: -0.02em;
+}

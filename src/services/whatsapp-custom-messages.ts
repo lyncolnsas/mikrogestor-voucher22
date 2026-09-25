@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { spinText } from '@/utils/spintax';
 
 export interface MessageTriggerDefinition {
   id: string;
@@ -345,7 +346,7 @@ export function applyTemplateTags(template: string, vars: Record<string, string>
     const pattern = new RegExp(`\\{${key}\\}`, 'gi');
     result = result.replace(pattern, val || '');
   }
-  return result;
+  return spinText(result);
 }
 
 /**

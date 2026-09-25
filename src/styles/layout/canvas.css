@@ -1,0 +1,39 @@
+/* ==========================================================================
+   MIKROGESTOR — ESTRUTURA GLOBAL: CANVAS DE FUNDO & SCROLLBARS
+   ========================================================================== */
+
+.saas-canvas,
+.mg-canvas {
+  background-color: var(--mg-app-bg);
+  min-height: 100vh;
+  color: var(--mg-text-body);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ── Custom Scrollbar ── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: var(--mg-radius-full);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

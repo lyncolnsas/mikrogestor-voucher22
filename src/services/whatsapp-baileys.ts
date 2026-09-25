@@ -112,6 +112,7 @@ export interface BaileysSessionInstance {
   reconnectTimeout?: NodeJS.Timeout;
   libraryGroupJid?: string | null;
   libraryGroupName?: string | null;
+  lastSentTimestamp?: number;
 }
 
 // ─── BaileysAdapter (Multi-Instance Manager) ──────────────────────────────────
@@ -260,8 +261,11 @@ export class BaileysAdapter implements IWhatsappAdapter {
         // Fallback offline
       }
 
-      // Anti-Ban: Realistic Chrome User-Agent
-      const browserAgent: [string, string, string] = ['Chrome', 'Chrome', '125.0.6422.112'];
+      // Anti-Ban: Realistic Chrome User-Agent dinâmico
+      const maskCfg = await this.loadMaskingConfig();
+      const browserAgent: [string, string, string] = (maskCfg.enabled && maskCfg.browserFingerprint)
+        ? ['Chrome (Windows)', 'Chrome', '128.0.6613.120']
+        : ['Chrome', 'Chrome', '125.0.6422.112'];
 
       session.sock = makeWASocket({
         version,
@@ -376,6 +380,13 @@ export class BaileysAdapter implements IWhatsappAdapter {
             if (chatUpdate.type !== 'notify') continue;
             if (msg.key.fromMe) continue;
             if (remoteJid.includes('@g.us')) continue;
+
+            // ── Anti-Ban: Simulação de Leitura Humana (Blue Ticks com delay) ─
+            this.loadMaskingConfig().then(cfg => {
+              if (cfg.enabled && cfg.simulateReading) {
+                this.simulateReading(session!, remoteJid, msg.key).catch(() => {});
+              }
+            }).catch(() => {});
 
             const text =
               msg.message.conversation ||
@@ -715,6 +726,16 @@ export class BaileysAdapter implements IWhatsappAdapter {
     const cfg = await this.loadMaskingConfig();
     const jid = await this.resolveJid(session, to);
 
+    // Anti-burst cooldown: se uma mensagem acabou de ser enviada por este chip, aguarda um respiro natural
+    const now = Date.now();
+    const lastSent = session.lastSentTimestamp || 0;
+    const timeSinceLastSend = now - lastSent;
+    const minCooldown = cfg.enabled ? randomBetween(1500, 3000) : 400;
+    if (timeSinceLastSend < minCooldown) {
+      await sleep(minCooldown - timeSinceLastSend);
+    }
+    session.lastSentTimestamp = Date.now();
+
     const sendMediaIfPresent = async () => {
       // 1. Prioridade: Forward nativo da Biblioteca (sem re-upload, mesmo ID de mídia da Meta)
       if (options?.forwardLibraryId) {
@@ -807,7 +828,10 @@ export class BaileysAdapter implements IWhatsappAdapter {
   private incrementDailyCount(instanceId: string) {
     prisma.whatsappInstance.update({
       where: { id: instanceId },
-      data: { dailyCount: { increment: 1 } }
+      data: {
+        dailyCount: { increment: 1 },
+        lastSeen: new Date()
+      }
     }).catch(() => {});
   }
 

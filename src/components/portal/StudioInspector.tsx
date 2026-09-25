@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Palette,
   Type,
@@ -8,7 +8,6 @@ import {
   Sparkles,
   Layers,
   Square,
-  Sliders,
   Zap,
   AlignLeft,
   AlignCenter,
@@ -17,19 +16,15 @@ import {
   Trash2,
   Film,
   Image as ImageIcon,
-  Eye,
   Check,
   Undo2,
   Redo2,
   Download,
   Upload as UploadIcon,
-  RefreshCw,
   RotateCcw,
   ShieldCheck,
   Blend,
   Wand2,
-  ChevronDown,
-  ChevronRight,
   MousePointer2,
   Settings2,
   Sun,
@@ -200,22 +195,7 @@ function contrastRatio(hex1: string, hex2: string): number | null {
   return (bright + 0.05) / (dark + 0.05);
 }
 
-// ─── Utility: generate harmonious palette ────────────────────────────────────
-function generateHarmonicPalette(hex: string): { name: string; color: string }[] {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return [];
-  const [r, g, b] = rgb;
-  // Rotate hue by complementary, split-complementary, triadic
-  const toHex = (r: number, g: number, b: number) =>
-    '#' + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
-  return [
-    { name: 'Complementar', color: toHex(255 - r, 255 - g, 255 - b) },
-    { name: 'Análogo +30°', color: toHex(g, b, r) },
-    { name: 'Análogo -30°', color: toHex(b, r, g) },
-    { name: 'Mais Claro', color: toHex(r + 60, g + 60, b + 60) },
-    { name: 'Mais Escuro', color: toHex(r - 60, g - 60, b - 60) },
-  ];
-}
+
 
 // ─── Sub-component: ColorToken ───────────────────────────────────────────────
 interface ColorTokenProps {
@@ -228,11 +208,14 @@ interface ColorTokenProps {
 }
 function ColorToken({ label, value, onChange, onHover, contrastWith }: ColorTokenProps) {
   const [hexInput, setHexInput] = useState(value);
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
+    setHexInput(value);
+  }
   const ratio = contrastWith ? contrastRatio(value, contrastWith) : null;
   const wcagOk = ratio !== null && ratio >= 4.5;
   const wcagAa = ratio !== null && ratio >= 3;
-
-  useEffect(() => { setHexInput(value); }, [value]);
 
   const commitHex = () => {
     const clean = hexInput.startsWith('#') ? hexInput : '#' + hexInput;
@@ -308,7 +291,7 @@ interface SliderFieldProps {
   onHover?: () => void;
   color?: string;
 }
-function SliderField({ label, value, min, max, step = 1, unit = 'px', onChange, onHover, color = '#2563eb' }: SliderFieldProps) {
+function SliderField({ label, value, min, max, step = 1, unit = 'px', onChange, onHover }: SliderFieldProps) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
     <div className="space-y-1.5 py-1.5 px-2.5 rounded-xl hover:bg-slate-100/70 border border-transparent hover:border-slate-200 transition-colors" onMouseEnter={onHover}>
@@ -388,10 +371,6 @@ export default function StudioInspector({
   setEffects,
   studio,
   setStudio,
-  social,
-  setSocial,
-  badges,
-  setBadges,
   bg,
   setBg,
   handleBgUpload,
@@ -399,7 +378,6 @@ export default function StudioInspector({
   bgUploadLoading,
   COLOR_PRESETS,
   NICHE_EFFECTS,
-  hoveredTarget,
   onCardHover,
   onUndo,
   onRedo,
@@ -418,8 +396,6 @@ export default function StudioInspector({
 }: StudioInspectorProps) {
   const [activeSection, setActiveSection] = useState<StudioNavSection>('identity');
   const [bgCategory, setBgCategory] = useState<string>('all');
-  const [showHarmonicPalette, setShowHarmonicPalette] = useState(false);
-  const [harmonicBase, setHarmonicBase] = useState(colors.blue || '#2563eb');
   const presetFileRef = useRef<HTMLInputElement>(null);
 
   const fontOptions = [
@@ -977,7 +953,7 @@ export default function StudioInspector({
 
               <SliderField
                 label="Opacidade do Card"
-                value={(() => { let v = colors.glassOpacity ?? 85; return v > 0 && v <= 1 ? Math.round(v * 100) : v; })()}
+                value={(() => { const v = colors.glassOpacity ?? 85; return v > 0 && v <= 1 ? Math.round(v * 100) : v; })()}
                 min={0} max={100} unit="%"
                 onChange={v => setColors(p => ({ ...p, glassOpacity: v }))}
                 onHover={() => onCardHover?.('card')}

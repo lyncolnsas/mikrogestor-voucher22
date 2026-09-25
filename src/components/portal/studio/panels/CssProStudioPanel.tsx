@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Code2, Terminal, Sparkles, Copy, Check } from 'lucide-react';
+import { Code2, Terminal } from 'lucide-react';
 
 interface CssProStudioPanelProps {
   customCode: { customCss: string };
@@ -12,12 +12,8 @@ export default function CssProStudioPanel({
   customCode,
   setCustomCode,
 }: CssProStudioPanelProps) {
-  const [copied, setCopied] = React.useState(false);
-
   const handleCopySnippet = (snippet: string) => {
     navigator.clipboard.writeText(snippet);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
   };
 
   return (

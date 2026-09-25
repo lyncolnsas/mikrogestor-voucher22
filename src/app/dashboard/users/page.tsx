@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import RouterOffline from '@/components/RouterOffline';
 
 export default function Users() {
@@ -19,7 +18,16 @@ export default function Users() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Unified Active Tab State
-  const [activeTab, setActiveTab] = useState<'list' | 'batch' | 'single' | 'orders'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'batch' | 'single' | 'orders'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam === 'batch' || tabParam === 'single' || tabParam === 'list' || tabParam === 'orders') {
+        return tabParam as 'list' | 'batch' | 'single' | 'orders';
+      }
+    }
+    return 'list';
+  });
 
   // Pending Orders State
   const [pendingPix, setPendingPix] = useState<any[]>([]);
@@ -116,7 +124,7 @@ export default function Users() {
       } else {
         setSingleMessage({ type: 'error', text: data.message || 'Erro ao criar usuário' });
       }
-    } catch (err) {
+    } catch {
       setSingleMessage({ type: 'error', text: 'Falha na requisição ao criar usuário' });
     } finally {
       setCreatingSingle(false);
@@ -166,7 +174,7 @@ export default function Users() {
       } else {
         setBatchMessage({ type: 'error', text: data.message || 'Erro ao gerar vouchers' });
       }
-    } catch (err: any) {
+    } catch {
       setBatchMessage({ type: 'error', text: 'Falha na requisição ao gerar vouchers' });
     } finally {
       setGeneratingBatch(false);
@@ -207,7 +215,7 @@ export default function Users() {
       } else {
         setError(data.message);
       }
-    } catch (_err) {
+    } catch {
       setError('Falha ao carregar usuários');
     } finally {
       setLoading(false);
@@ -225,7 +233,7 @@ export default function Users() {
         setPendingMp(grouped.mercadopago || []);
         setPendingCounts(data.counts || { total: 0, manual: 0, mercadopago: 0 });
       }
-    } catch (_e) {}
+    } catch {}
     finally { if (showSpinner) setRefreshingOrders(false); }
   };
 
@@ -261,19 +269,22 @@ export default function Users() {
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   useEffect(() => {
-    fetchUsers();
-    fetchOptions();
-    fetchPendingOrders();
+    let isSubscribed = true;
+    const initData = async () => {
+      await fetchUsers();
+      if (!isSubscribed) return;
+      await fetchOptions();
+      if (!isSubscribed) return;
+      await fetchPendingOrders();
+    };
+    initData();
+
     // Auto-refresh pedidos a cada 30s
     const interval = setInterval(() => fetchPendingOrders(), 30000);
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const tabParam = params.get('tab');
-      if (tabParam === 'batch' || tabParam === 'single' || tabParam === 'list' || tabParam === 'orders') {
-        setActiveTab(tabParam as 'list' | 'batch' | 'single' | 'orders');
-      }
-    }
-    return () => clearInterval(interval);
+    return () => {
+      isSubscribed = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const handleDeleteUser = async (id: string, name: string) => {
@@ -291,7 +302,7 @@ export default function Users() {
       } else {
         alert(data.message);
       }
-    } catch (_err) {
+    } catch {
       alert('Erro ao apagar usuário.');
     }
   };
@@ -314,7 +325,7 @@ export default function Users() {
         setBatchDeleteComment('');
         fetchUsers();
       }
-    } catch (err) {
+    } catch {
       alert('Erro ao apagar lote.');
     } finally {
       setIsDeleting(false);
@@ -403,9 +414,9 @@ export default function Users() {
   const isAllSelected = filteredUsers.length > 0 && filteredUsers.every(u => selectedIds.includes(u.id || u.name));
 
   return (
-    <main className="w-full p-4 md:p-6 max-w-7xl mx-auto space-y-6 animate-fade-in relative pb-24">
+    <main className="mg-page-container relative pb-24">
       {/* Header */}
-      <header className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <header className="mg-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2 h-2 rounded-full bg-blue-600 shadow-[0_0_8px_#2563eb]" />
@@ -421,48 +432,32 @@ export default function Users() {
           </p>
         </div>
         
-        <div className="flex items-center flex-wrap bg-slate-200/80 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 shrink-0 gap-1">
+        <div className="mg-tabs-container shrink-0 flex-wrap">
           <button 
             onClick={() => { setActiveTab('list'); setError(''); }}
-            className={`text-xs font-black py-2 px-3.5 rounded-lg transition-all cursor-pointer ${
-              activeTab === 'list'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-800 dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
-            }`}
+            className={`mg-tab-item ${activeTab === 'list' ? 'active' : ''}`}
           >
             📋 Lista de Vouchers
           </button>
           <button 
             onClick={() => { setActiveTab('batch'); setBatchMessage(null); }}
-            className={`text-xs font-black py-2 px-3.5 rounded-lg transition-all cursor-pointer ${
-              activeTab === 'batch'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-800 dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
-            }`}
+            className={`mg-tab-item ${activeTab === 'batch' ? 'active' : ''}`}
           >
             ⚡ Gerar em Lote
           </button>
           <button 
             onClick={() => { setActiveTab('single'); setSingleMessage(null); }}
-            className={`text-xs font-black py-2 px-3.5 rounded-lg transition-all cursor-pointer ${
-              activeTab === 'single'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-800 dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
-            }`}
+            className={`mg-tab-item ${activeTab === 'single' ? 'active' : ''}`}
           >
             👤 Criar Avulso
           </button>
           <button 
             onClick={() => { setActiveTab('orders'); fetchPendingOrders(true); }}
-            className={`relative text-xs font-black py-2 px-3.5 rounded-lg transition-all cursor-pointer ${
-              activeTab === 'orders'
-                ? 'bg-amber-500 text-white shadow-sm'
-                : 'text-slate-800 dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
-            }`}
+            className={`mg-tab-item relative ${activeTab === 'orders' ? 'active' : ''}`}
           >
             📦 Pedidos
             {pendingCounts.total > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-black bg-rose-500 text-white rounded-full px-1 shadow">
+              <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white shadow">
                 {pendingCounts.total}
               </span>
             )}
@@ -530,11 +525,11 @@ export default function Users() {
                   className="bg-white dark:bg-[#0e1524] border-2 border-slate-400 dark:border-slate-700 focus:border-rose-600 dark:focus:border-rose-500 text-slate-950 dark:text-slate-100 font-bold rounded-xl px-3 py-1.5 text-xs flex-1 outline-none transition-all shadow-xs placeholder:text-slate-500 dark:placeholder:text-slate-500"
                 />
                 <button 
-                  disabled={!batchDeleteComment} 
+                  disabled={!batchDeleteComment || isDeleting} 
                   type="submit" 
                   className="bg-rose-600 hover:bg-rose-700 text-white py-1.5 px-3.5 text-xs rounded-xl font-black transition-all shadow-xs shrink-0 disabled:opacity-50 cursor-pointer"
                 >
-                  Apagar
+                  {isDeleting ? 'Apagando...' : 'Apagar'}
                 </button>
               </form>
             </div>

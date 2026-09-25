@@ -1,0 +1,50 @@
+/* ==========================================================================
+   MIKROGESTOR — COMPONENTES: TABELAS
+   ========================================================================== */
+
+.mg-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--mg-card-bg);
+  border: 1px solid var(--mg-card-border);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-card);
+}
+
+.mg-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--mg-text-sm);
+  white-space: nowrap;
+}
+
+.mg-table thead tr {
+  background-color: var(--mg-table-th-bg);
+  border-bottom: 2px solid var(--mg-table-row-divide);
+}
+
+.mg-table th {
+  padding: 0.875rem 1.25rem;
+  font-size: var(--mg-text-2xs);
+  font-weight: var(--mg-weight-extrabold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mg-table-th-text);
+}
+
+.mg-table tbody tr {
+  border-bottom: 1px solid var(--mg-table-row-divide);
+  color: var(--mg-table-text);
+  transition: background-color 0.15s ease;
+}
+
+.mg-table tbody tr:hover {
+  background-color: var(--mg-table-row-hover);
+}
+
+.mg-table td {
+  padding: 0.875rem 1.25rem;
+  vertical-align: middle;
+  font-weight: var(--mg-weight-medium);
+}
