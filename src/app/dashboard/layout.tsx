@@ -69,6 +69,7 @@ const NAV_SECTIONS = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('mg-theme') as 'light' | 'dark' | null;
@@ -149,38 +150,53 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* ── Sidebar ──────────────────────────────────────────────── */}
       <aside
         className={[
-          'saas-sidebar fixed inset-y-0 left-0 z-50 w-60 flex flex-col shrink-0',
+          'saas-sidebar fixed inset-y-0 left-0 z-50 flex flex-col shrink-0',
           'md:sticky md:top-0 md:h-screen md:translate-x-0',
-          'transition-transform duration-300 ease-in-out',
+          'transition-[width,transform] duration-300 ease-in-out',
           'print:hidden border-r border-[#262a3d]',
+          isCollapsed ? 'w-20' : 'w-[260px]',
           open ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         ].join(' ')}
       >
         {/* Brand */}
-        <div className="mg-sidebar-brand">
-          <div className="mg-sidebar-logo-icon">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071a9 9 0 0112.14 0M1.394 9h.01m21.196 0h.01" />
+        <div className="mg-sidebar-brand flex items-center justify-between px-4 py-4 border-b border-[#1e2538]">
+          <div className={`flex items-center gap-3 overflow-hidden transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}>
+            <div className="mg-sidebar-logo-icon">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071a9 9 0 0112.14 0M1.394 9h.01m21.196 0h.01" />
+              </svg>
+            </div>
+            <div className="whitespace-nowrap">
+              <div className="text-[15px] font-extrabold text-white leading-none tracking-tight">
+                Mikro<span className="text-blue-400">Gestor</span>
+              </div>
+              <div className="text-[9.5px] font-semibold text-slate-300 tracking-wider uppercase mt-1">
+                Hotspot Gateway
+              </div>
+            </div>
+          </div>
+          
+          <button 
+            type="button" 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="w-7 h-7 rounded-lg hidden md:flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+            title="Alternar Menu Lateral"
+          >
+            <svg className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
             </svg>
-          </div>
-          <div>
-            <div className="text-[15px] font-extrabold text-white leading-none tracking-tight">
-              Mikro<span className="text-blue-400">Gestor</span>
-            </div>
-            <div className="text-[9.5px] font-semibold text-slate-300 tracking-wider uppercase mt-1">
-              Hotspot Gateway
-            </div>
-          </div>
+          </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-3 custom-scrollbar">
+        <nav className="flex-1 overflow-y-auto py-3 custom-scrollbar overflow-x-hidden">
           {NAV_SECTIONS.map(section => (
             <div key={section.label} className="mb-2">
               {/* Section label */}
-              <div className="mg-sidebar-section-label">
+              <div className={`mg-sidebar-section-label transition-all duration-300 ${isCollapsed ? 'opacity-0 h-0 p-0 overflow-hidden m-0' : 'opacity-100'}`}>
                 {section.label}
               </div>
+              {isCollapsed && <div className="h-px bg-[#1e293b] mx-4 my-2" />}
 
               {/* Links */}
               {section.items.map(item => {
@@ -190,14 +206,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     key={item.href}
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className={`mg-nav-link ${active ? 'active' : ''}`}
+                    className={`mg-nav-link group relative ${active ? 'active' : ''} ${isCollapsed ? 'justify-center px-0' : ''}`}
                     style={{ textDecoration: 'none' }}
                   >
                     {/* Active bar */}
                     {active && <span className="mg-nav-link-indicator" />}
                     <Icon d={ICONS[item.icon as keyof typeof ICONS]} active={active} />
-                    <span className="truncate">{item.label}</span>
-                    {active && <span className="mg-nav-link-dot" />}
+                    <span className={`truncate transition-all duration-300 ${isCollapsed ? 'w-0 opacity-0 hidden' : 'w-auto opacity-100'}`}>
+                      {item.label}
+                    </span>
+                    {active && !isCollapsed && <span className="mg-nav-link-dot" />}
+
+                    {/* Custom CSS Tooltip (Mini-Sidebar) */}
+                    {isCollapsed && (
+                      <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#0F172A] border border-[#1E293B] text-white text-[11px] font-bold tracking-wide rounded-md whitespace-nowrap opacity-0 pointer-events-none translate-x-1 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 z-[999] shadow-[4px_0_20px_rgba(0,0,0,0.45)] flex items-center">
+                        <div className="absolute -left-[5px] top-1/2 -translate-y-1/2 w-0 h-0 border-y-[5px] border-y-transparent border-r-[5px] border-r-[#1E293B]"></div>
+                        <div className="absolute -left-[4px] top-1/2 -translate-y-1/2 w-0 h-0 border-y-[4px] border-y-transparent border-r-[4px] border-r-[#0F172A] z-10"></div>
+                        {item.label}
+                      </div>
+                    )}
                   </Link>
                 );
               })}
@@ -207,40 +234,104 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Footer — user + logout */}
         <div className="mg-sidebar-footer">
-          <div className="flex items-center gap-2.5 px-2 mb-3">
-            <div className="mg-sidebar-avatar-badge">
+          <div className={`flex items-center gap-2.5 mb-3 transition-all duration-300 ${isCollapsed ? 'justify-center' : 'px-2'}`}>
+            <div className="mg-sidebar-avatar-badge" title={isCollapsed ? 'Administrador' : undefined}>
               ADM
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11.5px] font-bold text-white leading-none truncate">Administrador</p>
-              <p className="text-[9px] mt-0.5 uppercase tracking-wider text-emerald-400 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
-                MikroTik Online
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors cursor-pointer shrink-0"
-              title="Alternar Tema Claro / Escuro"
-            >
-              {theme === 'light' ? '🌙' : '☀️'}
-            </button>
+            {!isCollapsed && (
+              <>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11.5px] font-bold text-white leading-none truncate">Administrador</p>
+                  <p className="text-[9px] mt-0.5 uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
+                    Online
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors cursor-pointer shrink-0"
+                  title="Alternar Tema Claro / Escuro"
+                >
+                  {theme === 'light' ? '🌙' : '☀️'}
+                </button>
+              </>
+            )}
           </div>
 
           <button
             type="button"
             onClick={handleLogout}
-            className="mg-sidebar-logout-btn"
+            className={`mg-sidebar-logout-btn group relative ${isCollapsed ? 'justify-center p-2' : ''}`}
           >
             <Icon d={ICONS.logout} />
-            Sair do Painel
+            {!isCollapsed && <span>Sair do Painel</span>}
+
+            {/* Custom Tooltip Logout */}
+            {isCollapsed && (
+              <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#0F172A] border border-[#1E293B] text-rose-400 text-[11px] font-bold tracking-wide rounded-md whitespace-nowrap opacity-0 pointer-events-none translate-x-1 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 z-[999] shadow-[4px_0_20px_rgba(0,0,0,0.45)] flex items-center">
+                <div className="absolute -left-[5px] top-1/2 -translate-y-1/2 w-0 h-0 border-y-[5px] border-y-transparent border-r-[5px] border-r-[#1E293B]"></div>
+                <div className="absolute -left-[4px] top-1/2 -translate-y-1/2 w-0 h-0 border-y-[4px] border-y-transparent border-r-[4px] border-r-[#0F172A] z-10"></div>
+                Sair do Painel
+              </div>
+            )}
           </button>
         </div>
       </aside>
 
       {/* ── Main Content ─────────────────────────────────────────── */}
-      <main className="flex-1 min-w-0 min-h-screen flex flex-col bg-[var(--mg-app-bg)] transition-colors duration-200">
+      <main className="flex-1 min-w-0 min-h-screen flex flex-col bg-[var(--mg-app-bg)] transition-colors duration-200 relative">
+        
+        {/* ── Global Top Bar (Desktop) ─────────────────────────────── */}
+        <div className="hidden md:flex h-16 bg-white dark:bg-[#111726] border-b border-slate-200 dark:border-slate-800 px-6 items-center justify-between shrink-0 sticky top-0 z-40 transition-colors">
+          <div className="flex items-center gap-4 flex-1">
+            <button 
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors"
+              title="Menu"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div className="relative w-full max-w-md group">
+              <svg className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input 
+                type="text" 
+                placeholder="Pesquisar em todo o painel..." 
+                className="w-full bg-slate-50 hover:bg-slate-100 dark:bg-[#0e1524] dark:hover:bg-[#141d30] border border-slate-200 dark:border-slate-700/80 rounded-full pl-10 pr-4 py-2.5 text-[13px] font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:bg-white dark:focus:bg-[#0e1524] transition-all"
+              />
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] font-bold text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+                Ctrl K
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <button className="relative w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              <span className="absolute top-2 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-[1.5px] border-white dark:border-[#111726]"></span>
+            </button>
+            <div className="w-px h-6 bg-slate-200 dark:bg-slate-700/60"></div>
+            <div className="flex items-center gap-3 cursor-pointer group">
+              <div className="text-right hidden lg:block">
+                <p className="text-[13px] font-bold text-slate-700 dark:text-slate-200 leading-none group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Administrador</p>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold mt-1">Conta Master</p>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-slate-800 to-slate-700 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center text-white font-black text-xs shadow-sm ring-2 ring-transparent group-hover:ring-blue-500/30 transition-all">
+                AD
+              </div>
+              <svg className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
         {children}
       </main>
     </div>
