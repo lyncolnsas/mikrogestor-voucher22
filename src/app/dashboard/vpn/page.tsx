@@ -96,16 +96,26 @@ function formatLastSeen(dateStr: string | null): string {
 // ─── Componentes Auxiliares ────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { color: string; dot: string; label: string }> = {
-    connected:    { color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500 animate-pulse", label: "Online" },
-    pending:      { color: "bg-amber-50 text-amber-700 border-amber-200",       dot: "bg-amber-400",                 label: "Aguardando" },
-    disconnected: { color: "bg-rose-50 text-rose-700 border-rose-200",         dot: "bg-rose-400",                  label: "Offline" },
-  };
-  const s = map[status] ?? map.disconnected;
+  if (status === "connected") {
+    return (
+      <span className="mg-badge-success inline-flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+        Online
+      </span>
+    );
+  }
+  if (status === "pending") {
+    return (
+      <span className="mg-badge-warning inline-flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+        Aguardando
+      </span>
+    );
+  }
   return (
-    <span className={"inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border " + s.color}>
-      <span className={"w-1.5 h-1.5 rounded-full " + s.dot} />
-      {s.label}
+    <span className="mg-badge-danger inline-flex items-center gap-1.5">
+      <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+      Offline
     </span>
   );
 }
@@ -1257,19 +1267,19 @@ export default function VpnPage() {
       {/* ── Metric Cards ─────────────────────────────────────────── */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total Online na VPN", value: totalConnected, sub: `${connectedRouters} Roteador(es) · ${connectedPeers} Admin(s)`, gradient: "from-emerald-500 to-emerald-700", shadow: "shadow-emerald-500/30", dot: "bg-white" },
-          { label: "MikroTiks Conectados", value: vpnRouters.length, sub: "Túneis de controle ativos", gradient: "from-blue-500 to-blue-700", shadow: "shadow-blue-500/30", dot: "bg-white" },
-          { label: "PCs e Celulares Admin", value: peers.length, sub: "Perfis com acesso Winbox", gradient: "from-indigo-500 to-indigo-700", shadow: "shadow-indigo-500/30", dot: "bg-white" },
+          { label: "Total Online na VPN", value: totalConnected, sub: `${connectedRouters} Roteador(es) · ${connectedPeers} Admin(s)`, variant: "mg-stat-teal" },
+          { label: "MikroTiks Conectados", value: vpnRouters.length, sub: "Túneis de controle ativos", variant: "mg-stat-blue" },
+          { label: "PCs e Celulares Admin", value: peers.length, sub: "Perfis com acesso Winbox", variant: "mg-stat-orange" },
         ].map((s) => (
-          <div key={s.label} className={`rounded-2xl p-5 bg-gradient-to-br ${s.gradient} shadow-lg ${s.shadow} flex items-center justify-between text-white`}>
+          <div key={s.label} className={`mg-stat-card ${s.variant} flex items-center justify-between`}>
             <div>
-              <span className="text-[11px] font-bold text-white/70 uppercase tracking-wider block">
+              <span className="text-[11px] font-bold text-white/80 uppercase tracking-wider block">
                 {s.label}
               </span>
               <p className="text-3xl font-black mt-1 text-white">{s.value}</p>
-              <p className="text-[10px] text-white/60 font-medium mt-0.5">{s.sub}</p>
+              <p className="text-[10px] text-white/70 font-medium mt-0.5">{s.sub}</p>
             </div>
-            <div className={`w-3 h-3 rounded-full ${s.dot} opacity-80`} />
+            <div className="w-3 h-3 rounded-full bg-white/90 shadow-xs" />
           </div>
         ))}
       </section>

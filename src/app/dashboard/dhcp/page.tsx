@@ -58,13 +58,13 @@ export default function DHCPLeases() {
       </header>
 
       {/* Main Table Card */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-[#161e31] flex justify-between items-center">
+      <div className="mg-card overflow-hidden">
+        <div className="px-6 py-5 border-b border-[var(--mg-card-border-subtle)] bg-[var(--mg-card-bg-subtle)] flex justify-between items-center">
           <div>
-            <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Dispositivos Conectados</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Clientes identificados com IPs concedidos via DHCP</p>
+            <h2 className="text-sm font-extrabold uppercase tracking-wider" style={{ color: 'var(--mg-text-heading)' }}>Dispositivos Conectados</h2>
+            <p className="text-xs font-medium mt-0.5" style={{ color: 'var(--mg-text-muted)' }}>Clientes identificados com IPs concedidos via DHCP</p>
           </div>
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800/80 bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 tracking-wider uppercase">
+          <span className="mg-badge-warning uppercase tracking-wider">
             {leases.length} LEASES
           </span>
         </div>
@@ -103,7 +103,7 @@ export default function DHCPLeases() {
                       <td className="px-6 py-4 font-bold text-slate-900">{lease.hostName || <span className="text-slate-400 italic">sem hostname</span>}</td>
                       <td className="px-6 py-4 text-slate-600 font-medium">{lease.server}</td>
                       <td className="px-6 py-4 text-right">
-                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${lease.status === 'bound' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                        <span className={lease.status === 'bound' ? 'mg-badge-success' : 'mg-badge-warning'}>
                           {lease.status.toUpperCase()}
                         </span>
                       </td>

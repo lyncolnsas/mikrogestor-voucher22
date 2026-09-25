@@ -481,32 +481,32 @@ export default function Users() {
           {/* Control Cards (Search, Print Batch, Delete Batch) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Search */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 md:col-span-2 lg:col-span-2 space-y-2">
-              <span className="block text-xs font-black text-slate-800 dark:text-slate-200">Buscar Usuário</span>
+            <div className="mg-card p-5 md:col-span-2 lg:col-span-2 space-y-2">
+              <span className="block text-xs font-black" style={{ color: 'var(--mg-text-heading)' }}>Buscar Usuário</span>
               <input 
                 type="text" 
                 placeholder="Buscar por nome ou lote..." 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-white dark:bg-[#0e1524] border-2 border-slate-400 dark:border-slate-700 focus:border-blue-600 dark:focus:border-blue-500 text-slate-950 dark:text-slate-100 font-bold rounded-xl px-3.5 py-2 text-xs outline-none transition-all shadow-xs placeholder:text-slate-500 dark:placeholder:text-slate-500"
+                className="w-full bg-white dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:border-blue-600 dark:focus:border-blue-500 font-bold rounded-xl px-3.5 py-2 text-xs outline-none transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500" style={{ color: 'var(--mg-text-heading)' }}
               />
             </div>
 
             {/* Print Batch */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 space-y-2">
-              <span className="block text-xs font-black text-emerald-800 dark:text-emerald-400">Imprimir Lote (Comentário)</span>
+            <div className="mg-card p-5 space-y-2">
+              <span className="block text-xs font-black text-emerald-600 dark:text-emerald-400">Imprimir Lote (Comentário)</span>
               <form onSubmit={handlePrintBatch} className="flex gap-2 w-full">
                 <input 
                   type="text" 
                   placeholder="Ex: dez-2023" 
                   value={batchPrintComment}
                   onChange={(e) => setBatchPrintComment(e.target.value)}
-                  className="bg-white dark:bg-[#0e1524] border-2 border-slate-400 dark:border-slate-700 focus:border-emerald-600 dark:focus:border-emerald-500 text-slate-950 dark:text-slate-100 font-bold rounded-xl px-3 py-1.5 text-xs flex-1 outline-none transition-all shadow-xs placeholder:text-slate-500 dark:placeholder:text-slate-500"
+                  className="bg-white dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:border-emerald-600 dark:focus:border-emerald-500 font-bold rounded-xl px-3 py-1.5 text-xs flex-1 outline-none transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500" style={{ color: 'var(--mg-text-heading)' }}
                 />
                 <button 
                   disabled={!batchPrintComment} 
                   type="submit" 
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white py-1.5 px-3.5 text-xs rounded-xl font-black transition-all shadow-xs shrink-0 disabled:opacity-50 cursor-pointer"
+                  className="mg-btn-success text-xs py-1.5 px-3.5 rounded-xl font-black transition-all shrink-0 disabled:opacity-50 cursor-pointer"
                 >
                   Imprimir
                 </button>
@@ -514,20 +514,20 @@ export default function Users() {
             </div>
 
             {/* Delete Batch */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 space-y-2">
-              <span className="block text-xs font-black text-rose-800 dark:text-rose-400">Excluir Lote (Comentário)</span>
+            <div className="mg-card p-5 space-y-2">
+              <span className="block text-xs font-black text-rose-600 dark:text-rose-400">Excluir Lote (Comentário)</span>
               <form onSubmit={handleBatchDelete} className="flex gap-2 w-full">
                 <input 
                   type="text" 
                   placeholder="Ex: dez-2023" 
                   value={batchDeleteComment}
                   onChange={(e) => setBatchDeleteComment(e.target.value)}
-                  className="bg-white dark:bg-[#0e1524] border-2 border-slate-400 dark:border-slate-700 focus:border-rose-600 dark:focus:border-rose-500 text-slate-950 dark:text-slate-100 font-bold rounded-xl px-3 py-1.5 text-xs flex-1 outline-none transition-all shadow-xs placeholder:text-slate-500 dark:placeholder:text-slate-500"
+                  className="bg-white dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 focus:border-rose-600 dark:focus:border-rose-500 font-bold rounded-xl px-3 py-1.5 text-xs flex-1 outline-none transition-all shadow-xs placeholder:text-slate-400 dark:placeholder:text-slate-500" style={{ color: 'var(--mg-text-heading)' }}
                 />
                 <button 
                   disabled={!batchDeleteComment || isDeleting} 
                   type="submit" 
-                  className="bg-rose-600 hover:bg-rose-700 text-white py-1.5 px-3.5 text-xs rounded-xl font-black transition-all shadow-xs shrink-0 disabled:opacity-50 cursor-pointer"
+                  className="mg-btn-danger text-xs py-1.5 px-3.5 rounded-xl font-black transition-all shrink-0 disabled:opacity-50 cursor-pointer"
                 >
                   {isDeleting ? 'Apagando...' : 'Apagar'}
                 </button>

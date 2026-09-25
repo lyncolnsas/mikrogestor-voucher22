@@ -336,44 +336,44 @@ export default function LeadsWorkspace({
           {/* Top KPI Cards Grid (5 Cards) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Card 1: Total de Cadastros */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+            <div className="mg-card p-5 flex flex-col justify-between">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">Total de Cadastros</h3>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60">
+                <h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--mg-text-muted)' }}>Total de Cadastros</h3>
+                <span className="mg-badge-info">
                   REGISTRADOS
                 </span>
               </div>
               <div className="my-1 flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{data.total}</span>
-                <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">acumulado</span>
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: 'var(--mg-text-heading)' }}>{data.total}</span>
+                <span className="text-xs font-medium" style={{ color: 'var(--mg-text-muted)' }}>acumulado</span>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
+              <div className="pt-2 border-t border-[var(--mg-card-border-subtle)] flex items-center justify-between text-[11px]">
                 <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                   ↑ +{data.growthMonthPct || 0}% este mês
                 </span>
-                <span className="text-slate-500 dark:text-slate-400 font-medium truncate max-w-[120px]" title={`${data.validWhatsAppPct}% com WhatsApp válido`}>
+                <span className="font-medium truncate max-w-[120px]" style={{ color: 'var(--mg-text-muted)' }} title={`${data.validWhatsAppPct}% com WhatsApp válido`}>
                   {data.validWhatsAppPct}% WhatsApp
                 </span>
               </div>
             </div>
 
             {/* Card 2: Novos Hoje */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+            <div className="mg-card p-5 flex flex-col justify-between">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">Cadastros Hoje</h3>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
+                <h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--mg-text-muted)' }}>Cadastros Hoje</h3>
+                <span className="mg-badge-success">
                   HOJE
                 </span>
               </div>
               <div className="my-1 flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{data.today}</span>
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: 'var(--mg-text-heading)' }}>{data.today}</span>
                 <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">novos</span>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 dark:text-slate-400 font-medium">
+              <div className="pt-2 border-t border-[var(--mg-card-border-subtle)] flex items-center justify-between text-[11px]">
+                <span className="font-medium" style={{ color: 'var(--mg-text-muted)' }}>
                   {data.todayDiff >= 0 ? `+${data.todayDiff} vs. ontem` : `${data.todayDiff} vs. ontem`}
                 </span>
-                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60">
+                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60 font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Tempo Real
                 </span>
@@ -381,52 +381,52 @@ export default function LeadsWorkspace({
             </div>
 
             {/* Card 3: Taxa de Conversão */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+            <div className="mg-card p-5 flex flex-col justify-between">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">Conversão do Portal</h3>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
+                <h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--mg-text-muted)' }}>Conversão do Portal</h3>
+                <span className="mg-badge-warning">
                   CONVERSÃO
                 </span>
               </div>
               <div className="my-1 flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{data.conversionRate}%</span>
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: 'var(--mg-text-heading)' }}>{data.conversionRate}%</span>
                 <span className="text-xs text-amber-600 dark:text-amber-400 font-bold">efetividade</span>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              <div className="pt-2 border-t border-[var(--mg-card-border-subtle)] text-[11px] font-medium" style={{ color: 'var(--mg-text-muted)' }}>
                 Sessões abertas vs. cadastros
               </div>
             </div>
 
             {/* Card 4: Retorno & Recorrência */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+            <div className="mg-card p-5 flex flex-col justify-between">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">Recorrência</h3>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60">
+                <h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--mg-text-muted)' }}>Recorrência</h3>
+                <span className="mg-badge-primary">
                   RETORNO
                 </span>
               </div>
               <div className="my-1 flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{data.retentionRate}%</span>
-                <span className="text-xs text-indigo-600 dark:text-indigo-400 font-bold">retorno</span>
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: 'var(--mg-text-heading)' }}>{data.retentionRate}%</span>
+                <span className="text-xs text-blue-600 dark:text-blue-400 font-bold">retorno</span>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              <div className="pt-2 border-t border-[var(--mg-card-border-subtle)] text-[11px] font-medium" style={{ color: 'var(--mg-text-muted)' }}>
                 Conectaram mais de 1 vez
               </div>
             </div>
 
             {/* Card 5: Tempo Médio de Permanência */}
-            <div className="bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+            <div className="mg-card p-5 flex flex-col justify-between">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">Tempo Médio</h3>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/60">
+                <h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--mg-text-muted)' }}>Tempo Médio</h3>
+                <span className="mg-badge-neutral font-bold">
                   TEMPO MÉDIO
                 </span>
               </div>
               <div className="my-1 flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{data.avgSessionMinutes} min</span>
-                <span className="text-xs text-purple-600 dark:text-purple-400 font-bold">duração</span>
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: 'var(--mg-text-heading)' }}>{data.avgSessionMinutes} min</span>
+                <span className="text-xs text-indigo-600 dark:text-indigo-400 font-bold">duração</span>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              <div className="pt-2 border-t border-[var(--mg-card-border-subtle)] text-[11px] font-medium" style={{ color: 'var(--mg-text-muted)' }}>
                 Permanência por sessão ativa
               </div>
             </div>

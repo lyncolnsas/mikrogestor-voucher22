@@ -180,26 +180,26 @@ export default function TrafficMonitor() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* RX Card (Download) */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-[#161e31] flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">DOWNLOAD (RX)</span>
+        <div className="mg-card overflow-hidden">
+          <div className="px-6 py-4 border-b border-[var(--mg-card-border-subtle)] bg-[var(--mg-card-bg-subtle)] flex items-center justify-between">
+            <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">DOWNLOAD (RX)</span>
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
           </div>
           <div className="p-6 space-y-4">
-            <div className="p-5 text-center bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl">
-              <span className="block text-[11px] text-slate-700 font-black uppercase tracking-wider mb-1">CONSUMO ATUAL</span>
+            <div className="p-5 text-center bg-[var(--mg-card-bg-subtle)] border border-[var(--mg-card-border-subtle)] rounded-2xl">
+              <span className="block text-[11px] font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-muted)' }}>CONSUMO ATUAL</span>
               <p className="text-3xl md:text-4xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 font-mono">
                 {trafficData ? formatBps(trafficData.rx) : '0.00 bps'}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-800 rounded-xl text-center shadow-xs">
-                <span className="block text-[11px] text-slate-700 font-black uppercase tracking-wider mb-1">Pico RX</span>
-                <span className="text-sm font-black text-slate-950 font-mono">{formatBps(peakRx)}</span>
+              <div className="p-4 bg-white dark:bg-slate-900/50 border border-[var(--mg-card-border-subtle)] rounded-xl text-center shadow-xs">
+                <span className="block text-[11px] font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-muted)' }}>Pico RX</span>
+                <span className="text-sm font-black font-mono" style={{ color: 'var(--mg-text-heading)' }}>{formatBps(peakRx)}</span>
               </div>
-              <div className="p-4 bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-800 rounded-xl text-center shadow-xs">
-                <span className="block text-[11px] text-slate-700 font-black uppercase tracking-wider mb-1">Status do Link</span>
-                <span className="text-xs font-black uppercase text-emerald-700 dark:text-emerald-400 flex items-center justify-center gap-1.5">
+              <div className="p-4 bg-white dark:bg-slate-900/50 border border-[var(--mg-card-border-subtle)] rounded-xl text-center shadow-xs">
+                <span className="block text-[11px] font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-muted)' }}>Status do Link</span>
+                <span className="text-xs font-black uppercase text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
                   CONECTADO
                 </span>
@@ -209,26 +209,26 @@ export default function TrafficMonitor() {
         </div>
 
         {/* TX Card (Upload) */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-[#161e31] flex items-center justify-between">
-            <span className="text-xs font-black text-blue-700 dark:text-blue-400 uppercase tracking-wider">UPLOAD (TX)</span>
+        <div className="mg-card overflow-hidden">
+          <div className="px-6 py-4 border-b border-[var(--mg-card-border-subtle)] bg-[var(--mg-card-bg-subtle)] flex items-center justify-between">
+            <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider">UPLOAD (TX)</span>
             <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
           </div>
           <div className="p-6 space-y-4">
-            <div className="p-5 text-center bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl">
-              <span className="block text-[11px] text-slate-700 font-black uppercase tracking-wider mb-1">CONSUMO ATUAL</span>
+            <div className="p-5 text-center bg-[var(--mg-card-bg-subtle)] border border-[var(--mg-card-border-subtle)] rounded-2xl">
+              <span className="block text-[11px] font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-muted)' }}>CONSUMO ATUAL</span>
               <p className="text-3xl md:text-4xl font-black tracking-tight text-blue-600 dark:text-blue-400 font-mono">
                 {trafficData ? formatBps(trafficData.tx) : '0.00 bps'}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-800 rounded-xl text-center shadow-xs">
-                <span className="block text-[11px] text-slate-700 font-black uppercase tracking-wider mb-1">Pico TX</span>
-                <span className="text-sm font-black text-slate-950 font-mono">{formatBps(peakTx)}</span>
+              <div className="p-4 bg-white dark:bg-slate-900/50 border border-[var(--mg-card-border-subtle)] rounded-xl text-center shadow-xs">
+                <span className="block text-[11px] font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-muted)' }}>Pico TX</span>
+                <span className="text-sm font-black font-mono" style={{ color: 'var(--mg-text-heading)' }}>{formatBps(peakTx)}</span>
               </div>
-              <div className="p-4 bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-800 rounded-xl text-center shadow-xs">
-                <span className="block text-[11px] text-slate-700 font-black uppercase tracking-wider mb-1">Status do Link</span>
-                <span className="text-xs font-black uppercase text-blue-700 dark:text-blue-400 flex items-center justify-center gap-1.5">
+              <div className="p-4 bg-white dark:bg-slate-900/50 border border-[var(--mg-card-border-subtle)] rounded-xl text-center shadow-xs">
+                <span className="block text-[11px] font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-muted)' }}>Status do Link</span>
+                <span className="text-xs font-black uppercase text-blue-600 dark:text-blue-400 flex items-center justify-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-blue-500 inline-block animate-pulse"></span>
                   ATIVO
                 </span>
