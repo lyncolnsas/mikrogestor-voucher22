@@ -526,18 +526,14 @@ export default function SecurityControl() {
                           <tr key={`${rule.id || rule.host}-${index}`} className="hover:bg-slate-50/80 transition-colors">
                             <td className="px-5 py-3.5 font-bold text-slate-900 text-sm">{rule.host}</td>
                             <td className="px-5 py-3.5">
-                              <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                                rule.action === 'allow' 
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                                  : 'bg-rose-50 text-rose-700 border-rose-200'
-                              }`}>
+                              <span className={rule.action === 'allow' ? 'mg-badge-success' : 'mg-badge-danger'}>
                                 {rule.action === 'allow' ? 'LIBERADO' : 'BLOQUEADO'}
                               </span>
                             </td>
                             <td className="px-5 py-3.5 text-right">
                               <button
                                 onClick={() => handleDeleteSite(rule.id)}
-                                className="px-3 py-1.5 text-xs font-bold rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors shadow-xs"
+                                className="mg-btn-danger text-xs px-3 py-1.5 rounded-lg font-bold"
                               >
                                 Remover
                               </button>
@@ -665,7 +661,7 @@ export default function SecurityControl() {
                                 <button
                                   onClick={() => handleDeleteTimeRule(rule.id)}
                                   disabled={timeLoading}
-                                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors shadow-xs"
+                                  className="mg-btn-danger text-xs px-3 py-1.5 rounded-lg font-bold"
                                 >
                                   Remover
                                 </button>

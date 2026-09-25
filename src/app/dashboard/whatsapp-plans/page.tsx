@@ -205,16 +205,16 @@ export default function WhatsappPlansPage() {
                 <div className="flex items-center gap-3">
                   <button 
                     onClick={() => toggleActive(plan)}
-                    className={`px-3 py-1 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+                    className={`cursor-pointer transition-colors ${
                       plan.active 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60' 
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        ? 'mg-badge-success hover:opacity-90' 
+                        : 'mg-badge-neutral hover:opacity-90'
                     }`}
                   >
                     {plan.active ? 'Ativo' : 'Inativo'}
                   </button>
-                  <button onClick={() => deletePlan(plan.id)} className="p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors border border-transparent hover:border-rose-200 dark:hover:border-rose-800/60 cursor-pointer" title="Excluir">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <button onClick={() => deletePlan(plan.id)} className="mg-btn-danger text-xs p-2 rounded-lg font-bold" title="Excluir">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>

@@ -684,17 +684,17 @@ export default function WhatsappConnection() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* CARD: BAILEYS MULTI-DEVICE */}
-                  <div className={`p-6 rounded-2xl border-2 transition-all duration-200 bg-white shadow-xs ${
-                    modeInfo.baileysEnabled ? 'border-sky-500 ring-1 ring-sky-200' : 'border-slate-200'
+                  <div className={`p-6 rounded-2xl border transition-all duration-200 bg-white ${
+                    modeInfo.baileysEnabled ? 'border-blue-600/40 shadow-sm' : 'border-slate-200/80 shadow-xs'
                   }`}>
                     <div className="flex items-start justify-between gap-4 mb-3">
                       <div className="flex items-center gap-3">
-                        <div className={`p-3 rounded-xl ${modeInfo.baileysEnabled ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-500'}`}>
+                        <div className={`p-3 rounded-xl ${modeInfo.baileysEnabled ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>
                           <Bot className="w-6 h-6" />
                         </div>
                         <div>
                           <h3 className="font-bold text-slate-900 text-base">WhatsApp Multi-Device (Baileys)</h3>
-                          <span className="text-[10px] font-mono text-sky-700 uppercase tracking-widest font-bold">
+                          <span className="text-[10px] font-mono text-blue-600 uppercase tracking-widest font-bold">
                             Multi-Aparelhos // Rotação Round-Robin
                           </span>
                         </div>
@@ -705,13 +705,11 @@ export default function WhatsappConnection() {
                         disabled={togglingEngine === 'baileys'}
                       />
                     </div>
-                    <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+                    <p className="text-xs text-slate-600 mb-4 leading-relaxed font-medium">
                       Conecte múltiplos números através de QR Code. Disparos rotativos de vouchers, suporte interativo e respostas bidirecionais autônomas.
                     </p>
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className={`px-2.5 py-1 rounded-full font-bold uppercase text-[10px] ${
-                        modeInfo.baileysEnabled ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'bg-slate-100 text-slate-500'
-                      }`}>
+                      <span className={modeInfo.baileysEnabled ? 'mg-badge-info' : 'mg-badge-neutral'}>
                         {modeInfo.baileysEnabled ? '● Motor Ativo' : '○ Motor Desligado'}
                       </span>
                       <span className="text-slate-600 font-semibold">{baileysInstances.length} aparelho(s) cadastrado(s)</span>
@@ -719,17 +717,17 @@ export default function WhatsappConnection() {
                   </div>
 
                   {/* CARD: META CLOUD API */}
-                  <div className={`p-6 rounded-2xl border-2 transition-all duration-200 bg-white shadow-xs ${
-                    modeInfo.metaEnabled ? 'border-emerald-500 ring-1 ring-emerald-200' : 'border-slate-200'
+                  <div className={`p-6 rounded-2xl border transition-all duration-200 bg-white ${
+                    modeInfo.metaEnabled ? 'border-emerald-600/40 shadow-sm' : 'border-slate-200/80 shadow-xs'
                   }`}>
                     <div className="flex items-start justify-between gap-4 mb-3">
                       <div className="flex items-center gap-3">
-                        <div className={`p-3 rounded-xl ${modeInfo.metaEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                        <div className={`p-3 rounded-xl ${modeInfo.metaEnabled ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
                           <ShieldCheck className="w-6 h-6" />
                         </div>
                         <div>
                           <h3 className="font-bold text-slate-900 text-base">API Oficial da Meta Cloud</h3>
-                          <span className="text-[10px] font-mono text-emerald-700 uppercase tracking-widest font-bold">
+                          <span className="text-[10px] font-mono text-emerald-600 uppercase tracking-widest font-bold">
                             Meta Graph API // Templates Pré-Aprovados
                           </span>
                         </div>
@@ -740,13 +738,11 @@ export default function WhatsappConnection() {
                         disabled={togglingEngine === 'meta'}
                       />
                     </div>
-                    <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+                    <p className="text-xs text-slate-600 mb-4 leading-relaxed font-medium">
                       Disparo de notificações oficiais com zero risco de banimento. Ao suspender o motor, todos os tokens e IDs permanecem preservados em definitivo.
                     </p>
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className={`px-2.5 py-1 rounded-full font-bold uppercase text-[10px] ${
-                        modeInfo.metaEnabled ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                      }`}>
+                      <span className={modeInfo.metaEnabled ? 'mg-badge-success' : 'mg-badge-neutral'}>
                         {modeInfo.metaEnabled ? '● Motor Ativo' : '🛡️ Suspenso (Dados Salvos)'}
                       </span>
                       <span className="text-slate-600 font-semibold">{metaInstances.length} número(s) Meta</span>

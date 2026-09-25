@@ -348,19 +348,19 @@ export default function AdminSettings() {
             </div>
 
             {/* VPN Banner */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200/80 dark:border-blue-800/50 rounded-2xl p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="mg-card p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-[var(--mg-card-border)] bg-[var(--mg-card-bg)] shadow-[var(--mg-shadow-card)]">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-blue-600/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-[var(--mg-primary-light)] text-[var(--mg-primary)] border border-[var(--mg-primary-border)] flex items-center justify-center text-base shrink-0">
                   🛡️
                 </div>
                 <div>
-                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">Acesso Remoto sem IP Público</h4>
-                  <p className="text-[11px] text-slate-600 font-medium">Seu MikroTik está em CGNAT ou rede interna? Conecte-o à VPS com túnel WireGuard.</p>
+                  <h4 className="text-xs font-black uppercase tracking-wider" style={{ color: 'var(--mg-text-heading)' }}>Acesso Remoto sem IP Público</h4>
+                  <p className="text-[11px] font-medium" style={{ color: 'var(--mg-text-muted)' }}>Seu MikroTik está em CGNAT ou rede interna? Conecte-o à VPS com túnel WireGuard.</p>
                 </div>
               </div>
               <Link
                 href="/dashboard/vpn"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider transition-colors shrink-0 shadow-xs"
+                className="mg-btn mg-btn-primary text-xs uppercase tracking-wider shrink-0"
               >
                 Configurar VPN →
               </Link>
@@ -368,19 +368,19 @@ export default function AdminSettings() {
 
             <div className="space-y-4">
               {showScanner && (
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                <div className="mg-card p-4 space-y-3 bg-[var(--mg-card-bg-subtle)] border-[var(--mg-card-border)]">
                   <div className="flex justify-between items-center">
-                    <h4 className="font-bold text-xs text-slate-800 uppercase tracking-wider">Scanner de Rede (MNDP)</h4>
+                    <h4 className="font-bold text-xs uppercase tracking-wider" style={{ color: 'var(--mg-text-heading)' }}>Scanner de Rede (MNDP)</h4>
                     <button onClick={() => setShowScanner(false)} className="text-slate-500 hover:text-slate-800 text-xs font-bold cursor-pointer">✕</button>
                   </div>
                   {scanning ? (
-                    <p className="text-center text-slate-600 text-xs py-4 animate-pulse">Buscando MikroTiks na rede local...</p>
+                    <p className="text-center text-xs py-4 animate-pulse" style={{ color: 'var(--mg-text-muted)' }}>Buscando MikroTiks na rede local...</p>
                   ) : scannedRouters.length === 0 ? (
-                    <p className="text-center text-slate-600 text-xs py-4">Nenhum equipamento encontrado na rede.</p>
+                    <p className="text-center text-xs py-4" style={{ color: 'var(--mg-text-muted)' }}>Nenhum equipamento encontrado na rede.</p>
                   ) : (
                     <div className="space-y-2">
                       {scannedRouters.map((r, i) => (
-                        <div key={i} className="border border-slate-200 bg-white p-3 rounded-xl flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors shadow-xs" onClick={() => {
+                        <div key={i} className="mg-card p-3 flex items-center justify-between hover:bg-[var(--mg-card-bg-subtle)] cursor-pointer transition-colors" onClick={() => {
                           setRName(r.identity || 'MikroTik Local');
                           setRHost(r.ipAddress || r.macAddress);
                           setRUser('admin');
@@ -388,10 +388,10 @@ export default function AdminSettings() {
                           setShowScanner(false);
                         }}>
                           <div>
-                            <p className="text-xs font-bold text-slate-900">{r.identity || 'MikroTik'} <span className="text-[10px] font-normal text-slate-500">({r.board || r.platform})</span></p>
-                            <p className="text-[10px] text-slate-600 font-mono mt-0.5">IP: {r.ipAddress || '0.0.0.0'} | MAC: {r.macAddress}</p>
+                            <p className="text-xs font-bold" style={{ color: 'var(--mg-text-heading)' }}>{r.identity || 'MikroTik'} <span className="text-[10px] font-normal" style={{ color: 'var(--mg-text-muted)' }}>({r.board || r.platform})</span></p>
+                            <p className="text-[10px] font-mono mt-0.5" style={{ color: 'var(--mg-text-muted)' }}>IP: {r.ipAddress || '0.0.0.0'} | MAC: {r.macAddress}</p>
                           </div>
-                          <span className="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-1 rounded-md border border-blue-200">Usar</span>
+                          <span className="mg-badge-primary text-[10px]">Usar</span>
                         </div>
                       ))}
                     </div>
@@ -400,69 +400,69 @@ export default function AdminSettings() {
               )}
 
               {showRouterForm && (
-                <form onSubmit={handleAddRouter} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-                  <h4 className="font-bold text-xs text-slate-900 uppercase tracking-wider">Cadastrar Novo Roteador</h4>
+                <form onSubmit={handleAddRouter} className="mg-card p-4 space-y-3 bg-[var(--mg-card-bg-subtle)] border-[var(--mg-card-border)]">
+                  <h4 className="font-bold text-xs uppercase tracking-wider" style={{ color: 'var(--mg-text-heading)' }}>Cadastrar Novo Roteador</h4>
                   <div>
-                    <label className="block text-xs font-black text-slate-900 uppercase tracking-wider mb-1">Nome de Identificação</label>
-                    <input type="text" value={rName} onChange={e => setRName(e.target.value)} required placeholder="Ex: Mikrotik Matriz" className="w-full bg-white border-2 border-slate-400 text-slate-950 font-bold rounded-xl px-3 py-2 text-xs focus:border-blue-600 outline-none" />
+                    <label className="block text-xs font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-heading)' }}>Nome de Identificação</label>
+                    <input type="text" value={rName} onChange={e => setRName(e.target.value)} required placeholder="Ex: Mikrotik Matriz" className="mg-input w-full" />
                   </div>
                   <div>
-                    <label className="block text-xs font-black text-slate-900 uppercase tracking-wider mb-1">IP ou Host</label>
-                    <input type="text" value={rHost} onChange={e => setRHost(e.target.value)} required placeholder="Ex: 192.168.88.1" className="w-full bg-white border-2 border-slate-400 text-slate-950 font-bold rounded-xl px-3 py-2 text-xs focus:border-blue-600 outline-none" />
+                    <label className="block text-xs font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-heading)' }}>IP ou Host</label>
+                    <input type="text" value={rHost} onChange={e => setRHost(e.target.value)} required placeholder="Ex: 192.168.88.1" className="mg-input w-full font-mono" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-black text-slate-900 uppercase tracking-wider mb-1">Usuário API</label>
-                      <input type="text" value={rUser} onChange={e => setRUser(e.target.value)} required placeholder="admin" className="w-full bg-white border-2 border-slate-400 text-slate-950 font-bold rounded-xl px-3 py-2 text-xs focus:border-blue-600 outline-none" />
+                      <label className="block text-xs font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-heading)' }}>Usuário API</label>
+                      <input type="text" value={rUser} onChange={e => setRUser(e.target.value)} required placeholder="admin" className="mg-input w-full" />
                     </div>
                     <div>
-                      <label className="block text-xs font-black text-slate-900 uppercase tracking-wider mb-1">Senha</label>
-                      <input type="password" value={rPass} onChange={e => setRPass(e.target.value)} placeholder="••••" className="w-full bg-white border-2 border-slate-400 text-slate-950 font-bold rounded-xl px-3 py-2 text-xs focus:border-blue-600 outline-none" />
+                      <label className="block text-xs font-black uppercase tracking-wider mb-1" style={{ color: 'var(--mg-text-heading)' }}>Senha</label>
+                      <input type="password" value={rPass} onChange={e => setRPass(e.target.value)} placeholder="••••" className="mg-input w-full" />
                     </div>
                   </div>
                   <div className="flex justify-end gap-2 pt-2">
-                    <button type="button" onClick={() => setShowRouterForm(false)} className="bg-white border-2 border-slate-300 text-slate-800 font-bold text-xs py-1.5 px-3 rounded-xl hover:bg-slate-100 cursor-pointer">Cancelar</button>
-                    <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-1.5 px-3.5 rounded-xl shadow-sm cursor-pointer">Salvar Roteador</button>
+                    <button type="button" onClick={() => setShowRouterForm(false)} className="mg-btn mg-btn-secondary text-xs">Cancelar</button>
+                    <button type="submit" className="mg-btn mg-btn-primary text-xs">Salvar Roteador</button>
                   </div>
                 </form>
               )}
 
               <div className="space-y-4">
                 {loadingRouters ? (
-                  <p className="text-center text-slate-800 font-bold text-xs py-6 animate-pulse">Carregando unidades de hardware...</p>
+                  <p className="text-center font-bold text-xs py-6 animate-pulse" style={{ color: 'var(--mg-text-muted)' }}>Carregando unidades de hardware...</p>
                 ) : routers.length === 0 ? (
-                  <div className="bg-slate-100/70 border border-slate-300 p-6 rounded-2xl text-center space-y-4">
-                    <div className="w-10 h-10 rounded-full bg-white border border-slate-300 flex items-center justify-center mx-auto shadow-xs">
+                  <div className="mg-card p-6 text-center space-y-4 bg-[var(--mg-card-bg-subtle)]">
+                    <div className="w-10 h-10 rounded-full bg-[var(--mg-card-bg)] border border-[var(--mg-card-border)] flex items-center justify-center mx-auto shadow-xs">
                       <span className="text-slate-700 text-sm">🖧</span>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-slate-950 text-sm font-black">Nenhum Roteador Cadastrado</p>
-                      <p className="text-slate-700 text-xs font-semibold leading-normal">Cadastre um MikroTik no botão &quot;+ Adicionar Roteador&quot; acima para inicializar a integração do painel.</p>
+                      <p className="text-sm font-black" style={{ color: 'var(--mg-text-heading)' }}>Nenhum Roteador Cadastrado</p>
+                      <p className="text-xs font-semibold leading-normal" style={{ color: 'var(--mg-text-muted)' }}>Cadastre um MikroTik no botão &quot;+ Adicionar Roteador&quot; acima para inicializar a integração do painel.</p>
                     </div>
-                    <span className="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full border bg-amber-100 text-amber-900 border-amber-300">
+                    <span className="mg-badge-warning">
                       BANCO: {dbStatus}
                     </span>
                   </div>
                 ) : (
                   routers.map(router => (
-                    <div key={router.id} className="border-2 border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-300 transition-all bg-white shadow-xs">
+                    <div key={router.id} className="mg-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-[var(--mg-primary-border)] transition-all">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 border border-slate-300 shadow-xs shrink-0">
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[var(--mg-card-bg-subtle)] border border-[var(--mg-card-border)] shadow-xs shrink-0">
                           <span className="text-slate-700 text-sm">📟</span>
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-black text-slate-950 text-xs uppercase tracking-wider">{router.name}</h4>
+                            <h4 className="font-black text-xs uppercase tracking-wider" style={{ color: 'var(--mg-text-heading)' }}>{router.name}</h4>
                             {router.active && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-blue-100 text-blue-700">Ativo</span>
+                              <span className="mg-badge-primary text-[9px] py-0.5">Ativo</span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-700 font-mono font-bold mt-0.5">
+                          <p className="text-xs font-mono font-bold mt-0.5" style={{ color: 'var(--mg-text-muted)' }}>
                             {router.host} · {router.user}
                           </p>
                           {router.vpnEnabled && router.vpnIp ? (
                             <div className="flex items-center gap-2 mt-1">
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="mg-badge-success text-[10px] py-0.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                 VPN: {router.vpnIp}
                               </span>
@@ -472,7 +472,7 @@ export default function AdminSettings() {
                             </div>
                           ) : (
                             <div className="mt-1">
-                              <Link href="/dashboard/vpn" className="text-[10px] font-bold text-indigo-600 hover:underline">
+                              <Link href="/dashboard/vpn" className="text-[10px] font-bold text-blue-600 hover:underline">
                                 + Conectar via VPN WireGuard
                               </Link>
                             </div>
@@ -484,13 +484,13 @@ export default function AdminSettings() {
                         <button
                           onClick={() => connectToRouter(router)}
                           disabled={connectingId === router.id}
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-3.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          className="mg-btn mg-btn-primary text-xs py-2 px-3.5"
                         >
                           {connectingId === router.id ? 'Conectando...' : '⚡ Conectar'}
                         </button>
                         <button
                           onClick={() => handleDeleteRouter(router.id)}
-                          className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs py-2 px-3.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                          className="mg-btn mg-btn-danger text-xs py-2 px-3.5"
                         >
                           Excluir
                         </button>

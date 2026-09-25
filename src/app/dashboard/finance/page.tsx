@@ -494,36 +494,68 @@ export default function FinanceReport() {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="mg-stat-card mg-stat-blue">
-          <span className="mg-stat-label">TOTAL FATURAMENTO</span>
-          <p className="mg-stat-value text-blue-500">
-            {formatBRL(financeData?.totalRevenue || 0)}
-          </p>
-          <span className="text-xs font-semibold mt-auto" style={{ color: 'var(--mg-text-muted)' }}>Persistido no script do MikroTik</span>
+        {/* TOTAL FATURAMENTO (AZUL OPERACIONAL) */}
+        <div className="mg-stat-card mg-stat-blue group">
+          <div className="flex flex-col justify-between h-full z-10">
+            <span className="text-xs font-black uppercase tracking-wider text-white">TOTAL FATURAMENTO</span>
+            <div className="my-2">
+              <div className="text-2xl lg:text-3xl font-black text-white tracking-tight">
+                {formatBRL(financeData?.totalRevenue || 0)}
+              </div>
+            </div>
+            <span className="text-xs font-medium text-white/80 mt-auto">Persistido no MikroTik</span>
+          </div>
+          <div className="mg-stat-icon-badge text-blue-700">
+            <span className="text-xl">💰</span>
+          </div>
         </div>
         
-        <div className="mg-stat-card mg-stat-emerald">
-          <span className="mg-stat-label">FATURAMENTO DO MÊS</span>
-          <p className="mg-stat-value text-emerald-500">
-            {formatBRL(financeData?.monthlyRevenue || 0)}
-          </p>
-          <span className="text-xs font-semibold mt-auto" style={{ color: 'var(--mg-text-muted)' }}>Vendas do mês atual</span>
+        {/* FATURAMENTO DO MÊS (VERDE ESMERALDA) */}
+        <div className="mg-stat-card mg-stat-teal group">
+          <div className="flex flex-col justify-between h-full z-10">
+            <span className="text-xs font-black uppercase tracking-wider text-white">FATURAMENTO DO MÊS</span>
+            <div className="my-2">
+              <div className="text-2xl lg:text-3xl font-black text-white tracking-tight">
+                {formatBRL(financeData?.monthlyRevenue || 0)}
+              </div>
+            </div>
+            <span className="text-xs font-medium text-white/80 mt-auto">Vendas do mês atual</span>
+          </div>
+          <div className="mg-stat-icon-badge text-emerald-700">
+            <span className="text-xl">📈</span>
+          </div>
         </div>
 
-        <div className="mg-stat-card mg-stat-amber">
-          <span className="mg-stat-label">FATURAMENTO HOJE</span>
-          <p className="mg-stat-value text-amber-500">
-            {formatBRL(financeData?.todayRevenue || 0)}
-          </p>
-          <span className="text-xs font-semibold mt-auto" style={{ color: 'var(--mg-text-muted)' }}>Vendas nas últimas 24h</span>
+        {/* FATURAMENTO HOJE (LARANJA ÂMBAR) */}
+        <div className="mg-stat-card mg-stat-orange group">
+          <div className="flex flex-col justify-between h-full z-10">
+            <span className="text-xs font-black uppercase tracking-wider text-white">FATURAMENTO HOJE</span>
+            <div className="my-2">
+              <div className="text-2xl lg:text-3xl font-black text-white tracking-tight">
+                {formatBRL(financeData?.todayRevenue || 0)}
+              </div>
+            </div>
+            <span className="text-xs font-medium text-white/80 mt-auto">Vendas nas últimas 24h</span>
+          </div>
+          <div className="mg-stat-icon-badge text-amber-700">
+            <span className="text-xl">⚡</span>
+          </div>
         </div>
 
-        <div className="mg-stat-card mg-stat-purple">
-          <span className="mg-stat-label">TOTAL DE VOUCHERS</span>
-          <p className="mg-stat-value">
-            {financeData?.salesCount || 0}
-          </p>
-          <span className="text-xs font-semibold mt-auto" style={{ color: 'var(--mg-text-muted)' }}>Vouchers gerados no sistema</span>
+        {/* TOTAL DE VOUCHERS (FRAMBOESA / ROSE) */}
+        <div className="mg-stat-card mg-stat-rose group">
+          <div className="flex flex-col justify-between h-full z-10">
+            <span className="text-xs font-black uppercase tracking-wider text-white">TOTAL DE VOUCHERS</span>
+            <div className="my-2">
+              <div className="text-2xl lg:text-3xl font-black text-white tracking-tight">
+                {financeData?.salesCount || 0}
+              </div>
+            </div>
+            <span className="text-xs font-medium text-white/80 mt-auto">Vouchers gerados no sistema</span>
+          </div>
+          <div className="mg-stat-icon-badge text-rose-700">
+            <span className="text-xl">🎟️</span>
+          </div>
         </div>
       </div>
 
