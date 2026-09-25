@@ -12,34 +12,63 @@ import { BaileysAdapter } from './whatsapp-baileys';
 import type { IWhatsappAdapter } from './whatsapp-interface';
 import { getMaskedPortalDomain, getMaskedPortalUrl } from '@/lib/domain';
 
-interface ChatState {
-  step: number;
-  mac?: string;
-  name?: string;
-  password?: string;
-  selectedPlanId?: string;
-  token?: string;
-  tokenVerified?: boolean;
-}
-
 class WhatsappSpecialist {
-  private chatStates: Map<string, ChatState> = new Map();
-  private stateFilePath = path.join(process.cwd(), 'whatsapp_states.json');
   private cronStarted = false;
 
   // Adapters — gerenciados pelo facade
   private metaAdapter: MetaAdapter = new MetaAdapter();
   private baileysAdapter: BaileysAdapter | null = null;
 
+  // ─── SQLite-backed ChatBot State (P1: sobrevive a redeploys) ────────────────
+
+  private async getState(remoteJid: string): Promise<{ step: number; mac?: string; name?: string; password?: string; token?: string; tokenVerified?: boolean; instanceId?: string; } | null> {
+    try {
+      const row = await (prisma as any).chatBotState.findUnique({ where: { remoteJid } });
+      if (!row) return null;
+      // Expiração automática de sessão inativa (30 min)
+      if (row.expireAt && row.expireAt < new Date()) {
+        await (prisma as any).chatBotState.delete({ where: { remoteJid } });
+        return null;
+      }
+      return row;
+    } catch { return null; }
+  }
+
+  private async setState(remoteJid: string, data: { step: number; mac?: string; name?: string; password?: string; token?: string; tokenVerified?: boolean; instanceId?: string; }): Promise<void> {
+    try {
+      const expireAt = new Date(Date.now() + 30 * 60 * 1000); // 30 min
+      await (prisma as any).chatBotState.upsert({
+        where: { remoteJid },
+        update: { ...data, expireAt },
+        create: { remoteJid, ...data, expireAt },
+      });
+    } catch (e) { console.error('[ChatBotState] Erro ao salvar estado:', e); }
+  }
+
+  private async deleteState(remoteJid: string): Promise<void> {
+    try {
+      await (prisma as any).chatBotState.delete({ where: { remoteJid } });
+    } catch { /* não existia */ }
+  }
+
   constructor() {
-    this.loadStates();
     if (!this.cronStarted) {
       this.cronStarted = true;
       setInterval(() => this.cleanupExpiredBindings(), 60000);
+      // Limpeza periódica de estados expirados (a cada 5 min)
+      setInterval(() => this.cleanupExpiredStates(), 5 * 60 * 1000);
       networkSyncService.startAutoSync();
       waitingListService.startAutoCheck();
       this.initActiveMode();
     }
+  }
+
+  private async cleanupExpiredStates(): Promise<void> {
+    try {
+      await (prisma as any).chatBotState.deleteMany({
+        where: { expireAt: { lt: new Date() } }
+      });
+    } catch { /* silencioso */ }
   }
 
   // ─── Inicialização e Gestão de Adapters ────────────────────────────────────
@@ -458,24 +487,6 @@ class WhatsappSpecialist {
     return networkSyncService.syncNetworkIp();
   }
 
-  private loadStates() {
-    try {
-      if (fs.existsSync(this.stateFilePath)) {
-        const data = fs.readFileSync(this.stateFilePath, 'utf-8');
-        this.chatStates = new Map(Object.entries(JSON.parse(data)));
-      }
-    } catch (e) {
-      console.error('Failed to load chat states:', e);
-    }
-  }
-
-  private saveStates() {
-    try {
-      fs.writeFileSync(this.stateFilePath, JSON.stringify(Object.fromEntries(this.chatStates)), 'utf-8');
-    } catch (e) {
-      console.error('Failed to save chat states:', e);
-    }
-  }
 
   private async cleanupExpiredBindings() {
     try {
@@ -539,13 +550,16 @@ class WhatsappSpecialist {
 
   public async startRegistrationFlow(userId: string, remoteJid: string, mac: string) {
     const token = Math.floor(100000 + Math.random() * 900000).toString();
-    this.chatStates.set(remoteJid, { step: 0, mac, token, tokenVerified: false });
-    this.saveStates();
+    await this.setState(remoteJid, { step: 0, mac, token, tokenVerified: false });
 
     const portalUrl = getMaskedPortalUrl();
-    await this.sendWhatsAppMessage(userId, remoteJid, spinText(
+    const res = await this.sendWhatsAppMessage(userId, remoteJid, spinText(
       `{👋|🙌|✨|😃|🤖} {Olá|Oi|Opa|Seja bem-vindo|E aí}! Bem-vindo à nossa Wi-Fi.\n\n{Para liberar|Para acessar} seu acesso, {acesse|visite} {nossa página|nosso portal} de {cadastro|registro}:\n${portalUrl}/portal/register`
     ));
+    // P3: salva instanceId para session pinning na conversa
+    if (res.instanceId) {
+      await this.setState(remoteJid, { step: 0, mac, token, tokenVerified: false, instanceId: res.instanceId });
+    }
   }
 
   public async verifyToken(remoteJid: string, token: string): Promise<boolean> {
@@ -553,18 +567,17 @@ class WhatsappSpecialist {
   }
 
   public async continueRegistrationFlow(userId: string, remoteJid: string) {
-    const state = this.chatStates.get(remoteJid) || { step: 0 };
-    state.step = 1;
-    this.chatStates.set(remoteJid, state);
-    this.saveStates();
+    const state = await this.getState(remoteJid) || { step: 0 };
+    await this.setState(remoteJid, { ...state, step: 1 });
 
     await this.sendWhatsAppMessage(userId, remoteJid, spinText(
       `{✅|🚀|👍|✨} {Número confirmado|Tudo certo|Validação concluída} com sucesso!\n\n{Para começar|Para iniciar} a {configuração|criação} da sua {conta|conexão}, {digite|informe} o *NOME* que deseja {usar|cadastrar}:`
-    ));
+    ), { pinnedInstanceId: (state as any).instanceId });
   }
 
   public async handleIncomingMessage(phoneId: string, remoteJid: string, text: string) {
-    // Roteamento inteligente na Meta (ignorado se for Baileys)
+    // Roteamento inteligente na Meta — registra qual instância o cliente usou
+    let pinnedInstanceId: string | undefined;
     if (phoneId !== 'baileys') {
       let cleanPhone = remoteJid.replace(/\D/g, '');
       if (cleanPhone.length === 10 || cleanPhone.length === 11) cleanPhone = `55${cleanPhone}`;
@@ -575,64 +588,59 @@ class WhatsappSpecialist {
           update: { whatsappInstanceId: instance.id, lastInteraction: new Date() },
           create: { customerPhone: cleanPhone, whatsappInstanceId: instance.id }
         });
+        pinnedInstanceId = instance.id;
       }
     }
 
-    const state = this.chatStates.get(remoteJid) || { step: 0 };
+    // P1: Estado persistido no SQLite (sobrevive a redeploys no Coolify)
+    const state = await this.getState(remoteJid) || { step: 0 };
+    // P3: recupera session pinning salvo no estado, ou usa o da instância atual
+    const sessionPinned: string | undefined = (state as any).instanceId || pinnedInstanceId;
     const content = text.trim();
 
     // ── Passo Inicial (Cliente chamou no WhatsApp sem cadastro prévio) ──
     if (!state.step || state.step === 0) {
       const portalUrl = getMaskedPortalUrl();
-      await this.sendWhatsAppMessage('admin', remoteJid, spinText(
+      const res = await this.sendWhatsAppMessage('admin', remoteJid, spinText(
         `{👋|🙌|✨|😃|🤖} {Olá|Oi|Opa|Seja bem-vindo}! Bem-vindo ao atendimento automático da nossa Wi-Fi.\n\n` +
         `{Para liberar seu acesso à internet|Para acessar o portal de conexão}, visite:\n` +
         `${portalUrl}/portal/register\n\n` +
         `Ou se deseja comprar um plano de acesso por aqui agora mesmo, responda informando seu *NOME*:`
-      ));
-      state.step = 1;
-      this.chatStates.set(remoteJid, state);
-      this.saveStates();
+      ), { pinnedInstanceId: sessionPinned });
+      // P3: fixa o número que respondeu para toda a conversa
+      const fixedInstance = res.instanceId || sessionPinned;
+      await this.setState(remoteJid, { step: 1, mac: (state as any).mac, instanceId: fixedInstance });
       return;
     }
 
     // ── Passo 1: Nome informado ──
     if (state.step === 1) {
-      state.name = content;
-      state.step = 2;
-      this.chatStates.set(remoteJid, state);
-      this.saveStates();
+      const newState = { ...state, name: content, step: 2, instanceId: sessionPinned };
+      await this.setState(remoteJid, newState);
       await this.sendWhatsAppMessage('admin', remoteJid, spinText(
-        `{Prazer|Muito prazer}, ${state.name}! {🤝|✨|😃}\n\n{Agora|Para continuar}, {crie|escolha|informe} uma *Chave de Acesso* (senha) que você quer {usar|cadastrar} para {acessar|conectar n}a {internet|rede|Wi-Fi} no futuro:`
-      ));
+        `{Prazer|Muito prazer}, ${content}! {🤝|✨|😃}\n\n{Agora|Para continuar}, {crie|escolha|informe} uma *Chave de Acesso* (senha) que você quer {usar|cadastrar} para {acessar|conectar n}a {internet|rede|Wi-Fi} no futuro:`
+      ), { pinnedInstanceId: sessionPinned });
       return;
     }
 
     // ── Passo 2: Chave de Acesso informada -> Exibe Lista de Planos ──
     if (state.step === 2) {
-      state.password = content;
-
       const plans = await prisma.whatsappPlan.findMany({ where: { active: true }, orderBy: { price: 'asc' } });
 
       if (plans.length === 0) {
         await this.sendWhatsAppMessage('admin', remoteJid, spinText(
           `{❌|⚠️} No momento não temos {planos|pacotes} {disponíveis|ativos}. {Contate|Fale com} o {suporte|atendimento}.`
-        ));
-        this.chatStates.delete(remoteJid);
-        this.saveStates();
+        ), { pinnedInstanceId: sessionPinned });
+        await this.deleteState(remoteJid);
         return;
       }
 
-      state.step = 3;
-      this.chatStates.set(remoteJid, state);
-      this.saveStates();
+      await this.setState(remoteJid, { ...state, password: content, step: 3, instanceId: sessionPinned });
 
       let plansText = spinText(`{Ótimo|Perfeito|Legal}! {Escolha|Selecione} o {plano|pacote} {digitando|respondendo com} o *NÚMERO*:\n\n`);
-      plans.forEach((p, i) => {
-        plansText += `*${i + 1}* - ${p.title} (R$ ${p.price.toFixed(2)})\n`;
-      });
+      plans.forEach((p, i) => { plansText += `*${i + 1}* - ${p.title} (R$ ${p.price.toFixed(2)})\n`; });
 
-      await this.sendWhatsAppMessage('admin', remoteJid, plansText);
+      await this.sendWhatsAppMessage('admin', remoteJid, plansText, { pinnedInstanceId: sessionPinned });
       return;
     }
 
@@ -644,7 +652,7 @@ class WhatsappSpecialist {
       if (isNaN(choice) || choice < 1 || choice > plans.length) {
         await this.sendWhatsAppMessage('admin', remoteJid, spinText(
           `{⚠️|❌} {Opção inválida|Número incorreto}. {Digite|Envie} {apenas|somente} o *número* de uma das {opções acima|opções disponíveis}.`
-        ));
+        ), { pinnedInstanceId: sessionPinned });
         return;
       }
 
@@ -652,7 +660,7 @@ class WhatsappSpecialist {
 
       await this.sendWhatsAppMessage('admin', remoteJid, spinText(
         `{⏳|🔄|⚙️} {Gerando|Preparando} seu PIX no valor de *R$ ${selectedPlan.price.toFixed(2)}*, {aguarde|espere um instante}...`
-      ));
+      ), { pinnedInstanceId: sessionPinned });
 
       try {
         const mpConfig = await prisma.systemConfig.findUnique({ where: { key: 'MERCADOPAGO_TOKEN' } });
@@ -660,11 +668,11 @@ class WhatsappSpecialist {
 
         const lead = await prisma.hotspotLead.upsert({
           where: { hotspotUser: state.name || '' },
-          update: { password: state.password, whatsappNumber: remoteJid },
+          update: { password: (state as any).password || content, whatsappNumber: remoteJid },
           create: {
             name: state.name || '',
             hotspotUser: state.name || '',
-            password: state.password || '',
+            password: (state as any).password || content,
             whatsappNumber: remoteJid
           }
         });
@@ -678,14 +686,14 @@ class WhatsappSpecialist {
             const mk = new MikrotikAPI();
             const connected = await mk.connect(activeRouter.host, activeRouter.user, activeRouter.password, activeRouter.port);
             if (connected) {
-              if (state.mac) {
+              if ((state as any).mac) {
                 try {
-                  const trialUser = `T-${state.mac}`;
+                  const trialUser = `T-${(state as any).mac}`;
                   await mk.removeHotspotActiveByUser(trialUser);
                   await mk.removeHotspotUserByName(trialUser);
                   const bindings = await mk.getHotspotIpBindings() as any[];
                   for (const b of bindings) {
-                    if (b['mac-address'] === state.mac && b.type === 'bypassed') {
+                    if (b['mac-address'] === (state as any).mac && b.type === 'bypassed') {
                       await mk.removeHotspotIpBinding(b['.id'] || b.id);
                     }
                   }
@@ -694,7 +702,7 @@ class WhatsappSpecialist {
               try {
                 await mk.addHotspotUser({
                   name: state.name?.replace(/\s+/g, '').toLowerCase() || '',
-                  password: state.password || '',
+                  password: (state as any).password || '',
                   profile: selectedPlan.profile,
                   comment: `Venda Manual WhatsApp`,
                   server: 'all'
@@ -710,17 +718,16 @@ class WhatsappSpecialist {
               status: 'pending',
               amount: selectedPlan.price,
               profile: selectedPlan.profile,
-              macAddress: state.mac
+              macAddress: (state as any).mac
             }
           });
 
-          // Mensagem pós-cadastro com dados de acesso (formato camuflado US/SN)
           await this.sendWhatsAppMessage('admin', remoteJid,
-            `Olá ${state.name}! A sua solicitação foi registrada com sucesso.\n\nDetalhes de Acesso:\n\nUS: *${state.name}*\nSN: *${state.password}*\n\nGuarde essas informações para conectar seus aparelhos.\n\n⚠️ Para ativar seu plano, efetue o pagamento de *R$ ${selectedPlan.price.toFixed(2)}*:\n\n*CHAVE PIX:* ${pixKey}`
+            `Olá ${state.name}! A sua solicitação foi registrada com sucesso.\n\nDetalhes de Acesso:\n\nUS: *${state.name}*\nSN: *${(state as any).password}*\n\nGuarde essas informações para conectar seus aparelhos.\n\n⚠️ Para ativar seu plano, efetue o pagamento de *R$ ${selectedPlan.price.toFixed(2)}*:\n\n*CHAVE PIX:* ${pixKey}`,
+            { pinnedInstanceId: sessionPinned }
           );
 
-          this.chatStates.delete(remoteJid);
-          this.saveStates();
+          await this.deleteState(remoteJid);
           return;
         }
 
@@ -749,23 +756,21 @@ class WhatsappSpecialist {
             pixQrCodeBase64: qrCode64,
             amount: selectedPlan.price,
             profile: selectedPlan.profile,
-            macAddress: state.mac
+            macAddress: (state as any).mac
           }
         });
 
-        // Mensagem pós-compra de voucher com Pix Copia e Cola
         await this.sendWhatsAppMessage('admin', remoteJid, spinText(
           `{✅|🚀|💸} *PIX Gerado com Sucesso!*\n\n{Copie|Pegue} o {código|Pix Copia e Cola} abaixo e {pague|realize o pagamento} no {aplicativo do seu banco|seu app bancário}.\n\n*Sua conexão está liberada temporariamente para você abrir o app do banco.*\n\nAssim que o pagamento for confirmado, seu voucher será ativado automaticamente!`
-        ));
-        await this.sendWhatsAppMessage('admin', remoteJid, pixPayload);
+        ), { pinnedInstanceId: sessionPinned });
+        await this.sendWhatsAppMessage('admin', remoteJid, pixPayload, { pinnedInstanceId: sessionPinned });
 
-        this.chatStates.delete(remoteJid);
-        this.saveStates();
+        await this.deleteState(remoteJid);
       } catch (err: any) {
         console.error('Error generating PIX:', err);
         await this.sendWhatsAppMessage('admin', remoteJid, spinText(
           `{❌|⚠️} {Ocorreu um erro|Tivemos um problema} ao gerar seu PIX: ${err?.message || 'Erro desconhecido'}. {Contate o suporte|Fale com o administrador}.`
-        ));
+        ), { pinnedInstanceId: sessionPinned });
       }
       return;
     }

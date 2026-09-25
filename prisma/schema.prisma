@@ -235,4 +235,21 @@ model EmergencyToken {
   createdAt DateTime  @default(now())
 }
 
+/// Estados de conversa do chatbot WhatsApp (persistidos no SQLite para sobreviver a redeploys).
+/// Substitui o whatsapp_states.json volátil que era destruído a cada deploy no Coolify.
+model ChatBotState {
+  remoteJid  String   @id                // JID do cliente (ex: 5511999998888@s.whatsapp.net)
+  step       Int      @default(0)        // Passo atual do fluxo (0=inicial, 1=nome, 2=senha, 3=plano)
+  mac        String?                     // MAC address capturado do hotspot
+  name       String?                     // Nome informado pelo cliente
+  password   String?                     // Senha/chave escolhida
+  token      String?                     // Token de verificação
+  tokenVerified Boolean @default(false)  // Token já confirmado
+  instanceId String?                     // ID da instância Baileys fixada (session pinning)
+  expireAt   DateTime                    // Auto-expiração em 30 minutos de inatividade
+  updatedAt  DateTime @updatedAt
+
+  @@index([expireAt])
+}
+
 

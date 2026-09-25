@@ -44,7 +44,7 @@ export interface MaskingConfig {
 }
 
 const DEFAULT_MASKING: MaskingConfig = {
-  enabled: false,
+  enabled: true,  // P2: Masking anti-ban ativo por padrão — opt-out pelo painel, não opt-in
   browserFingerprint: true,
   simulateTyping: true,
   simulateReading: true,
@@ -55,6 +55,7 @@ const DEFAULT_MASKING: MaskingConfig = {
   standbyMaxSeconds: 180,
   typingCancelSimulation: true,
 };
+
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
