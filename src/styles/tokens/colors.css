@@ -8,70 +8,74 @@
 :root,
 [data-theme="light"] {
   /* ── 1. Superfícies & Fundo ── */
-  --mg-app-bg: #f4f6fa;
+  --mg-app-bg: #f4f6f9;
   --mg-card-bg: #ffffff;
   --mg-card-bg-subtle: #f8fafc;
   --mg-card-border: #e2e8f0;
   --mg-card-border-subtle: #f1f5f9;
 
   /* ── 2. Tipografia & Hierarquia de Texto ── */
-  --mg-text-heading: #090d16;
-  --mg-text-body: #1e293b;
-  --mg-text-muted: #475569;
-  --mg-text-subtle: #64748b;
+  --mg-text-heading: #1a202c;
+  --mg-text-body: #2d3748;
+  --mg-text-muted: #4a5568;
+  --mg-text-subtle: #718096;
 
   /* ── 3. Marca & Ação Primária ── */
   --mg-primary: #2563eb;
   --mg-primary-hover: #1d4ed8;
   --mg-primary-active: #1e40af;
   --mg-primary-text: #ffffff;
-  --mg-primary-light: #eff6ff;
-  --mg-primary-border: #bfdbfe;
+  --mg-primary-light: rgba(37, 99, 235, 0.12);
+  --mg-primary-border: rgba(37, 99, 235, 0.35);
 
   /* ── 4. Formulários & Controles ── */
   --mg-input-bg: #ffffff;
   --mg-input-bg-focus: #ffffff;
   --mg-input-border: #cbd5e1;
   --mg-input-border-focus: #2563eb;
-  --mg-input-text: #090d16;
+  --mg-input-text: #1a202c;
   --mg-input-placeholder: #94a3b8;
 
   /* ── 5. Tabelas ── */
   --mg-table-th-bg: #f1f5f9;
-  --mg-table-th-text: #090d16;
+  --mg-table-th-text: #1a202c;
   --mg-table-row-hover: #f8fafc;
   --mg-table-row-divide: #e2e8f0;
-  --mg-table-text: #1e293b;
+  --mg-table-text: #2d3748;
 
   /* ── 6. Menu Lateral (Sidebar) & Header ── */
-  --mg-sidebar-bg: #0f1322;
-  --mg-sidebar-border: #1e2538;
-  --mg-sidebar-text: #cbd5e1;
+  --mg-sidebar-bg: #0b1120;
+  --mg-sidebar-border: #1e293b;
+  --mg-sidebar-text: #e2e8f0;
   --mg-sidebar-text-hover: #ffffff;
   --mg-sidebar-text-active: #ffffff;
   --mg-sidebar-item-active-bg: #2563eb;
-  --mg-sidebar-footer-bg: #161927;
+  --mg-sidebar-footer-bg: #080d1a;
 
   /* ── 7. Cores de Estado & Feedback ── */
-  --mg-success: #16a34a;
-  --mg-success-bg: #f0fdf4;
-  --mg-success-border: #bbf7d0;
-  --mg-success-text: #166534;
+  /* Verde Esmeralda — #10B981 */
+  --mg-success: #10b981;
+  --mg-success-bg: rgba(16, 185, 129, 0.12);
+  --mg-success-border: rgba(16, 185, 129, 0.35);
+  --mg-success-text: #047857;
 
-  --mg-danger: #e11d48;
-  --mg-danger-bg: #fff1f2;
-  --mg-danger-border: #fecdd3;
-  --mg-danger-text: #9f1239;
+  /* Framboesa / Coral — #F43F5E */
+  --mg-danger: #f43f5e;
+  --mg-danger-bg: rgba(244, 63, 94, 0.12);
+  --mg-danger-border: rgba(244, 63, 94, 0.35);
+  --mg-danger-text: #be123c;
 
-  --mg-warning: #d97706;
-  --mg-warning-bg: #fffbeb;
-  --mg-warning-border: #fde68a;
-  --mg-warning-text: #92400e;
+  /* Laranja Âmbar — #F59E0B */
+  --mg-warning: #f59e0b;
+  --mg-warning-bg: rgba(245, 158, 11, 0.12);
+  --mg-warning-border: rgba(245, 158, 11, 0.35);
+  --mg-warning-text: #b45309;
 
-  --mg-info: #0284c7;
-  --mg-info-bg: #f0f9ff;
-  --mg-info-border: #bae6fd;
-  --mg-info-text: #075985;
+  /* Azul Operacional — #2563EB */
+  --mg-info: #2563eb;
+  --mg-info-bg: rgba(37, 99, 235, 0.12);
+  --mg-info-border: rgba(37, 99, 235, 0.35);
+  --mg-info-text: #1e40af;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -115,19 +119,19 @@
   --mg-table-text: #f1f5f9;
 
   /* ── 6. Menu Lateral (Sidebar) & Header ── */
-  --mg-sidebar-bg: #0d111d;
-  --mg-sidebar-border: #1a2236;
-  --mg-sidebar-text: #cbd5e1;
-  --mg-sidebar-text-hover: #f8fafc;
+  --mg-sidebar-bg: #0b1120;
+  --mg-sidebar-border: #1e293b;
+  --mg-sidebar-text: #e2e8f0;
+  --mg-sidebar-text-hover: #ffffff;
   --mg-sidebar-text-active: #ffffff;
   --mg-sidebar-item-active-bg: #2563eb;
-  --mg-sidebar-footer-bg: #0a0d17;
+  --mg-sidebar-footer-bg: #080d1a;
 
   /* ── 7. Cores de Estado & Feedback ── */
-  --mg-success: #22c55e;
-  --mg-success-bg: rgba(34, 197, 94, 0.15);
-  --mg-success-border: rgba(34, 197, 94, 0.35);
-  --mg-success-text: #4ade80;
+  --mg-success: #10b981;
+  --mg-success-bg: rgba(16, 185, 129, 0.15);
+  --mg-success-border: rgba(16, 185, 129, 0.35);
+  --mg-success-text: #34d399;
 
   --mg-danger: #f43f5e;
   --mg-danger-bg: rgba(244, 63, 94, 0.15);
@@ -139,8 +143,8 @@
   --mg-warning-border: rgba(245, 158, 11, 0.35);
   --mg-warning-text: #fbbf24;
 
-  --mg-info: #38bdf8;
-  --mg-info-bg: rgba(56, 189, 248, 0.15);
-  --mg-info-border: rgba(56, 189, 248, 0.35);
-  --mg-info-text: #7dd3fc;
+  --mg-info: #3b82f6;
+  --mg-info-bg: rgba(59, 130, 246, 0.15);
+  --mg-info-border: rgba(59, 130, 246, 0.35);
+  --mg-info-text: #60a5fa;
 }

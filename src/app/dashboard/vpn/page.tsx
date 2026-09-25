@@ -1257,19 +1257,19 @@ export default function VpnPage() {
       {/* ── Metric Cards ─────────────────────────────────────────── */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total Online na VPN", value: totalConnected, sub: `${connectedRouters} Roteador(es) · ${connectedPeers} Admin(s)`, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50/70 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/25", dot: "bg-emerald-500" },
-          { label: "MikroTiks Conectados", value: vpnRouters.length, sub: "Túneis de controle ativos", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50/70 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/25", dot: "bg-blue-500" },
-          { label: "PCs e Celulares Admin", value: peers.length, sub: "Perfis com acesso Winbox", color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-50/70 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/25", dot: "bg-indigo-500" },
+          { label: "Total Online na VPN", value: totalConnected, sub: `${connectedRouters} Roteador(es) · ${connectedPeers} Admin(s)`, gradient: "from-emerald-500 to-emerald-700", shadow: "shadow-emerald-500/30", dot: "bg-white" },
+          { label: "MikroTiks Conectados", value: vpnRouters.length, sub: "Túneis de controle ativos", gradient: "from-blue-500 to-blue-700", shadow: "shadow-blue-500/30", dot: "bg-white" },
+          { label: "PCs e Celulares Admin", value: peers.length, sub: "Perfis com acesso Winbox", gradient: "from-indigo-500 to-indigo-700", shadow: "shadow-indigo-500/30", dot: "bg-white" },
         ].map((s) => (
-          <div key={s.label} className={`border rounded-3xl p-5 ${s.bg} flex items-center justify-between shadow-xs`}>
+          <div key={s.label} className={`rounded-2xl p-5 bg-gradient-to-br ${s.gradient} shadow-lg ${s.shadow} flex items-center justify-between text-white`}>
             <div>
-              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block">
+              <span className="text-[11px] font-bold text-white/70 uppercase tracking-wider block">
                 {s.label}
               </span>
-              <p className={`text-3xl font-black mt-1 ${s.color}`}>{s.value}</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{s.sub}</p>
+              <p className="text-3xl font-black mt-1 text-white">{s.value}</p>
+              <p className="text-[10px] text-white/60 font-medium mt-0.5">{s.sub}</p>
             </div>
-            <div className={`w-3 h-3 rounded-full ${s.dot} shadow-xs`} />
+            <div className={`w-3 h-3 rounded-full ${s.dot} opacity-80`} />
           </div>
         ))}
       </section>

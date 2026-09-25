@@ -507,11 +507,7 @@ export default function AdminSettings() {
         <div className="lg:col-span-2 space-y-6">
           {/* Free Wi-Fi Mode Card */}
           <div
-            className="bg-white border border-slate-200/80 shadow-sm rounded-2xl p-5 md:p-6 transition-all duration-300"
-            style={{
-              borderColor: freeWifiMode ? '#10b981' : undefined,
-              backgroundColor: freeWifiMode ? '#f0fdf4' : '#ffffff',
-            }}
+            className={`rounded-2xl p-5 md:p-6 transition-all duration-300 ${freeWifiMode ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-500/30 text-white' : 'bg-white border border-slate-200/80 shadow-sm'}`}
           >
             {/* Header row */}
             <div className="flex items-start justify-between gap-4">
@@ -519,17 +515,17 @@ export default function AdminSettings() {
                 <div
                   className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-lg transition-all duration-300 border ${
                     freeWifiMode
-                      ? 'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800'
+                      ? 'bg-white/20 border-white/30'
                       : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
                   }`}
                 >
                   {freeWifiMode ? '🎉' : '🎟️'}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-slate-900 leading-tight">
+                  <h3 className={`text-sm font-bold leading-tight ${freeWifiMode ? 'text-white' : 'text-slate-900'}`}>
                     Modo Evento / Wi-Fi Gratuito
                   </h3>
-                  <p className="text-xs text-slate-600 leading-relaxed mt-0.5">
+                  <p className={`text-xs leading-relaxed mt-0.5 ${freeWifiMode ? 'text-white/70' : 'text-slate-600'}`}>
                     Desabilita a cobrança de PIX. Clientes receberão vouchers grátis imediatamente.
                   </p>
                 </div>
@@ -569,8 +565,8 @@ export default function AdminSettings() {
                     Salvando...
                   </span>
                 ) : freeWifiMode ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-white/20 border border-white/30 px-2.5 py-1 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                     MODO GRATUITO ATIVO
                   </span>
                 ) : (
@@ -580,7 +576,7 @@ export default function AdminSettings() {
                   </span>
                 )}
               </div>
-              <span className="text-[10px] text-slate-500 font-mono">
+              <span className={`text-[10px] font-mono ${freeWifiMode ? 'text-white/50' : 'text-slate-500'}`}>
                 free_wifi_mode
               </span>
             </div>
