@@ -80,66 +80,72 @@ export default function WhatsappPlansPage() {
   ];
 
   return (
-    <div className="p-4 md:p-6 space-y-6 text-slate-800 dark:text-slate-200">
-      <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-800">
+    <main className="mg-page-container">
+      {/* Page Header */}
+      <header className="mg-page-header-row">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/60 px-2 py-0.5 rounded tracking-wider uppercase">
+            <span className="mg-badge-primary">
               Catálogo de Vendas (PIX)
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Catálogo de Planos Hotspot</h1>
-          <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1">Configure os planos e durações disponíveis para compra no portal e via WhatsApp.</p>
+          <h1 className="mg-page-title">Catálogo de Planos Hotspot</h1>
+          <p className="mg-page-subtitle">
+            Configure os planos e durações disponíveis para compra no portal e via WhatsApp.
+          </p>
         </div>
-      </div>
+      </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Form */}
-        <div className="bg-white dark:bg-[#111726] rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm h-fit">
-          <h2 className="text-base font-black text-slate-900 dark:text-white mb-4">Adicionar Novo Plano</h2>
-          <form onSubmit={addPlan} className="space-y-4">
+        <div className="mg-card overflow-hidden h-fit">
+          <div className="mg-card-header">
+            <h2 className="mg-card-title">Adicionar Novo Plano</h2>
+            <p className="mg-card-subtitle">Defina nome, profile MikroTik, preço e duração</p>
+          </div>
+          <form onSubmit={addPlan} className="p-6 space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Nome de Exibição (Visível ao cliente)</label>
+              <label className="mg-label">Nome de Exibição (Visível ao cliente)</label>
               <input 
                 required 
                 type="text" 
                 value={title} 
                 onChange={e => setTitle(e.target.value)} 
                 placeholder="Ex: 24 Horas Turbo, 1 Dia de Acesso"
-                className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs font-medium focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-sm" 
+                className="mg-input" 
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Nome do Profile (Exato no MikroTik)</label>
+              <label className="mg-label">Nome do Profile (Exato no MikroTik)</label>
               <input 
                 required 
                 type="text" 
                 value={profile} 
                 onChange={e => setProfile(e.target.value)} 
                 placeholder="Ex: default, 1_Dia_10M, plano_vip"
-                className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs font-medium focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-sm" 
+                className="mg-input" 
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Preço R$ (Valor cobrado no PIX)</label>
+              <label className="mg-label">Preço R$ (Valor cobrado no PIX)</label>
               <input 
                 required 
                 type="number" 
                 step="0.01" 
                 value={price} 
                 onChange={e => setPrice(e.target.value)} 
-                className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-bold focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none shadow-sm" 
+                className="mg-input font-bold" 
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Duração / Limite de Tempo (`limit-uptime`)</label>
+              <label className="mg-label">Duração / Limite de Tempo (`limit-uptime`)</label>
               <input 
                 type="text" 
                 value={uptimeLimit} 
                 onChange={e => setUptimeLimit(e.target.value)} 
                 placeholder="Ex: 01:00:00 ou 1d 00:00:00"
-                className="w-full bg-slate-50 dark:bg-[#0e1524] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-slate-100 text-xs font-mono focus:border-blue-600 focus:bg-white dark:focus:bg-[#0e1524] outline-none mb-2 shadow-sm" 
+                className="mg-input font-mono mb-2" 
               />
               <div className="flex flex-wrap gap-1.5">
                 {presets.map(p => (
@@ -147,11 +153,12 @@ export default function WhatsappPlansPage() {
                     key={p.val}
                     type="button"
                     onClick={() => setUptimeLimit(p.val)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-colors ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-colors border ${
                       uptimeLimit === p.val 
-                        ? 'bg-blue-600 text-white font-bold shadow-xs' 
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 font-semibold'
+                        ? 'bg-[var(--mg-primary)] text-white font-bold border-transparent shadow-xs' 
+                        : 'border-[var(--mg-card-border)] bg-[var(--mg-card-bg-subtle)] font-semibold hover:opacity-80'
                     }`}
+                    style={uptimeLimit !== p.val ? { color: 'var(--mg-text-body)' } : {}}
                   >
                     {p.label}
                   </button>
@@ -165,14 +172,15 @@ export default function WhatsappPlansPage() {
                 type="checkbox"
                 checked={active}
                 onChange={e => setActive(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                className="w-4 h-4 rounded cursor-pointer"
+                style={{ accentColor: 'var(--mg-primary)' }}
               />
-              <label htmlFor="plan-active-check" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+              <label htmlFor="plan-active-check" className="text-xs font-bold cursor-pointer" style={{ color: 'var(--mg-text-body)' }}>
                 Plano ativo para comercialização imediata
               </label>
             </div>
 
-            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition-colors mt-2 shadow-sm text-xs cursor-pointer">
+            <button type="submit" className="mg-btn mg-btn-primary w-full mt-2">
               Salvar Plano
             </button>
           </form>
@@ -181,25 +189,25 @@ export default function WhatsappPlansPage() {
         {/* List */}
         <div className="lg:col-span-2 space-y-4">
           {loading ? (
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">Carregando planos...</p>
+            <p className="text-xs font-medium" style={{ color: 'var(--mg-text-muted)' }}>Carregando planos...</p>
           ) : plans.length === 0 ? (
-            <div className="bg-white dark:bg-[#111726] rounded-2xl p-8 text-center border border-slate-200 dark:border-slate-800 shadow-sm">
-              <p className="text-slate-800 dark:text-slate-200 font-bold">Nenhum plano cadastrado ainda.</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">Cadastre planos ao lado para que apareçam como opções de compra no portal e via WhatsApp.</p>
+            <div className="mg-card p-8 text-center">
+              <p className="font-bold" style={{ color: 'var(--mg-text-heading)' }}>Nenhum plano cadastrado ainda.</p>
+              <p className="text-xs mt-1 font-medium" style={{ color: 'var(--mg-text-muted)' }}>Cadastre planos ao lado para que apareçam como opções de compra no portal e via WhatsApp.</p>
             </div>
           ) : (
             plans.map(plan => (
-              <div key={plan.id} className="bg-white dark:bg-[#111726] rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+              <div key={plan.id} className="mg-card p-5 flex items-center justify-between hover:shadow-md transition-all">
                 <div>
-                  <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <h3 className="text-base font-black flex items-center gap-2" style={{ color: 'var(--mg-text-heading)' }}>
                     {plan.title}
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 font-mono font-bold">
+                    <span className="mg-badge-primary text-xs font-mono font-bold">
                       ⏱ {plan.uptimeLimit || 'none'}
                     </span>
                   </h3>
-                  <div className="flex gap-4 text-xs text-slate-600 dark:text-slate-400 mt-1.5 font-medium">
-                    <span>Profile: <strong className="text-slate-900 dark:text-slate-200 font-mono">{plan.profile}</strong></span>
-                    <span>Preço: <strong className="text-emerald-700 dark:text-emerald-400 font-extrabold text-sm">R$ {Number(plan.price).toFixed(2)}</strong></span>
+                  <div className="flex gap-4 text-xs mt-1.5 font-medium" style={{ color: 'var(--mg-text-muted)' }}>
+                    <span>Profile: <strong className="font-mono" style={{ color: 'var(--mg-text-body)' }}>{plan.profile}</strong></span>
+                    <span>Preço: <strong className="text-emerald-600 font-extrabold text-sm">R$ {Number(plan.price).toFixed(2)}</strong></span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -213,7 +221,7 @@ export default function WhatsappPlansPage() {
                   >
                     {plan.active ? 'Ativo' : 'Inativo'}
                   </button>
-                  <button onClick={() => deletePlan(plan.id)} className="mg-btn-danger text-xs p-2 rounded-lg font-bold" title="Excluir">
+                  <button onClick={() => deletePlan(plan.id)} className="mg-btn mg-btn-danger text-xs p-2" title="Excluir">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
@@ -224,6 +232,7 @@ export default function WhatsappPlansPage() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
+

@@ -124,7 +124,7 @@ function DeviceIcon({ type }: { type: string }) {
   switch (type.toLowerCase()) {
     case "android":
     case "ios":
-      return <Smartphone className="w-5 h-5 text-indigo-600" />;
+      return <Smartphone className="w-5 h-5 text-teal-600" />;
     case "macos":
     case "linux":
       return <Laptop className="w-5 h-5 text-slate-700" />;
@@ -860,7 +860,7 @@ function CreatePeerModal({ onClose, onSuccess }: CreatePeerModalProps) {
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
-                  <QrCode className="w-3.5 h-3.5 text-indigo-600" />
+                  <QrCode className="w-3.5 h-3.5 text-teal-600" />
                   <span>📱 QR Code (Celular)</span>
                 </button>
                 <button
@@ -999,7 +999,7 @@ function ViewPeerQrModal({ peer, onClose }: ViewPeerQrModalProps) {
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-hidden flex flex-col border border-slate-200">
         <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-teal-50 border border-teal-200 text-teal-600 flex items-center justify-center">
               <DeviceIcon type={peer.deviceType} />
             </div>
             <div>
@@ -1036,7 +1036,7 @@ function ViewPeerQrModal({ peer, onClose }: ViewPeerQrModalProps) {
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
-                  <QrCode className="w-3.5 h-3.5 text-indigo-600" />
+                  <QrCode className="w-3.5 h-3.5 text-teal-600" />
                   <span>📱 QR Code (Celular)</span>
                 </button>
                 <button
@@ -1450,7 +1450,7 @@ export default function VpnPage() {
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--mg-card-border-subtle)] bg-[var(--mg-card-bg-subtle)]">
           <div>
             <h2 className="text-sm font-extrabold flex items-center gap-2" style={{ color: 'var(--mg-text-heading)' }}>
-              <Laptop className="w-4 h-4 text-indigo-600" />
+              <Laptop className="w-4 h-4 text-teal-600" />
               Dispositivos de Acesso Remoto (Windows / Celular)
             </h2>
             <p className="text-xs text-[var(--mg-text-muted)] mt-0.5">
@@ -1469,7 +1469,7 @@ export default function VpnPage() {
 
         {peers.length === 0 ? (
           <div className="p-8 text-center space-y-3 max-w-md mx-auto">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center mx-auto text-indigo-600">
+            <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center mx-auto text-teal-600">
               <Laptop className="w-6 h-6" />
             </div>
             <div className="space-y-1">
@@ -1481,7 +1481,7 @@ export default function VpnPage() {
             <button
               type="button"
               onClick={() => setShowCreatePeerModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs transition-colors cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-black text-xs transition-colors cursor-pointer shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Conectar Meu Computador ou Celular</span>
@@ -1492,7 +1492,7 @@ export default function VpnPage() {
             {peers.map((p) => (
               <div key={p.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4 hover:bg-slate-50/60 transition-colors">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center shrink-0">
                     <DeviceIcon type={p.deviceType} />
                   </div>
                   <div>
@@ -1522,7 +1522,7 @@ export default function VpnPage() {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => setSelectedPeerForQr(p)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl transition-colors cursor-pointer border border-indigo-200 text-xs font-bold"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-xl transition-colors cursor-pointer border border-teal-200 text-xs font-bold"
                       title="Ver QR Code para celular"
                     >
                       <QrCode className="w-3.5 h-3.5" />
@@ -1583,7 +1583,7 @@ export default function VpnPage() {
 
           {/* Card Celular */}
           <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 space-y-2">
-            <div className="flex items-center gap-2 text-indigo-400 font-black">
+            <div className="flex items-center gap-2 text-teal-400 font-black">
               <Smartphone className="w-4 h-4" />
               <span>No Smartphone (Android / iPhone)</span>
             </div>

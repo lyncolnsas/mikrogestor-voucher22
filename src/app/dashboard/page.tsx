@@ -184,7 +184,7 @@ export default function Dashboard() {
               </Link>
               <Link
                 href="/dashboard/vpn"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300 font-bold text-xs uppercase tracking-wider hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 text-teal-700 dark:text-teal-300 font-bold text-xs uppercase tracking-wider hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors"
               >
                 🛡️ Conectar via VPN
               </Link>
@@ -740,7 +740,7 @@ export default function Dashboard() {
                       </div>
                       <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                         <div
-                          className={`h-2 rounded-full ${idx === 0 ? 'bg-blue-600' : idx === 1 ? 'bg-indigo-500' : idx === 2 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                          className={`h-2 rounded-full ${idx === 0 ? 'bg-blue-600' : idx === 1 ? 'bg-teal-500' : idx === 2 ? 'bg-amber-500' : 'bg-emerald-500'}`}
                           style={{ width: `${Math.max(5, item.percent)}%` }}
                         />
                       </div>

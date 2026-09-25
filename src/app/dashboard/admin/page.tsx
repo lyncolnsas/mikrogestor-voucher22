@@ -678,7 +678,7 @@ export default function AdminSettings() {
                   type="button"
                   onClick={handleSaveAdminPhone}
                   disabled={savingPhone}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2.5 rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50"
                 >
                   {savingPhone ? 'Salvando...' : 'Salvar Número 2FA'}
                 </button>

@@ -416,34 +416,34 @@ export default function SecurityControl() {
         {activeTab === 'walled-garden' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Form Section */}
-            <div className="lg:col-span-1 bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col justify-between">
+            <div className="mg-card p-5 md:p-6 flex flex-col justify-between">
               <div>
-                <h3 className="text-base font-black text-slate-900 mb-1">
+                <h3 className="mg-card-title mb-1">
                   Criar Regra
                 </h3>
-                <p className="text-xs text-slate-600 mb-4 leading-relaxed font-medium">
+                <p className="mg-card-subtitle mb-4 leading-relaxed">
                   Permita ou bloqueie domínios de passarem pelo Hotspot antes de realizar o login.
                 </p>
                 
                 <form onSubmit={handleAddSite} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 tracking-wider mb-1.5">Domínio / Host</label>
+                    <label className="mg-label">Domínio / Host</label>
                     <input
                       type="text"
                       value={host}
                       onChange={(e) => setHost(e.target.value)}
                       required
                       placeholder="Ex: google.com"
-                      className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-xl p-2.5 text-xs font-medium text-slate-900 outline-none shadow-sm placeholder:text-slate-400"
+                      className="mg-input"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 tracking-wider mb-1.5">Ação</label>
+                    <label className="mg-label">Ação</label>
                     <select
                       value={action}
                       onChange={(e) => setAction(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-xl p-2.5 text-xs font-semibold text-slate-800 outline-none shadow-sm"
+                      className="mg-select"
                     >
                       <option value="allow">Liberar (Permitir)</option>
                       <option value="deny">Bloquear (Negar)</option>
@@ -451,89 +451,89 @@ export default function SecurityControl() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 tracking-wider mb-1.5">Comentário</label>
+                    <label className="mg-label">Comentário</label>
                     <input
                       type="text"
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                       placeholder="Ex: Liberar updates"
-                      className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-xl p-2.5 text-xs font-medium text-slate-900 outline-none shadow-sm placeholder:text-slate-400"
+                      className="mg-input"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={walledLoading}
-                    className="w-full py-2.5 px-4 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="mg-btn mg-btn-primary w-full"
                   >
                     {walledLoading ? 'Processando...' : 'Adicionar Regra'}
                   </button>
                 </form>
               </div>
 
-              <div className="pt-4 mt-6 border-t border-slate-200">
-                <span className="block text-xs font-bold uppercase text-slate-700 tracking-wider mb-2">Acesso Rápido</span>
+              <div className="pt-4 mt-6 border-t border-[var(--mg-card-border)]">
+                <span className="mg-label mb-2">Acesso Rápido</span>
                 <button
                   type="button"
                   onClick={handleWhitelistMikroGestor}
                   disabled={walledLoading}
-                  className="w-full py-2.5 px-4 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="mg-btn mg-btn-success w-full"
                 >
                   ⚡ Liberar Auto Cadastro / API
                 </button>
-                <p className="text-[11px] text-slate-500 text-center mt-2 leading-normal font-medium">
+                <p className="text-[11px] text-center mt-2 leading-normal font-medium" style={{ color: 'var(--mg-text-muted)' }}>
                   Libera o IP/Domínio deste painel no Walled Garden e IP Bindings do MikroTik.
                 </p>
               </div>
             </div>
 
             {/* List Section */}
-            <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col">
+            <div className="mg-card p-5 md:p-6 flex flex-col">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base font-black text-slate-900">
+                <h3 className="mg-card-title">
                   Regras Ativas
                 </h3>
-                <span className="bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-2.5 py-1">
+                <span className="mg-badge-primary">
                   {rules.length} REGRAS
                 </span>
               </div>
               
-              <div className="flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="mg-table-wrap flex-1">
                 <div className="max-h-[460px] overflow-auto custom-scrollbar">
-                  <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
+                  <table className="mg-table">
                     <thead>
-                      <tr className="border-b border-slate-200 bg-slate-50 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
-                        <th className="px-5 py-3">Site / Domínio</th>
-                        <th className="px-5 py-3">Ação</th>
-                        <th className="px-5 py-3 text-right">Ações</th>
+                      <tr>
+                        <th>Site / Domínio</th>
+                        <th>Ação</th>
+                        <th className="text-right">Ações</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody>
                       {walledLoading && rules.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="px-5 py-8 text-center text-slate-500 italic font-medium">
+                          <td colSpan={3} className="text-center italic font-medium" style={{ color: 'var(--mg-text-muted)', padding: '2rem' }}>
                             <div className="inline-block animate-pulse">Consultando regras do Walled Garden...</div>
                           </td>
                         </tr>
                       ) : rules.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="px-5 py-8 text-center text-slate-500 italic font-medium">
+                          <td colSpan={3} className="text-center italic font-medium" style={{ color: 'var(--mg-text-muted)', padding: '2rem' }}>
                             Nenhuma regra cadastrada no Walled Garden.
                           </td>
                         </tr>
                       ) : (
                         rules.map((rule, index) => (
-                          <tr key={`${rule.id || rule.host}-${index}`} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="px-5 py-3.5 font-bold text-slate-900 text-sm">{rule.host}</td>
-                            <td className="px-5 py-3.5">
+                          <tr key={`${rule.id || rule.host}-${index}`}>
+                            <td className="font-bold text-sm" style={{ color: 'var(--mg-text-heading)' }}>{rule.host}</td>
+                            <td>
                               <span className={rule.action === 'allow' ? 'mg-badge-success' : 'mg-badge-danger'}>
                                 {rule.action === 'allow' ? 'LIBERADO' : 'BLOQUEADO'}
                               </span>
                             </td>
-                            <td className="px-5 py-3.5 text-right">
+                            <td className="text-right">
                               <button
                                 onClick={() => handleDeleteSite(rule.id)}
-                                className="mg-btn-danger text-xs px-3 py-1.5 rounded-lg font-bold"
+                                className="mg-btn mg-btn-danger text-xs"
                               >
                                 Remover
                               </button>
@@ -553,47 +553,47 @@ export default function SecurityControl() {
         {activeTab === 'time-block' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Form Section */}
-            <div className="lg:col-span-1 bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col justify-between">
+            <div className="mg-card p-5 md:p-6 flex flex-col justify-between">
               <div>
-                <h3 className="text-base font-black text-slate-900 mb-1">
+                <h3 className="mg-card-title mb-1">
                   Agendar Bloqueio
                 </h3>
-                <p className="text-xs text-slate-600 mb-4 leading-relaxed font-medium">
+                <p className="mg-card-subtitle mb-4 leading-relaxed">
                   Crie janelas de bloqueio temporário para cessar a navegação de hotspot na rede local.
                 </p>
 
                 <form onSubmit={handleAddTimeBlock} className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="block text-xs font-bold uppercase text-slate-700 tracking-wider mb-1.5">Início (Bloqueio)</label>
+                      <label className="mg-label">Início (Bloqueio)</label>
                       <input
                         type="time"
                         value={startHour}
                         onChange={(e) => setStartHour(e.target.value)}
                         required
                         step="1"
-                        className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-rose-600 rounded-xl p-2.5 text-xs font-bold text-rose-700 outline-none shadow-sm"
+                        className="mg-input font-bold text-rose-700"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold uppercase text-slate-700 tracking-wider mb-1.5">Fim (Liberação)</label>
+                      <label className="mg-label">Fim (Liberação)</label>
                       <input
                         type="time"
                         value={endHour}
                         onChange={(e) => setEndHour(e.target.value)}
                         required
                         step="1"
-                        className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-emerald-600 rounded-xl p-2.5 text-xs font-bold text-emerald-700 outline-none shadow-sm"
+                        className="mg-input font-bold text-emerald-700"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 tracking-wider mb-2">Dias Ativos</label>
+                    <label className="mg-label mb-2">Dias Ativos</label>
                     <div className="flex flex-wrap gap-2">
                       {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(dia => (
-                        <label key={dia} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl cursor-pointer border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors text-xs font-semibold text-slate-700">
-                          <input type="checkbox" defaultChecked className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer" />
+                        <label key={dia} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl cursor-pointer border border-[var(--mg-card-border)] bg-[var(--mg-card-bg-subtle)] hover:opacity-80 transition-colors text-xs font-semibold" style={{ color: 'var(--mg-text-body)' }}>
+                          <input type="checkbox" defaultChecked className="rounded border-slate-300 text-[var(--mg-primary)] w-3.5 h-3.5 cursor-pointer" />
                           <span>{dia}</span>
                         </label>
                       ))}
@@ -603,46 +603,46 @@ export default function SecurityControl() {
                   <button
                     type="submit"
                     disabled={timeLoading}
-                    className="w-full py-2.5 px-4 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="mg-btn mg-btn-danger w-full"
                   >
                     {timeLoading ? 'Aplicando...' : 'Ativar Regra'}
                   </button>
-                  <p className="text-[11px] text-slate-500 text-center mt-1 font-medium">A regra de filtragem drop será aplicada no Forward Chain do Firewall.</p>
+                  <p className="text-[11px] text-center mt-1 font-medium" style={{ color: 'var(--mg-text-muted)' }}>A regra de filtragem drop será aplicada no Forward Chain do Firewall.</p>
                 </form>
               </div>
             </div>
 
             {/* List Section */}
-            <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col">
+            <div className="mg-card p-5 md:p-6 flex flex-col">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base font-black text-slate-900">
+                <h3 className="mg-card-title">
                   Bloqueios Agendados
                 </h3>
-                <span className="bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-2.5 py-1">
+                <span className="mg-badge-warning">
                   {timeRules.length} REGRAS
                 </span>
               </div>
               
-              <div className="flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="mg-table-wrap flex-1">
                 <div className="max-h-[460px] overflow-auto custom-scrollbar">
-                  <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
+                  <table className="mg-table">
                     <thead>
-                      <tr className="border-b border-slate-200 bg-slate-50 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
-                        <th className="px-5 py-3">Horário de Bloqueio</th>
-                        <th className="px-5 py-3">Dias da Semana</th>
-                        <th className="px-5 py-3 text-right">Ações</th>
+                      <tr>
+                        <th>Horário de Bloqueio</th>
+                        <th>Dias da Semana</th>
+                        <th className="text-right">Ações</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody>
                       {timeLoading && timeRules.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="px-5 py-8 text-center text-slate-500 italic font-medium">
+                          <td colSpan={3} className="text-center italic font-medium" style={{ color: 'var(--mg-text-muted)', padding: '2rem' }}>
                             <div className="inline-block animate-pulse">Consultando agendamentos...</div>
                           </td>
                         </tr>
                       ) : timeRules.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="px-5 py-8 text-center text-slate-500 italic font-medium">
+                          <td colSpan={3} className="text-center italic font-medium" style={{ color: 'var(--mg-text-muted)', padding: '2rem' }}>
                             Nenhuma regra de bloqueio de horário configurada.
                           </td>
                         </tr>
@@ -652,16 +652,16 @@ export default function SecurityControl() {
                           const hours = timeParts[0] || '';
                           const days = timeParts[1] || 'todos';
                           return (
-                            <tr key={`${rule.id || index}`} className="hover:bg-slate-50/80 transition-colors">
-                              <td className="px-5 py-3.5 font-bold text-rose-700 text-sm tracking-wide">{hours.replace('-', ' às ')}</td>
-                              <td className="px-5 py-3.5 text-xs">
-                                <span className="inline-flex items-center text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200">{days}</span>
+                            <tr key={`${rule.id || index}`}>
+                              <td className="font-bold text-rose-700 text-sm tracking-wide">{hours.replace('-', ' às ')}</td>
+                              <td>
+                                <span className="mg-badge-warning text-[10px]">{days}</span>
                               </td>
-                              <td className="px-5 py-3.5 text-right">
+                              <td className="text-right">
                                 <button
                                   onClick={() => handleDeleteTimeRule(rule.id)}
                                   disabled={timeLoading}
-                                  className="mg-btn-danger text-xs px-3 py-1.5 rounded-lg font-bold"
+                                  className="mg-btn mg-btn-danger text-xs"
                                 >
                                   Remover
                                 </button>
@@ -682,27 +682,27 @@ export default function SecurityControl() {
         {activeTab === 'keywords' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Form Section */}
-            <div className="lg:col-span-1 bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col justify-between">
+            <div className="mg-card p-5 md:p-6 flex flex-col justify-between">
               <div>
-                <h3 className="text-base font-black text-slate-900 mb-1">
+                <h3 className="mg-card-title mb-1">
                   Bloquear Conteúdo
                 </h3>
-                <p className="text-xs text-slate-600 mb-4 leading-relaxed font-medium">
+                <p className="mg-card-subtitle mb-4 leading-relaxed">
                   Derruba conexões cujo domínio (HTTP Header ou SNI HTTPS) contenha as palavras indicadas.
                 </p>
                 
                 <form onSubmit={handleAddKeyword} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold uppercase text-slate-700 tracking-wider mb-1.5">Palavra-Chave</label>
+                    <label className="mg-label">Palavra-Chave</label>
                     <input
                       type="text"
                       value={keywordInput}
                       onChange={(e) => setKeywordInput(e.target.value)}
                       required
                       placeholder="Ex: torrent, poker, bet"
-                      className="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 rounded-xl p-2.5 text-xs font-medium text-slate-900 outline-none shadow-sm placeholder:text-slate-400"
+                      className="mg-input"
                     />
-                    <span className="text-[11px] text-slate-500 mt-1.5 block leading-normal font-medium">
+                    <span className="text-[11px] mt-1.5 block leading-normal font-medium" style={{ color: 'var(--mg-text-muted)' }}>
                       Pesquisas no Google continuarão disponíveis, porém domínios diretos com o termo serão bloqueados.
                     </span>
                   </div>
@@ -710,7 +710,7 @@ export default function SecurityControl() {
                   <button
                     type="submit"
                     disabled={actionLoading}
-                    className="w-full py-2.5 px-4 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="mg-btn mg-btn-danger w-full"
                   >
                     {actionLoading ? 'Aplicando Regra...' : 'Bloquear Termo'}
                   </button>
@@ -719,24 +719,24 @@ export default function SecurityControl() {
             </div>
 
             {/* List Section */}
-            <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col">
+            <div className="mg-card p-5 md:p-6 flex flex-col">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base font-black text-slate-900">
+                <h3 className="mg-card-title">
                   Termos Bloqueados
                 </h3>
-                <span className="bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-2.5 py-1">
+                <span className="mg-badge-danger">
                   {keywords.length} TERMOS
                 </span>
               </div>
               
-              <div className="flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="mg-table-wrap flex-1">
                 <div className="max-h-[460px] overflow-auto custom-scrollbar">
-                  <table className="w-full text-left text-xs border-collapse whitespace-nowrap">
+                  <table className="mg-table">
                     <thead>
-                      <tr className="border-b border-slate-200 bg-slate-50 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
-                        <th className="px-5 py-3">Termo Bloqueado</th>
-                        <th className="px-5 py-3">Método de Filtro</th>
-                        <th className="px-5 py-3 text-right">Ações</th>
+                      <tr>
+                        <th>Termo Bloqueado</th>
+                        <th>Método de Filtro</th>
+                        <th className="text-right">Ações</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -748,25 +748,25 @@ export default function SecurityControl() {
                         </tr>
                       ) : keywords.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="px-5 py-8 text-center text-slate-500 italic font-medium">
+                          <td colSpan={3} className="text-center italic font-medium" style={{ color: 'var(--mg-text-muted)', padding: '2rem' }}>
                             Nenhuma palavra-chave bloqueada no firewall.
                           </td>
                         </tr>
                       ) : (
                         keywords.map((kw, index) => (
-                          <tr key={`${kw.id || kw.keyword}-${index}`} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="px-5 py-3.5 font-bold text-rose-700 text-sm font-mono">{kw.keyword}</td>
-                            <td className="px-5 py-3.5">
+                          <tr key={`${kw.id || kw.keyword}-${index}`}>
+                            <td className="font-bold text-rose-700 text-sm font-mono">{kw.keyword}</td>
+                            <td>
                               <div className="flex gap-2">
-                                <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">HTTP CONTENT</span>
-                                <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border bg-sky-50 text-sky-700 border-sky-200">HTTPS TLS-SNI</span>
+                                <span className="mg-badge-neutral text-[10px]">HTTP CONTENT</span>
+                                <span className="mg-badge-primary text-[10px]">HTTPS TLS-SNI</span>
                               </div>
                             </td>
-                            <td className="px-5 py-3.5 text-right">
+                            <td className="text-right">
                               <button
                                 onClick={() => handleDeleteKeyword(kw.keyword)}
                                 disabled={actionLoading}
-                                className="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors shadow-xs"
+                                className="mg-btn mg-btn-secondary text-xs"
                               >
                                 🔓 Desbloquear
                               </button>
@@ -788,121 +788,123 @@ export default function SecurityControl() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-black text-slate-900">🔒 Clientes Bloqueados</h2>
-                <p className="text-xs text-slate-500 mt-0.5">Clientes bloqueados por não pagamento no prazo ou por bloqueio manual. Clique em Desbloquear para liberar o acesso.</p>
+                <h2 className="text-lg font-black" style={{ color: 'var(--mg-text-heading)' }}>🔒 Clientes Bloqueados</h2>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--mg-text-muted)' }}>Clientes bloqueados por não pagamento no prazo ou por bloqueio manual. Clique em Desbloquear para liberar o acesso.</p>
               </div>
               <button onClick={fetchBlockedClients} disabled={blacklistLoading}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-colors">
+                className="mg-btn mg-btn-secondary text-xs">
                 {blacklistLoading ? <span className="animate-spin">⟳</span> : '↻'} Atualizar
               </button>
             </div>
 
             {/* Clients Table */}
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-              <div className="max-h-[500px] overflow-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
-                      <th className="px-4 py-3">Cliente</th>
-                      <th className="px-4 py-3">MAC Address</th>
-                      <th className="px-4 py-3">CPF / Telefone</th>
-                      <th className="px-4 py-3">Motivo</th>
-                      <th className="px-4 py-3">Bloqueado em</th>
-                      <th className="px-4 py-3 text-right">Ação</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {blacklistLoading && blockedClients.length === 0 ? (
-                      <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-400 italic">
-                        <div className="inline-block animate-pulse">Carregando clientes bloqueados...</div>
-                      </td></tr>
-                    ) : blockedClients.length === 0 ? (
-                      <tr><td colSpan={6} className="px-4 py-10 text-center">
-                        <div className="flex flex-col items-center gap-2">
-                          <span className="text-3xl">✅</span>
-                          <p className="text-slate-500 font-medium text-sm">Nenhum cliente bloqueado</p>
-                          <p className="text-slate-400 text-xs">O sistema bloqueia automaticamente quem não paga no prazo</p>
-                        </div>
-                      </td></tr>
-                    ) : blockedClients.map((c) => (
-                      <tr key={c.id} className="hover:bg-red-50/30 transition-colors">
-                        <td className="px-4 py-3">
-                          <div className="font-bold text-slate-800">{c.phone || c.cpf || '—'}</div>
-                          {c.cpf && <div className="text-[10px] text-slate-400">CPF: {c.cpf}</div>}
-                        </td>
-                        <td className="px-4 py-3">
-                          {c.mac ? (
-                            <span className="font-mono text-xs bg-slate-100 border border-slate-200 text-slate-700 px-2 py-0.5 rounded">{c.mac}</span>
-                          ) : <span className="text-slate-400 italic">Sem MAC</span>}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="space-y-0.5">
-                            {c.cpf && <div className="text-slate-600">CPF: <span className="font-mono">{c.cpf}</span></div>}
-                            {c.phone && <div className="text-slate-600">📱 {c.phone}</div>}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 border border-red-200 text-red-700">
-                            🚫 {c.reason || 'Não pagou no prazo'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-slate-500">
-                          {c.blockedAt ? new Date(c.blockedAt).toLocaleString('pt-BR') : '—'}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => handleUnblock(c.id, c.mac)}
-                            disabled={unblockingId === c.id}
-                            className="flex items-center gap-1.5 ml-auto px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm disabled:opacity-50"
-                          >
-                            {unblockingId === c.id ? <span className="animate-spin">⟳</span> : '🔓'}
-                            Desbloquear
-                          </button>
-                        </td>
+            <div className="mg-card overflow-hidden">
+              <div className="mg-table-wrap">
+                <div className="max-h-[500px] overflow-auto">
+                  <table className="mg-table">
+                    <thead>
+                      <tr>
+                        <th>Cliente</th>
+                        <th>MAC Address</th>
+                        <th>CPF / Telefone</th>
+                        <th>Motivo</th>
+                        <th>Bloqueado em</th>
+                        <th className="text-right">Ação</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {blacklistLoading && blockedClients.length === 0 ? (
+                        <tr><td colSpan={6} className="text-center italic" style={{ color: 'var(--mg-text-muted)', padding: '2rem' }}>
+                          <div className="inline-block animate-pulse">Carregando clientes bloqueados...</div>
+                        </td></tr>
+                      ) : blockedClients.length === 0 ? (
+                        <tr><td colSpan={6} className="text-center" style={{ padding: '2rem' }}>
+                          <div className="flex flex-col items-center gap-2">
+                            <span className="text-3xl">✅</span>
+                            <p className="font-medium text-sm" style={{ color: 'var(--mg-text-muted)' }}>Nenhum cliente bloqueado</p>
+                            <p className="text-xs" style={{ color: 'var(--mg-text-muted)' }}>O sistema bloqueia automaticamente quem não paga no prazo</p>
+                          </div>
+                        </td></tr>
+                      ) : blockedClients.map((c) => (
+                        <tr key={c.id}>
+                          <td>
+                            <div className="font-bold text-sm" style={{ color: 'var(--mg-text-heading)' }}>{c.phone || c.cpf || '—'}</div>
+                            {c.cpf && <div className="text-[10px]" style={{ color: 'var(--mg-text-muted)' }}>CPF: {c.cpf}</div>}
+                          </td>
+                          <td>
+                            {c.mac ? (
+                              <span className="font-mono text-xs border border-[var(--mg-card-border)] bg-[var(--mg-card-bg-subtle)] px-2 py-0.5 rounded" style={{ color: 'var(--mg-text-body)' }}>{c.mac}</span>
+                            ) : <span className="italic" style={{ color: 'var(--mg-text-muted)' }}>Sem MAC</span>}
+                          </td>
+                          <td>
+                            <div className="space-y-0.5" style={{ color: 'var(--mg-text-body)' }}>
+                              {c.cpf && <div>CPF: <span className="font-mono">{c.cpf}</span></div>}
+                              {c.phone && <div>📱 {c.phone}</div>}
+                            </div>
+                          </td>
+                          <td>
+                            <span className="mg-badge-danger text-[10px]">
+                              🚫 {c.reason || 'Não pagou no prazo'}
+                            </span>
+                          </td>
+                          <td style={{ color: 'var(--mg-text-muted)' }}>
+                            {c.blockedAt ? new Date(c.blockedAt).toLocaleString('pt-BR') : '—'}
+                          </td>
+                          <td className="text-right">
+                            <button
+                              onClick={() => handleUnblock(c.id, c.mac)}
+                              disabled={unblockingId === c.id}
+                              className="mg-btn mg-btn-success text-xs"
+                            >
+                              {unblockingId === c.id ? <span className="animate-spin">⟳</span> : '🔓'}
+                              Desbloquear
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
             {/* Manual Block Form */}
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
-              <h3 className="font-black text-slate-800 mb-3 text-sm">➕ Bloquear Manualmente</h3>
+            <div className="mg-card p-5">
+              <h3 className="mg-card-title mb-3">➕ Bloquear Manualmente</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <input value={blockMac} onChange={e => setBlockMac(e.target.value)}
                   placeholder="MAC (AA:BB:CC:DD:EE:FF)"
-                  className="border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-red-500/30" />
+                  className="mg-input font-mono" />
                 <input value={blockCpf} onChange={e => setBlockCpf(e.target.value)}
                   placeholder="CPF"
-                  className="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/30" />
+                  className="mg-input" />
                 <input value={blockPhone} onChange={e => setBlockPhone(e.target.value)}
                   placeholder="Telefone"
-                  className="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/30" />
+                  className="mg-input" />
                 <input value={blockReason} onChange={e => setBlockReason(e.target.value)}
                   placeholder="Motivo (opcional)"
-                  className="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/30" />
+                  className="mg-input" />
               </div>
               <button onClick={handleManualBlock} disabled={blockSubmitting}
-                className="mt-3 flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors shadow-sm disabled:opacity-50">
+                className="mg-btn mg-btn-danger mt-3">
                 {blockSubmitting ? <span className="animate-spin">⟳</span> : '🔒'} Bloquear Cliente
               </button>
             </div>
 
             {/* Grace Period / Trial Unblock Section */}
-            <div className="bg-white border border-amber-200 rounded-2xl shadow-sm overflow-hidden">
-              <div className="p-5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-b border-amber-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="mg-card overflow-hidden border-amber-500/40">
+              <div className="p-5 border-b border-[var(--mg-card-border)] bg-amber-500/5 flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-xl">⏱️</span>
-                    <h3 className="font-black text-slate-900 text-base">Liberação de Carência (15 min expirados)</h3>
+                    <h3 className="mg-card-title">Liberação de Carência (15 min expirados)</h3>
                     {trialLeads.length > 0 && (
-                      <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-300">
+                      <span className="mg-badge-warning">
                         {trialLeads.length} aguardando
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-600 mt-1">
+                  <p className="mg-card-subtitle mt-1">
                     Clientes que utilizaram o tempo de carência de 15 minutos sem efetuar o pagamento. Clique em <strong>Liberar Carência</strong> para resetar o tempo, remover da lista negra e permitir que o cliente gere um novo Pix ou navegue novamente.
                   </p>
                 </div>
@@ -913,12 +915,12 @@ export default function SecurityControl() {
                       onChange={e => setTrialSearch(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') fetchTrialLeads(trialSearch); }}
                       placeholder="Buscar CPF, telefone, MAC..."
-                      className="w-full bg-white border border-slate-200 rounded-lg pl-3 pr-8 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                      className="mg-input pr-8"
                     />
                     {trialSearch && (
                       <button
                         onClick={() => { setTrialSearch(''); fetchTrialLeads(''); }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--mg-text-muted)' }}
                       >
                         ✕
                       </button>
@@ -927,99 +929,100 @@ export default function SecurityControl() {
                   <button
                     onClick={() => fetchTrialLeads(trialSearch)}
                     disabled={trialLoading}
-                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors shadow-xs"
+                    className="mg-btn mg-btn-warning text-xs"
                   >
                     {trialLoading ? '⟳' : 'Buscar'}
                   </button>
                 </div>
               </div>
 
-              <div className="max-h-[500px] overflow-auto">
-                <table className="w-full text-left text-xs border-collapse">
+              <div className="mg-table-wrap">
+                <div className="max-h-[500px] overflow-auto">
+                <table className="mg-table">
                   <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
-                      <th className="px-4 py-3">Cliente / Contato</th>
-                      <th className="px-4 py-3">CPF</th>
-                      <th className="px-4 py-3">MAC Address</th>
-                      <th className="px-4 py-3">Carência Usada</th>
-                      <th className="px-4 py-3">Histórico de Pix</th>
-                      <th className="px-4 py-3 text-right">Ação</th>
+                    <tr>
+                      <th>Cliente / Contato</th>
+                      <th>CPF</th>
+                      <th>MAC Address</th>
+                      <th>Carência Usada</th>
+                      <th>Histórico de Pix</th>
+                      <th className="text-right">Ação</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody>
                     {trialLoading && trialLeads.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-4 py-10 text-center text-slate-400 italic">
+                        <td colSpan={6} className="text-center italic" style={{ color: 'var(--mg-text-muted)', padding: '2rem' }}>
                           <div className="inline-block animate-pulse">Consultando clientes com carência...</div>
                         </td>
                       </tr>
                     ) : trialLeads.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-4 py-10 text-center">
-                          <div className="flex flex-col items-center gap-2">
+                        <td colSpan={6} style={{ padding: '2rem' }}>
+                          <div className="flex flex-col items-center gap-2 text-center">
                             <span className="text-3xl">✨</span>
-                            <p className="text-slate-600 font-medium text-sm">Nenhum cliente com carência pendente</p>
-                            <p className="text-slate-400 text-xs">Todos os cadastros recentes efetuaram pagamento ou não atingiram o limite de carência.</p>
+                            <p className="font-medium text-sm" style={{ color: 'var(--mg-text-muted)' }}>Nenhum cliente com carência pendente</p>
+                            <p className="text-xs" style={{ color: 'var(--mg-text-muted)' }}>Todos os cadastros recentes efetuaram pagamento ou não atingiram o limite de carência.</p>
                           </div>
                         </td>
                       </tr>
                     ) : trialLeads.map((lead) => (
-                      <tr key={lead.id} className="hover:bg-amber-50/40 transition-colors">
-                        <td className="px-4 py-3">
-                          <div className="font-bold text-slate-800">{lead.name || 'Sem nome'}</div>
-                          <div className="text-[11px] text-slate-500 font-mono">📱 {lead.phone || 'Sem telefone'}</div>
+                      <tr key={lead.id}>
+                        <td>
+                          <div className="font-bold text-sm" style={{ color: 'var(--mg-text-heading)' }}>{lead.name || 'Sem nome'}</div>
+                          <div className="text-[11px] font-mono" style={{ color: 'var(--mg-text-muted)' }}>📱 {lead.phone || 'Sem telefone'}</div>
                         </td>
-                        <td className="px-4 py-3">
-                          <span className="font-mono text-slate-700">{lead.cpf || '—'}</span>
+                        <td>
+                          <span className="font-mono" style={{ color: 'var(--mg-text-body)' }}>{lead.cpf || '—'}</span>
                         </td>
-                        <td className="px-4 py-3">
+                        <td>
                           {lead.mac ? (
-                            <span className="font-mono text-xs bg-slate-100 border border-slate-200 text-slate-700 px-2 py-0.5 rounded">
+                            <span className="font-mono text-xs border border-[var(--mg-card-border)] bg-[var(--mg-card-bg-subtle)] px-2 py-0.5 rounded" style={{ color: 'var(--mg-text-body)' }}>
                               {lead.mac}
                             </span>
                           ) : (
-                            <span className="text-slate-400 italic">Sem MAC</span>
+                            <span className="italic" style={{ color: 'var(--mg-text-muted)' }}>Sem MAC</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-slate-600">
+                        <td>
                           {lead.trialGrantedAt ? (
                             <div>
-                              <div className="font-bold text-amber-700">15 min expirados</div>
-                              <div className="text-[10px] text-slate-400">
+                              <div className="font-bold text-amber-600">15 min expirados</div>
+                              <div className="text-[10px]" style={{ color: 'var(--mg-text-muted)' }}>
                                 {new Date(lead.trialGrantedAt).toLocaleString('pt-BR')}
                               </div>
                             </div>
                           ) : lead.trialBlocked ? (
-                            <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                            <span className="mg-badge-danger text-[10px]">
                               Bloqueado
                             </span>
                           ) : '—'}
                         </td>
-                        <td className="px-4 py-3">
+                        <td>
                           {lead.payments && lead.payments.length > 0 ? (
                             <div className="space-y-1">
                               {lead.payments.map((p: any) => (
                                 <div key={p.id} className="text-[10px] flex items-center gap-1.5">
-                                  <span className={`px-1.5 py-0.2 rounded font-bold ${
-                                    p.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
-                                    p.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                                    'bg-slate-100 text-slate-600'
+                                  <span className={`px-1.5 py-0.5 rounded font-bold ${
+                                    p.status === 'approved' ? 'bg-emerald-500/15 text-emerald-700' :
+                                    p.status === 'pending' ? 'bg-amber-500/15 text-amber-700' :
+                                    'border border-[var(--mg-card-border)] bg-[var(--mg-card-bg-subtle)]'
                                   }`}>
                                     {p.status === 'approved' ? '✓ Pago' : p.status === 'pending' ? '⏳ Pendente' : p.status}
                                   </span>
-                                  <span className="font-semibold text-slate-700">R$ {Number(p.amount).toFixed(2)}</span>
+                                  <span className="font-semibold" style={{ color: 'var(--mg-text-body)' }}>R$ {Number(p.amount).toFixed(2)}</span>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <span className="text-slate-400 italic text-[11px]">Nenhum Pix gerado</span>
+                            <span className="italic text-[11px]" style={{ color: 'var(--mg-text-muted)' }}>Nenhum Pix gerado</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="text-right">
                           <button
                             onClick={() => handleUnlockLead(lead.id, lead.name || lead.phone || lead.cpf || 'Cliente')}
                             disabled={unlockingLeadId === lead.id}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors shadow-sm disabled:opacity-50"
+                            className="mg-btn mg-btn-warning text-xs"
                           >
                             {unlockingLeadId === lead.id ? <span className="animate-spin">⟳</span> : '🔓'}
                             Liberar Carência
@@ -1029,6 +1032,7 @@ export default function SecurityControl() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           </div>
