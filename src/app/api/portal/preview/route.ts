@@ -623,16 +623,23 @@ export async function GET(request: Request) {
         if (!logoEl) {
           logoEl = document.createElement('img');
           logoEl.className = 'logo brand-logo';
-          logoEl.alt = 'Logo';
+          logoEl.alt = '';
           logoContainer.prepend(logoEl);
         }
 
         if (logoEl) {
+          logoEl.onerror = function() {
+            this.style.setProperty('display', 'none', 'important');
+          };
+          logoEl.onload = function() {
+            if (displayMode !== 'none' && displayMode !== 'text') {
+              this.style.setProperty('display', 'block', 'important');
+            }
+          };
+
           if (displayMode === 'none' || displayMode === 'text') {
             logoEl.style.setProperty('display', 'none', 'important');
           } else {
-            logoEl.style.setProperty('display', 'block', 'important');
-            
             var currentTmpl = config.template || 'default';
             var baseLogoUrl = '/api/portal/logo?template=' + currentTmpl;
             if (!logoEl.dataset.loadedTmpl || logoEl.dataset.loadedTmpl !== currentTmpl) {
