@@ -22,7 +22,9 @@ function logEvent(type: string, data: any) {
   try {
     const logPath = path.join(process.cwd(), 'hotspot', 'error.log');
     const logMessage = `[${new Date().toISOString()}] [${type}] ${typeof data === 'string' ? data : JSON.stringify(data)}\n`;
-    fs.promises.appendFile(logPath, logMessage, 'utf8').catch(err => console.error('Failed to write to error.log', err));
+    fs.promises.mkdir(path.dirname(logPath), { recursive: true })
+      .then(() => fs.promises.appendFile(logPath, logMessage, 'utf8'))
+      .catch(err => console.error('Failed to write to error.log', err));
   } catch (err) {
     console.error('Failed to log event', err);
   }
@@ -251,25 +253,31 @@ export async function POST(request: Request) {
       return createResponse({ success: false, message: 'O cadastro de clientes está desativado.' }, isForm, 400);
     }
 
-    const fields = {
+    const defaultFields = {
       nameEnabled: true,
       nameRequired: true,
       phoneEnabled: true,
       phoneRequired: true,
-      birthDateEnabled: true,
-      birthDateRequired: true,
-      emailEnabled: true,
+      birthDateEnabled: false,
+      birthDateRequired: false,
+      emailEnabled: false,
       emailRequired: false,
-      cpfEnabled: true,
-      cpfRequired: true,
-      genderEnabled: true,
-      genderRequired: true,
-      passwordEnabled: true,
-      passwordRequired: true,
+      cpfEnabled: false,
+      cpfRequired: false,
+      genderEnabled: false,
+      genderRequired: false,
+      passwordEnabled: false,
+      passwordRequired: false,
       customFieldEnabled: false,
       customFieldLabel: 'Descreva aqui!',
       customFieldRequired: false,
-      ...config?.fields
+      optInCoursesEnabled: false,
+      optInCoursesLabel: 'Eu aceito receber informações dos cursos'
+    };
+
+    const fields = {
+      ...defaultFields,
+      ...(config?.fields || {})
     };
 
     const { name, username, email, cpf, gender, password, customFieldValue, optInCourses } = body;
@@ -330,7 +338,7 @@ export async function POST(request: Request) {
       logEvent('VALIDATION_FAILED', 'Gênero é obrigatório.');
       return createResponse({ success: false, message: 'Gênero é obrigatório.' }, isForm, 400);
     }
-    if (fields.passwordEnabled !== false && fields.passwordRequired) {
+    if (fields.passwordEnabled && fields.passwordRequired) {
       if (!password || !password.trim()) {
         logEvent('VALIDATION_FAILED', 'Senha é obrigatória.');
         return createResponse({ success: false, message: 'Senha é obrigatória.' }, isForm, 400);

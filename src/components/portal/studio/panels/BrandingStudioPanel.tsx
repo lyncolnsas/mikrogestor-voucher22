@@ -55,6 +55,7 @@ interface BrandingStudioPanelProps {
   setTemplate?: (t: string) => void;
   availableTemplates?: string[];
   onOpenMediaPicker?: (target: { type: 'bg' | 'logo'; title: string }) => void;
+  onSubTabChange?: () => void;
 }
 
 export default function BrandingStudioPanel({
@@ -79,8 +80,14 @@ export default function BrandingStudioPanel({
   setTemplate,
   availableTemplates = ['default', 'FAP'],
   onOpenMediaPicker,
+  onSubTabChange,
 }: BrandingStudioPanelProps) {
   const [activeSubTab, setActiveSubTab] = useState<'presets' | 'layout' | 'palette' | 'logo' | 'background'>('presets');
+  const [logoImgError, setLogoImgError] = useState(false);
+
+  React.useEffect(() => {
+    setLogoImgError(false);
+  }, [logoPreviewUrl]);
 
   // Contrast check
   const buttonContrast = getContrastRatio(colors.blue || '#2563eb', colors.loginButtonText || '#ffffff');
@@ -89,10 +96,10 @@ export default function BrandingStudioPanel({
   return (
     <div className="flex flex-col h-full bg-white dark:bg-slate-900 overflow-y-auto p-4 space-y-5 select-none">
       {/* Subtabs for Branding */}
-      <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200 dark:border-slate-700/70 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200 dark:border-slate-700/70 overflow-x-auto scrollbar-none min-w-0">
         {[
           { id: 'presets', label: 'Temas' },
-          { id: 'layout', label: 'Estruturas & Caixas' },
+          { id: 'layout', label: 'Estrutura' },
           { id: 'palette', label: 'Cores' },
           { id: 'logo', label: 'Logotipo' },
           { id: 'background', label: 'Fundo' },
@@ -100,8 +107,11 @@ export default function BrandingStudioPanel({
           <button
             key={sub.id}
             type="button"
-            onClick={() => setActiveSubTab(sub.id as any)}
-            className={`flex-1 text-xs font-semibold py-1.5 px-2 rounded-lg transition-all cursor-pointer text-center whitespace-nowrap ${
+            onClick={() => {
+              setActiveSubTab(sub.id as any);
+              if (onSubTabChange) onSubTabChange();
+            }}
+            className={`flex-1 min-w-fit text-[11px] font-semibold py-1.5 px-2 rounded-lg transition-all cursor-pointer text-center whitespace-nowrap shrink-0 ${
               activeSubTab === sub.id
                 ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-xs font-bold'
                 : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
@@ -698,9 +708,22 @@ export default function BrandingStudioPanel({
       {activeSubTab === 'logo' && (
         <div className="space-y-4">
           <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex items-center gap-4">
-            <div className="w-16 h-16 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-300 dark:border-slate-700 shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={logoPreviewUrl} alt="Logo" className="w-full h-full object-contain p-1" />
+            <div className="w-16 h-16 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-300 dark:border-slate-700 shrink-0 relative">
+              {logoImgError ? (
+                <div className="flex flex-col items-center justify-center text-center p-1">
+                  <Sparkles className="w-5 h-5 text-slate-400 dark:text-slate-500 mb-0.5" />
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 leading-tight">Sem Logo</span>
+                </div>
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img 
+                  src={logoPreviewUrl} 
+                  alt="Logo" 
+                  onError={() => setLogoImgError(true)}
+                  onLoad={() => setLogoImgError(false)}
+                  className="w-full h-full object-contain p-1" 
+                />
+              )}
             </div>
             <div className="flex-1">
               <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">Logotipo Atual</h4>
@@ -733,10 +756,10 @@ export default function BrandingStudioPanel({
               <input
                 type="range"
                 min="40"
-                max="220"
+                max="360"
                 value={brand.logoSize || 100}
                 onChange={(e) => setBrand(prev => ({ ...prev, logoSize: parseInt(e.target.value) }))}
-                className="w-full accent-blue-600"
+                className="w-full accent-blue-600 cursor-pointer"
               />
             </div>
 

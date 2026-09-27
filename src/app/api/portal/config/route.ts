@@ -1466,8 +1466,12 @@ export async function POST(request: Request) {
       }).catch(() => null);
     }
 
-    if (newConfig.saleMode !== undefined) {
-      const modeValue = newConfig.saleMode ? 'paid' : 'free';
+    const isFreeMode = newConfig.systemFreeWifiMode !== undefined
+      ? Boolean(newConfig.systemFreeWifiMode)
+      : (newConfig.saleMode !== undefined ? !newConfig.saleMode : undefined);
+
+    if (isFreeMode !== undefined) {
+      const modeValue = isFreeMode ? 'free' : 'paid';
       await Promise.all([
         prisma.systemConfig.upsert({
           where: { key: 'PORTAL_SALES_MODE' },
@@ -1476,8 +1480,8 @@ export async function POST(request: Request) {
         }),
         prisma.systemConfig.upsert({
           where: { key: 'free_wifi_mode' },
-          update: { value: newConfig.saleMode ? 'false' : 'true' },
-          create: { key: 'free_wifi_mode', value: newConfig.saleMode ? 'false' : 'true' }
+          update: { value: isFreeMode ? 'true' : 'false' },
+          create: { key: 'free_wifi_mode', value: isFreeMode ? 'true' : 'false' }
         })
       ]).catch(() => null);
     }

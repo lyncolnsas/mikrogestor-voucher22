@@ -85,6 +85,38 @@ export default function AdsStudioPanel({
         </div>
       </div>
 
+      {ad.type === 'none' && (
+        <div className="p-6 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/30 text-center space-y-3">
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-xs">
+            <Megaphone className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+              Nenhuma Campanha Publicitária Ativa
+            </h4>
+            <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
+              Selecione <strong>Banner Único</strong> ou <strong>Carrossel</strong> acima para carregar mídias de patrocinadores ou avisos com contagem regressiva antes da liberação do Wi-Fi.
+            </p>
+          </div>
+          <div className="flex justify-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setAd((prev: any) => ({ ...prev, type: 'single' }))}
+              className="text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white cursor-pointer shadow-xs transition-colors"
+            >
+              Ativar Banner Único
+            </button>
+            <button
+              type="button"
+              onClick={() => setAd((prev: any) => ({ ...prev, type: 'carousel' }))}
+              className="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 cursor-pointer transition-colors"
+            >
+              Ativar Carrossel
+            </button>
+          </div>
+        </div>
+      )}
+
       {ad.type !== 'none' && (
         <>
           {/* Mandatory Timer Setting */}

@@ -25,7 +25,10 @@ import {
   Megaphone, 
   Globe, 
   Code2, 
-  Cpu 
+  Cpu,
+  CheckCircle2,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 
 interface Colors {
@@ -429,27 +432,41 @@ export default function PortalEditor() {
 
   const [fields, setFields] = useState<FieldsConfig>({
     usernameEnabled: false,
-    usernameRequired: true,
+    usernameRequired: false,
     nameEnabled: true,
     nameRequired: true,
     phoneEnabled: true,
     phoneRequired: true,
-    birthDateEnabled: true,
-    birthDateRequired: true,
-    emailEnabled: true,
+    birthDateEnabled: false,
+    birthDateRequired: false,
+    emailEnabled: false,
     emailRequired: false,
-    cpfEnabled: true,
-    cpfRequired: true,
-    genderEnabled: true,
-    genderRequired: true,
-    passwordEnabled: true,
-    passwordRequired: true,
+    cpfEnabled: false,
+    cpfRequired: false,
+    genderEnabled: false,
+    genderRequired: false,
+    passwordEnabled: false,
+    passwordRequired: false,
     customFieldEnabled: false,
     customFieldLabel: 'Como nos conheceu?',
     customFieldRequired: false,
-    optInCoursesEnabled: true,
+    optInCoursesEnabled: false,
     optInCoursesLabel: 'Eu aceito receber informações dos cursos'
   });
+
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type });
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => {
+      setToast(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const [studio, setStudio] = useState<any>({
     activeComponent: 'submit_button',
@@ -705,6 +722,8 @@ export default function PortalEditor() {
 
   // Alterna o modo operacional mestre do sistema (sincroniza /api/config/system e /api/admin/whatsapp-messages)
   const handleToggleSystemMode = async (free: boolean) => {
+    const prevFree = systemFreeWifiMode;
+    const prevSale = saleMode;
     setSystemFreeWifiMode(free);
     if (free) {
       setSaleMode(false);
@@ -712,7 +731,7 @@ export default function PortalEditor() {
       setSaleMode(true);
     }
     try {
-      await Promise.all([
+      const [resSys, resWpp] = await Promise.all([
         fetch('/api/config/system', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -724,9 +743,16 @@ export default function PortalEditor() {
           body: JSON.stringify({ action: 'setActiveMode', mode: free ? 'free' : 'paid' })
         })
       ]);
+      if (!resSys.ok || !resWpp.ok) {
+        throw new Error('Falha ao sincronizar o modo do sistema na VPS.');
+      }
       broadcastLivePreview();
-    } catch (e) {
+      showToast(free ? 'Modo Wi-Fi 100% Gratuito ativado!' : 'Modo Venda de Acesso via PIX ativado!', 'success');
+    } catch (e: any) {
       console.error('Erro ao sincronizar modo do sistema:', e);
+      setSystemFreeWifiMode(prevFree);
+      setSaleMode(prevSale);
+      showToast(`Erro ao alterar modo do sistema: ${e?.message || 'Falha de comunicação'}`, 'error');
     }
   };
 
@@ -857,6 +883,7 @@ export default function PortalEditor() {
           fields,
           enabled,
           saleMode,
+          systemFreeWifiMode,
           redirectUrl,
           loginButtonLabel,
           registerButtonText,
@@ -881,12 +908,12 @@ export default function PortalEditor() {
           } catch {}
         }
         broadcastLivePreview();
-        alert('✅ Configurações salvas localmente com sucesso!');
+        showToast('Configurações salvas localmente com sucesso!', 'success');
       } else {
-        alert('❌ Erro ao salvar: ' + data.message);
+        showToast('Erro ao salvar: ' + (data.message || 'Falha'), 'error');
       }
     } catch {
-      alert('❌ Erro de conexão ao salvar.');
+      showToast('Erro de conexão ao salvar as configurações.', 'error');
     } finally {
       setSaving(false);
     }
@@ -898,8 +925,8 @@ export default function PortalEditor() {
     setDeployModalResult(null);
 
     try {
-      // 1. Save config first
-      await fetch(`/api/portal/config?template=${template}`, {
+      // 1. Save config first and verify success
+      const saveRes = await fetch(`/api/portal/config?template=${template}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -918,6 +945,7 @@ export default function PortalEditor() {
           fields,
           enabled,
           saleMode,
+          systemFreeWifiMode,
           redirectUrl,
           loginButtonLabel,
           registerButtonText,
@@ -934,6 +962,13 @@ export default function PortalEditor() {
           trialModalCancelText,
         })
       });
+      const saveData = await saveRes.json();
+      if (!saveRes.ok || !saveData.success) {
+        const errorMsg = `Falha ao salvar as configurações antes do deploy: ${saveData.message || 'Erro desconhecido'}`;
+        setDeployModalResult({ type: 'error', message: errorMsg });
+        showToast(errorMsg, 'error');
+        return;
+      }
 
       // 2. Trigger FTP Deploy
       const res = await fetch('/api/portal/deploy', {
@@ -950,11 +985,14 @@ export default function PortalEditor() {
           } catch {}
         }
         setDeployModalResult({ type: 'success', message: data.message });
+        showToast('Deploy no MikroTik concluído com sucesso!', 'success');
       } else {
         setDeployModalResult({ type: 'error', message: data.message || 'Erro no Deploy' });
+        showToast('Erro no Deploy: ' + (data.message || 'Falha'), 'error');
       }
     } catch {
       setDeployModalResult({ type: 'error', message: 'Falha na comunicação com o roteador.' });
+      showToast('Falha na comunicação com o roteador.', 'error');
     } finally {
       setDeploying(false);
     }
@@ -1268,6 +1306,7 @@ export default function PortalEditor() {
               setTemplate={handleSelectTemplate}
               availableTemplates={availableTemplates}
               onOpenMediaPicker={handleOpenMediaPicker}
+              onSubTabChange={broadcastLivePreview}
             />
           )}
 
@@ -1421,6 +1460,38 @@ export default function PortalEditor() {
         targetType={mediaModalTarget.type}
         template={template}
       />
+
+      {/* 5. Floating Toast Notification */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border text-xs sm:text-sm font-semibold transition-all animate-in fade-in slide-in-from-top-4 duration-200 backdrop-blur-md max-w-md ${
+            toast.type === 'success'
+              ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-100 shadow-emerald-950/40'
+              : toast.type === 'error'
+              ? 'bg-rose-950/90 border-rose-500/50 text-rose-100 shadow-rose-950/40'
+              : 'bg-blue-950/90 border-blue-500/50 text-blue-100 shadow-blue-950/40'
+          }`}
+        >
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          ) : toast.type === 'error' ? (
+            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+          ) : (
+            <Eye className="w-5 h-5 text-blue-400 shrink-0" />
+          )}
+          <span className="flex-1 leading-snug">{toast.message}</span>
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            className="p-1 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors cursor-pointer shrink-0"
+            title="Fechar"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

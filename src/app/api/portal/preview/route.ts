@@ -620,6 +620,13 @@ export async function GET(request: Request) {
         logoContainer.style.alignItems = tAlign === 'left' ? 'flex-start' : tAlign === 'right' ? 'flex-end' : 'center';
         logoContainer.style.textAlign = tAlign;
 
+        if (!logoEl) {
+          logoEl = document.createElement('img');
+          logoEl.className = 'logo brand-logo';
+          logoEl.alt = 'Logo';
+          logoContainer.prepend(logoEl);
+        }
+
         if (logoEl) {
           if (displayMode === 'none' || displayMode === 'text') {
             logoEl.style.setProperty('display', 'none', 'important');
@@ -636,6 +643,7 @@ export async function GET(request: Request) {
             var lSize = brandCfg.logoSize || 120;
             var lPad = brandCfg.logoPadding || 0;
             
+            logoEl.style.setProperty('width', 'auto', 'important');
             logoEl.style.setProperty('max-width', lSize + 'px', 'important');
             logoEl.style.setProperty('max-height', lSize + 'px', 'important');
             logoEl.style.setProperty('padding', lPad + 'px', 'important');

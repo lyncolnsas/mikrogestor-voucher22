@@ -25,8 +25,14 @@ export async function GET() {
       return NextResponse.json({ success: false, message: 'Falha ao conectar no MikroTik', entries: [] });
     }
 
-    const entries = await api.getWalledGarden();
+    const rawEntries = await api.getWalledGarden();
     await api.close();
+
+    const entries = (rawEntries || []).filter((e: any) => {
+      const host = (e['dst-host'] || e.dstHost || '').toLowerCase();
+      const comment = (e.comment || '').toLowerCase();
+      return !host.includes('place hotspot rules here') && !comment.includes('place hotspot rules here');
+    });
 
     return NextResponse.json({ success: true, entries });
   } catch (err: any) {

@@ -47,7 +47,12 @@ export default function WalledGardenStudioPanel({
       const res = await fetch('/api/hotspot/walled-garden');
       const data = await res.json();
       if (data.success) {
-        setEntries(data.entries || []);
+        const clean = (data.entries || []).filter((e: any) => {
+          const host = (e['dst-host'] || e.dstHost || '').toLowerCase();
+          const comment = (e.comment || '').toLowerCase();
+          return !host.includes('place hotspot rules here') && !comment.includes('place hotspot rules here');
+        });
+        setEntries(clean);
       }
     } catch {
       // Ignorar erro de conexão ou timeout
