@@ -232,7 +232,19 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { id, forceLocal } = await request.json();
+    const { id, forceLocal, clearAll } = await request.json();
+
+    if (clearAll) {
+      await prisma.mediaLibrary.deleteMany({});
+      
+      // Também precisa limpar todas as referências nos gatilhos
+      await prisma.systemConfig.deleteMany({
+        where: { key: { endsWith: '_FORWARD_ID' } }
+      });
+      
+      return NextResponse.json({ success: true, message: "Todas as mídias foram limpas com sucesso!" });
+    }
+
     if (!id) return NextResponse.json({ success: false, message: "ID obrigatorio" }, { status: 400 });
 
     const item = await prisma.mediaLibrary.findUnique({ where: { id } });

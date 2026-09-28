@@ -237,6 +237,30 @@ export function WhatsappMessageCustomizer() {
     }
   };
 
+  const handleClearAllMedia = async () => {
+    if (!confirm('ATENÇÃO: Isso apagará todas as mídias salvas na Biblioteca Central do painel. Deseja continuar?')) return;
+    setDeletingMediaId('all');
+    try {
+      const res = await fetch('/api/admin/media-library', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clearAll: true })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLibraryItems([]);
+        setEditedForwardIds({});
+        setFeedback({ key: 'LIBRARY', success: true, message: data.message || 'Todas as mídias foram limpas!' });
+      } else {
+        alert(data.message || 'Não foi possível limpar as mídias.');
+      }
+    } catch {
+      alert('Falha na comunicação ao tentar limpar mídias.');
+    } finally {
+      setDeletingMediaId(null);
+    }
+  };
+
   useEffect(() => {
     let ignore = false;
     const run = async () => {
@@ -1287,13 +1311,23 @@ export function WhatsappMessageCustomizer() {
                 </button>
                 <button
                   type="button"
+                  onClick={handleClearAllMedia}
+                  disabled={deletingMediaId === 'all'}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 bg-white hover:bg-rose-50 border border-rose-200 cursor-pointer disabled:opacity-50 transition-all shadow-xs"
+                  title="Apagar todas as mídias da biblioteca central"
+                >
+                  <Trash2 className={`w-3.5 h-3.5 ${deletingMediaId === 'all' ? 'animate-spin' : ''}`} />
+                  Limpar
+                </button>
+                <button
+                  type="button"
                   onClick={() => fetchLibrary(true)}
                   disabled={libraryLoading}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer disabled:opacity-50 transition-all shadow-xs"
                   title="Buscar e sincronizar todas as mídias existentes no grupo do WhatsApp"
                 >
                   <RefreshCcw className={`w-3.5 h-3.5 ${libraryLoading ? 'animate-spin text-emerald-600' : ''}`} />
-                  {syncingGroup ? 'Sincronizando grupo...' : 'Atualizar'}
+                  {syncingGroup ? 'Sincronizando...' : 'Atualizar'}
                 </button>
                 <button type="button" onClick={() => setShowLibraryModal(false)} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 cursor-pointer">
                   <X className="w-5 h-5" />
