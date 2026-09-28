@@ -1327,7 +1327,7 @@ export class BaileysAdapter implements IWhatsappAdapter {
 
       const isFromMe = Boolean(
         msgKey.fromMe ||
-        (participantJid && myJid && participantJid.startsWith(readySession.number || ''))
+        (participantJid && myJid && participantJid.split(':')[0] === myJid.split(':')[0])
       );
 
       console.log(`[Baileys][Delete] Tentando apagar mídia ${item.id} (MsgID: ${item.messageId}) no grupo ${groupJid}...`);
