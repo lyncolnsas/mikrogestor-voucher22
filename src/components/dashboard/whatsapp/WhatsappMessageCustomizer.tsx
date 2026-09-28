@@ -198,8 +198,8 @@ export function WhatsappMessageCustomizer() {
     }
   };
 
-  const handleDeleteLibraryItem = async (itemId: string) => {
-    if (!confirm('Deseja excluir esta mídia da Biblioteca Central? Os gatilhos vinculados serão atualizados automaticamente para manter os envios ativos.')) {
+  const handleDeleteLibraryItem = async (itemId: string, force = false) => {
+    if (!force && !confirm('Deseja apagar esta mídia para todos no WhatsApp e remover da Biblioteca Central?')) {
       return;
     }
     setDeletingMediaId(itemId);
@@ -207,7 +207,7 @@ export function WhatsappMessageCustomizer() {
       const res = await fetch('/api/admin/media-library', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: itemId })
+        body: JSON.stringify({ id: itemId, forceLocal: force })
       });
       const data = await res.json();
       if (data.success) {
@@ -219,11 +219,19 @@ export function WhatsappMessageCustomizer() {
           }
           return next;
         });
+        setFeedback({ key: 'LIBRARY', success: true, message: data.message || 'Mídia apagada com sucesso!' });
       } else {
-        alert(data.message || 'Erro ao excluir mídia.');
+        if (data.requireForceLocal) {
+          if (confirm(`${data.message}\n\nDeseja forçar a remoção apenas da biblioteca do painel?`)) {
+            await handleDeleteLibraryItem(itemId, true);
+            return;
+          }
+        } else {
+          alert(data.message || 'Não foi possível apagar a mídia.');
+        }
       }
     } catch {
-      alert('Falha na comunicação ao excluir.');
+      alert('Falha na comunicação ao tentar apagar mídia.');
     } finally {
       setDeletingMediaId(null);
     }
@@ -1329,19 +1337,23 @@ export function WhatsappMessageCustomizer() {
                     >
                       <div className="w-full aspect-video bg-slate-100 flex items-center justify-center overflow-hidden relative">
                         {item.thumbnailUrl ? (
-                          <img src={item.thumbnailUrl} alt={item.caption || ''} className="w-full h-full object-cover" />
+                          item.thumbnailUrl.endsWith('.mp4') ? (
+                            <video src={item.thumbnailUrl} className="w-full h-full object-cover" muted playsInline />
+                          ) : (
+                            <img src={item.thumbnailUrl} alt={item.caption || ''} className="w-full h-full object-cover" />
+                          )
                         ) : (
                           <div className="text-slate-400">{mediaTypeIcon(item.mediaType)}</div>
                         )}
-                        {/* Botão de Excluir da Biblioteca */}
+                        {/* Botão de Excluir da Biblioteca e Apagar no WhatsApp */}
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); handleDeleteLibraryItem(item.id); }}
                           disabled={deletingMediaId === item.id}
-                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/70 hover:bg-rose-600 text-white transition-all cursor-pointer z-20 opacity-0 group-hover:opacity-100"
-                          title="Excluir mídia permanentemente da biblioteca"
+                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 hover:bg-rose-600 text-white transition-all cursor-pointer z-20 shadow-xs"
+                          title="Apagar mídia para todos no WhatsApp e remover da biblioteca"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className={`w-3.5 h-3.5 ${deletingMediaId === item.id ? 'animate-spin' : ''}`} />
                         </button>
                       </div>
                       <div className="p-2.5 flex-1 flex flex-col justify-between">

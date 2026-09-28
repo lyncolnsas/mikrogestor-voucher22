@@ -1188,6 +1188,18 @@ export class BaileysAdapter implements IWhatsappAdapter {
       // Aguarda 2 segundos para o WhatsApp responder e o listener processar as mensagens recebidas
       await new Promise(r => setTimeout(r, 2000));
 
+      // Enriquece miniaturas pendentes para mídias sincronizadas sem preview
+      const pendingThumbs = await prisma.mediaLibrary.findMany({
+        where: { sourceJid: targetGroup, thumbnailUrl: null },
+        take: 30
+      });
+      if (pendingThumbs.length > 0) {
+        console.log(`[Baileys][MediaSync] Gerando miniaturas para ${pendingThumbs.length} mídias sincronizadas...`);
+        for (const item of pendingThumbs) {
+          await this.ensureMediaThumbnail(item).catch(() => {});
+        }
+      }
+
       const count = await prisma.mediaLibrary.count({
         where: { sourceJid: targetGroup }
       });
@@ -1200,6 +1212,171 @@ export class BaileysAdapter implements IWhatsappAdapter {
     } catch (err: any) {
       console.error(`[Baileys][MediaSync] Erro ao sincronizar histórico:`, err);
       return { success: false, message: `Erro ao comunicar com WhatsApp: ${err?.message || err}` };
+    }
+  }
+
+  /**
+   * Baixa a mídia diretamente do WhatsApp via downloadMediaMessage e gera sua miniatura (Base64 ou arquivo local).
+   */
+  async ensureMediaThumbnail(libItem: { id: string; messageJson: string; mediaType: string; mimeType: string | null }): Promise<string | null> {
+    try {
+      if (!libItem.messageJson) return null;
+      const msg = JSON.parse(libItem.messageJson);
+      const innerMsg = msg.message?.imageMessage || msg.message?.videoMessage || msg.message?.documentMessage;
+
+      // 1. Se já possui thumbnail em Base64 nativo
+      if (innerMsg?.jpegThumbnail) {
+        const buf = Buffer.from(innerMsg.jpegThumbnail);
+        const thumb = `data:image/jpeg;base64,${buf.toString('base64')}`;
+        await prisma.mediaLibrary.update({
+          where: { id: libItem.id },
+          data: { thumbnailUrl: thumb }
+        }).catch(() => {});
+        return thumb;
+      }
+
+      // 2. Baixa mídia diretamente dos servidores da Meta via Baileys
+      const { downloadMediaMessage } = await import('@whiskeysockets/baileys');
+      const buffer = await downloadMediaMessage(msg, 'buffer', {});
+      if (!buffer || buffer.length === 0) return null;
+
+      let thumb: string | null = null;
+      const mime = libItem.mimeType || (libItem.mediaType === 'image' ? 'image/jpeg' : 'video/mp4');
+
+      if (libItem.mediaType === 'image') {
+        if (buffer.length <= 150 * 1024) {
+          thumb = `data:${mime};base64,${buffer.toString('base64')}`;
+        } else {
+          const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'media-library');
+          if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+          const filename = `thumb-${libItem.id.slice(0, 8)}.jpg`;
+          fs.writeFileSync(path.join(uploadDir, filename), buffer);
+          thumb = `/uploads/media-library/${filename}`;
+        }
+      } else if (libItem.mediaType === 'video') {
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'media-library');
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        const filename = `video-${libItem.id.slice(0, 8)}.mp4`;
+        fs.writeFileSync(path.join(uploadDir, filename), buffer);
+        thumb = `/uploads/media-library/${filename}`;
+      }
+
+      if (thumb) {
+        await prisma.mediaLibrary.update({
+          where: { id: libItem.id },
+          data: { thumbnailUrl: thumb }
+        }).catch(() => {});
+      }
+      return thumb;
+    } catch (err: any) {
+      console.warn(`[Baileys][Thumbnail] Não foi possível gerar miniatura para ${libItem.id}:`, err?.message || err);
+      return null;
+    }
+  }
+
+  /**
+   * Deleta uma mídia no WhatsApp (Apagar para todos / REVOKE).
+   * Identifica quem mandou:
+   * - Se o WhatsApp estiver desconectado: recusa e avisa.
+   * - Se o próprio WhatsApp conectado enviou (fromMe): apaga para todos com sucesso.
+   * - Se outra pessoa enviou: só consegue apagar para todos se o WhatsApp conectado for ADMIN do grupo!
+   */
+  async deleteMediaFromWhatsAppGroup(mediaId: string): Promise<{
+    success: boolean;
+    deletedFromWhatsApp: boolean;
+    reason?: string;
+  }> {
+    const item = await prisma.mediaLibrary.findUnique({
+      where: { id: mediaId }
+    });
+
+    if (!item) {
+      return { success: false, deletedFromWhatsApp: false, reason: 'Mídia não encontrada no banco de dados.' };
+    }
+
+    // Se for upload manual sem ID real do WhatsApp, não há mensagem para apagar no WhatsApp
+    if (!item.sourceJid || item.sourceJid === 'manual-upload' || !item.messageId) {
+      return { success: true, deletedFromWhatsApp: false, reason: 'Mídia local (não associada a mensagem no WhatsApp).' };
+    }
+
+    const groupJid = item.sourceJid;
+
+    // 1. Procura por qualquer sessão de WhatsApp conectada
+    const readySession = Array.from(this.sessions.values()).find(s => this.isSocketReady(s) && s.sock);
+    if (!readySession || !readySession.sock) {
+      return {
+        success: false,
+        deletedFromWhatsApp: false,
+        reason: 'WhatsApp desconectado. Não é possível apagar a mensagem no grupo do WhatsApp sem conexão ativa.'
+      };
+    }
+
+    try {
+      let parsedMsg: any = null;
+      try {
+        if (item.messageJson) parsedMsg = JSON.parse(item.messageJson);
+      } catch {}
+
+      const msgKey = parsedMsg?.key || {
+        remoteJid: groupJid,
+        id: item.messageId,
+      };
+
+      const myJid = readySession.sock.user?.id ? readySession.sock.user.id.split(':')[0] + '@s.whatsapp.net' : '';
+      const participantJid = msgKey.participant || '';
+
+      const isFromMe = Boolean(
+        msgKey.fromMe ||
+        (participantJid && myJid && participantJid.startsWith(readySession.number || ''))
+      );
+
+      console.log(`[Baileys][Delete] Tentando apagar mídia ${item.id} (MsgID: ${item.messageId}) no grupo ${groupJid}...`);
+      console.log(`[Baileys][Delete] É do próprio bot (fromMe)? ${isFromMe} | Participant: ${participantJid} | Bot: ${myJid}`);
+
+      // 2. Se a mensagem foi enviada por outra pessoa, verifica se o bot é ADMIN do grupo
+      if (!isFromMe) {
+        let isAdmin = false;
+        try {
+          const groupMeta = await readySession.sock.groupMetadata(groupJid);
+          const meInGroup = (groupMeta?.participants || []).find((p: any) => {
+            const pId = p.id.split(':')[0].split('@')[0];
+            const botNum = readySession.number || '';
+            return pId === botNum || (myJid && p.id === myJid);
+          });
+          isAdmin = Boolean(meInGroup?.admin === 'admin' || meInGroup?.admin === 'superadmin');
+          console.log(`[Baileys][Delete] Verificação de admin para ${readySession.name}: ${isAdmin ? 'ADMIN ✅' : 'MEMBRO COMUM ❌'}`);
+        } catch (groupMetaErr: any) {
+          console.warn(`[Baileys][Delete] Não foi possível obter metadata do grupo ${groupJid}:`, groupMetaErr?.message);
+        }
+
+        if (!isAdmin) {
+          return {
+            success: false,
+            deletedFromWhatsApp: false,
+            reason: 'Esta mídia foi enviada por outro participante do grupo e o WhatsApp conectado não é Administrador para poder apagá-la para todos.'
+          };
+        }
+      }
+
+      // 3. Dispara a revogação no WhatsApp (Apagar para todos)
+      const deleteKey = {
+        remoteJid: groupJid,
+        id: item.messageId,
+        fromMe: isFromMe,
+        participant: !isFromMe ? (participantJid || undefined) : undefined,
+      };
+
+      await readySession.sock.sendMessage(groupJid, { delete: deleteKey });
+      console.log(`[Baileys][Delete] ✅ Mídia ${item.messageId} apagada no WhatsApp para todos com sucesso!`);
+
+      return { success: true, deletedFromWhatsApp: true };
+    } catch (err: any) {
+      console.error(`[Baileys][Delete] Erro ao enviar comando de deleção para o WhatsApp:`, err);
+      return {
+        success: false,
+        deletedFromWhatsApp: false,
+        reason: `Falha ao apagar no WhatsApp: ${err?.message || err}`
+      };
     }
   }
 
@@ -1402,7 +1579,7 @@ export class BaileysAdapter implements IWhatsappAdapter {
         } catch {}
       }
 
-      await prisma.mediaLibrary.create({
+      const created = await prisma.mediaLibrary.create({
         data: {
           caption,
           mediaType,
@@ -1414,6 +1591,10 @@ export class BaileysAdapter implements IWhatsappAdapter {
           instanceId: session?.id || null,
         }
       });
+
+      if (!thumbnailUrl) {
+        this.ensureMediaThumbnail(created).catch(() => {});
+      }
 
       const groupDisplayName = session?.libraryGroupName || remoteJid;
       console.log(`[Baileys][MediaLibrary] ✅ MÍDIA CATALOGADA COM SUCESSO! Tipo: ${mediaType} — "${caption}" (Grupo: ${groupDisplayName}, Aparelho: ${session?.name || session?.id})`);

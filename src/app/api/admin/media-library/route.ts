@@ -216,10 +216,29 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { id } = await request.json();
+    const { id, forceLocal } = await request.json();
     if (!id) return NextResponse.json({ success: false, message: "ID obrigatorio" }, { status: 400 });
 
     const item = await prisma.mediaLibrary.findUnique({ where: { id } });
+    if (!item) {
+      return NextResponse.json({ success: false, message: "Mídia não encontrada." }, { status: 404 });
+    }
+
+    // Tenta apagar do WhatsApp para todos (se não for exclusão local forçada)
+    let waNotice = "";
+    if (!forceLocal && item.sourceJid && item.sourceJid !== 'manual-upload' && item.messageId) {
+      const waDeleteResult = await whatsappService.deleteMediaFromWhatsAppGroup(id);
+      if (!waDeleteResult.success) {
+        return NextResponse.json({
+          success: false,
+          requireForceLocal: true,
+          message: waDeleteResult.reason || "Não foi possível apagar a mídia no grupo do WhatsApp."
+        }, { status: 400 });
+      }
+      if (waDeleteResult.deletedFromWhatsApp) {
+        waNotice = " e apagada para todos no WhatsApp";
+      }
+    }
 
     // 1. Remove da tabela MediaLibrary
     await prisma.mediaLibrary.deleteMany({ where: { id } });
@@ -245,7 +264,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Item removido da biblioteca e gatilhos atualizados com sucesso."
+      message: `Mídia removida da biblioteca${waNotice} com sucesso.`
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error?.message || "Erro ao remover" }, { status: 500 });

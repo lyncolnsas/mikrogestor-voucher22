@@ -878,6 +878,11 @@ class WhatsappSpecialist {
     const adapter = this.getBaileysAdapter();
     return await adapter.syncGroupMedia(groupJid);
   }
+
+  async deleteMediaFromWhatsAppGroup(mediaId: string) {
+    const adapter = this.getBaileysAdapter();
+    return await adapter.deleteMediaFromWhatsAppGroup(mediaId);
+  }
 }
 
 // ─── Singleton global (compatível com Next.js hot reload) ───────────────────
