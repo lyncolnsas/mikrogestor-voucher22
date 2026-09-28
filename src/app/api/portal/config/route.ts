@@ -1851,7 +1851,8 @@ ${newConfig.enabled !== false ? `.actions { display: grid !important; grid-templ
 }
 @media (max-width: 480px) {
   #box { padding: 16px; }
-  .actions { grid-template-columns: 1fr !important; gap: 8px !important; }
+  .actions { grid-template-columns: 1fr !important; gap: 12px !important; }
+  #btnLogin + #btnSignup, .btn-submit + .btn-cad, .btn-submit + .btn-signup { margin-top: 12px !important; }
 }
 ${newConfig.brand?.displayMode === 'none' ? `
 #mg-brand-container, #mg-live-brand-container, .logo, #logo, .brand-logo, .edu-logo, .header-brand {

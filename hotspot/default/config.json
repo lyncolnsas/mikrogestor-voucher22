@@ -107,7 +107,7 @@
     "badgeStyle": "none"
   },
   "social": {
-    "whatsappEnabled": true,
+    "whatsappEnabled": false,
     "whatsappNumber": "",
     "whatsappMessage": "Olá! Preciso de ajuda para conectar ao Wi-Fi.",
     "instagramUrl": "https://www.instagram.com/expressao.devida/",

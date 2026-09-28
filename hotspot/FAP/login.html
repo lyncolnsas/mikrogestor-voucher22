@@ -217,7 +217,7 @@
             border-radius: 8px; 
             cursor: pointer; 
             transition: all 0.3s; 
-            margin-top: 10px; 
+            margin-top: 0; 
             box-shadow: 0 4px 6px rgba(243, 146, 0, 0.2); 
             display: flex;
             align-items: center;
@@ -229,7 +229,7 @@
             transform: translateY(-1px); 
         }
 
-        .btn-signup { 
+        .btn-signup, .btn-cad { 
             display: flex; 
             align-items: center; 
             justify-content: center; 
@@ -246,11 +246,26 @@
             cursor: pointer; 
             text-decoration: none; 
             transition: all 0.3s ease; 
-            margin-top: 10px; 
+            margin-top: 0; 
             box-sizing: border-box; 
         }
 
-        .btn-signup:hover { 
+        .actions {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+            margin-top: 18px !important;
+            margin-bottom: 4px !important;
+            width: 100% !important;
+        }
+
+        #btnLogin + #btnSignup,
+        .btn-submit + .btn-cad,
+        .btn-submit + .btn-signup {
+            margin-top: 12px !important;
+        }
+
+        .btn-signup:hover, .btn-cad:hover { 
             background-color: var(--fap-blue); 
             color: #ffffff; 
             transform: translateY(-1px); 
@@ -927,16 +942,18 @@ body {
                     <input type="password" id="password" name="password" placeholder="••••••••" required />
                 </div>
 
-                <button type="submit" id="btnLogin" class="btn-submit">Conectar à Rede</button>
+                <div class="actions" style="display: flex; flex-direction: column; gap: 12px; margin-top: 18px; margin-bottom: 4px; width: 100%;">
+                    <button type="submit" id="btnLogin" class="btn btn-login btn-submit" style="margin: 0;">Conectar à Rede</button>
 
-                <!-- Botão de Cadastro -->
-                <!-- MIKROGESTOR_REGISTER_BTN -->
-<a id="btnSignup" class="btn btn-cad" href="https://mikrogestor.com/portal/register?link-login-only=$(link-login-only-esc)&link-orig=$(link-orig-esc)" style="display: flex !important;">Cadastre-se aqui</a>
+                    <!-- Botão de Cadastro -->
+                    <!-- MIKROGESTOR_REGISTER_BTN -->
+<a id="btnSignup" class="btn btn-cad btn-signup" href="https://mikrogestor.com/portal/register?link-login-only=$(link-login-only-esc)&link-orig=$(link-orig-esc)" style="margin: 0; display: flex !important;">Cadastre-se aqui</a>
 <!-- END_MIKROGESTOR_REGISTER_BTN -->
+                </div>
 
                 <!-- Botão de Uso Free -->
                 <!-- MIKROGESTOR_TRIAL_BLOCK -->
-<div id="trial-container" style="display: block; text-align: center; font-size: 11px; margin-top: 12px; color: var(--muted);">
+<div id="trial-container" style="display: block; text-align: center; font-size: 11px; margin-top: 14px; color: var(--muted);">
 $(if trial == 'yes')
 Acesso de teste disponível, <a href="javascript:void(0)" onclick="if(confirm('Tem certeza de que deseja liberar o acesso grátis por 30 minutos?')) confirmTrialLogin()" style="color: var(--blue); text-decoration: underline; font-weight: 600;">clique aqui</a>.
 $(endif)

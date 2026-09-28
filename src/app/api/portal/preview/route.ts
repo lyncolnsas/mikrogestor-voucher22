@@ -242,12 +242,16 @@ export async function GET(request: Request) {
 
       if (!isRegEnabled) {
         rules.push('html body #btnSignup, html body .btn-cad, html body .btn-register, html body a[href*="register"] { display: none !important; visibility: hidden !important; height: 0 !important; min-height: 0 !important; max-height: 0 !important; padding: 0 !important; margin: 0 !important; border: none !important; opacity: 0 !important; pointer-events: none !important; overflow: hidden !important; }');
-        rules.push('html body .actions { display: flex !important; flex-direction: column !important; gap: 0 !important; margin-top: ' + cardGapVal + 'px !important; width: 100% !important; }');
+        rules.push('html body .actions { display: flex !important; flex-direction: column !important; gap: 0 !important; margin-top: ' + Math.max(16, cardGapVal) + 'px !important; width: 100% !important; }');
         rules.push('html body .actions .btn, html body .actions .btn-login, html body .actions #btnLogin { width: 100% !important; }');
       } else {
         rules.push('html body #btnSignup, html body .btn-cad, html body .btn-register { display: flex !important; visibility: visible !important; width: 100% !important; }');
-        rules.push('html body .actions { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: ' + cardGapVal + 'px !important; margin-top: ' + cardGapVal + 'px !important; width: 100% !important; }');
-        rules.push('@media (max-width: 480px) { html body .actions { grid-template-columns: 1fr !important; gap: 8px !important; } }');
+        rules.push('html body .actions { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: ' + Math.max(12, cardGapVal) + 'px !important; margin-top: ' + Math.max(16, cardGapVal) + 'px !important; width: 100% !important; }');
+        rules.push('@media (max-width: 480px) { html body .actions { grid-template-columns: 1fr !important; gap: 12px !important; } }');
+        rules.push('html body .login-card .actions, html body .card .actions, html body .card-body .actions, html body .actions.flex-col { display: flex !important; flex-direction: column !important; gap: 12px !important; }');
+        rules.push('html body #btnLogin + #btnSignup, html body .btn-submit + .btn-cad, html body .btn-submit + .btn-signup { margin-top: 12px !important; }');
+        rules.push('html body .actions #btnSignup, html body .actions .btn-cad { margin-top: 0 !important; }');
+        rules.push('html body #trial-container { margin-top: 14px !important; margin-bottom: 8px !important; }');
       }
 
       var btnGroupSelector = isRegEnabled ? (btnSelector + ', ' + btnCadSelector + ', ' + btnTrialSelector) : (btnSelector + ', ' + btnTrialSelector);
@@ -739,7 +743,9 @@ export async function GET(request: Request) {
 
       // 6. Botão Flutuante de WhatsApp (Live Preview)
       var waBtn = document.getElementById('mg-floating-whatsapp');
-      if (config.social && config.social.whatsappEnabled) {
+      var waNumClean = (config.social && config.social.whatsappNumber) ? String(config.social.whatsappNumber).replace(/\D/g, '') : '';
+      var isWaActive = Boolean(config.social && config.social.whatsappEnabled && waNumClean.length >= 8);
+      if (isWaActive) {
         if (!waBtn) {
           waBtn = document.createElement('a');
           waBtn.id = 'mg-floating-whatsapp';
@@ -748,9 +754,8 @@ export async function GET(request: Request) {
           waBtn.innerHTML = '<svg style="width:28px;height:28px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.275.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824z"/></svg>';
           document.body.appendChild(waBtn);
         }
-        var waNum = config.social.whatsappNumber || '5511999999999';
         var msg = encodeURIComponent(config.social.whatsappMessage || 'Olá, preciso de suporte com o Wi-Fi.');
-        waBtn.href = 'https://wa.me/' + waNum + '?text=' + msg;
+        waBtn.href = 'https://wa.me/' + waNumClean + '?text=' + msg;
         waBtn.style.display = 'flex';
       } else if (waBtn) {
         waBtn.style.display = 'none';
@@ -786,20 +791,31 @@ export async function GET(request: Request) {
       var isRegEnabled = config.enabled !== false;
       var cardGapVal = (config.studio && config.studio.cardGap !== undefined) ? config.studio.cardGap : 14;
       if (actionsEl) {
+        var isStacked = actionsEl.classList.contains('flex-col') || 
+                        actionsEl.style.flexDirection === 'column' || 
+                        window.innerWidth <= 480 || 
+                        document.querySelector('.card, .login-card') !== null;
         if (isRegEnabled) {
-          actionsEl.style.setProperty('display', 'grid', 'important');
-          actionsEl.style.setProperty('grid-template-columns', '1fr 1fr', 'important');
-          actionsEl.style.setProperty('gap', cardGapVal + 'px', 'important');
+          if (isStacked) {
+            actionsEl.style.setProperty('display', 'flex', 'important');
+            actionsEl.style.setProperty('flex-direction', 'column', 'important');
+            actionsEl.style.removeProperty('grid-template-columns');
+          } else {
+            actionsEl.style.setProperty('display', 'grid', 'important');
+            actionsEl.style.setProperty('grid-template-columns', '1fr 1fr', 'important');
+          }
+          actionsEl.style.setProperty('gap', Math.max(12, cardGapVal) + 'px', 'important');
         } else {
           actionsEl.style.setProperty('display', 'flex', 'important');
           actionsEl.style.setProperty('flex-direction', 'column', 'important');
+          actionsEl.style.removeProperty('grid-template-columns');
           actionsEl.style.setProperty('gap', '0', 'important');
         }
-        actionsEl.style.setProperty('margin-top', cardGapVal + 'px', 'important');
+        actionsEl.style.setProperty('margin-top', Math.max(16, cardGapVal) + 'px', 'important');
         actionsEl.style.setProperty('width', '100%', 'important');
       }
 
-      var btnLogin = document.querySelector('.btn-login') || document.querySelector('button[type="submit"]') || document.querySelector('#btnConnect');
+      var btnLogin = document.querySelector('.btn-login') || document.querySelector('button[type="submit"]') || document.querySelector('#btnLogin') || document.querySelector('#btnConnect');
       if (btnLogin) {
         btnLogin.style.setProperty('display', 'flex', 'important');
         btnLogin.style.setProperty('width', '100%', 'important');
@@ -838,7 +854,7 @@ export async function GET(request: Request) {
           btnSignup.style.setProperty('border', 'none', 'important');
           btnSignup.style.setProperty('opacity', '0', 'important');
           btnSignup.style.setProperty('pointer-events', 'none', 'important');
-          btnSignup.style.setProperty('overflow', 'hidden', 'important');
+          btnSignup.style.removeProperty('overflow');
         } else {
           btnSignup.style.setProperty('display', 'flex', 'important');
           btnSignup.style.setProperty('visibility', 'visible', 'important');
@@ -846,7 +862,6 @@ export async function GET(request: Request) {
           btnSignup.style.removeProperty('min-height');
           btnSignup.style.removeProperty('max-height');
           btnSignup.style.removeProperty('padding');
-          btnSignup.style.removeProperty('margin');
           btnSignup.style.removeProperty('border');
           btnSignup.style.removeProperty('opacity');
           btnSignup.style.removeProperty('pointer-events');
@@ -854,6 +869,11 @@ export async function GET(request: Request) {
           btnSignup.style.setProperty('width', '100%', 'important');
           btnSignup.style.setProperty('align-items', 'center', 'important');
           btnSignup.style.setProperty('justify-content', 'center', 'important');
+          if (!actionsEl) {
+            btnSignup.style.setProperty('margin-top', '12px', 'important');
+          } else {
+            btnSignup.style.setProperty('margin-top', '0', 'important');
+          }
           btnSignup.innerText = config.registerButtonText || 'Cadastre-se aqui';
         }
       }
@@ -956,7 +976,8 @@ export async function GET(request: Request) {
         var btnRadiusCss = (st.btnRadiusTL !== undefined) ? 'border-radius: ' + st.btnRadiusTL + 'px ' + st.btnRadiusTR + 'px ' + st.btnRadiusBR + 'px ' + st.btnRadiusBL + 'px !important;' : '';
         var cardRadiusCss = (st.cardRadiusTL !== undefined) ? 'border-radius: ' + st.cardRadiusTL + 'px ' + st.cardRadiusTR + 'px ' + st.cardRadiusBR + 'px ' + st.cardRadiusBL + 'px !important;' : '';
         var cardPaddingCss = (st.cardPaddingTop !== undefined) ? 'padding: ' + st.cardPaddingTop + 'px ' + st.cardPaddingRight + 'px ' + st.cardPaddingBottom + 'px ' + st.cardPaddingLeft + 'px !important;' : '';
-        var cardGapCss = st.cardGap ? 'gap: ' + st.cardGap + 'px !important;' : '';
+        var cardGapValStudio = Math.max(12, (st.cardGap || 14));
+        var cardGapCss = 'gap: ' + cardGapValStudio + 'px !important;';
         var inputRadiusCss = (st.inputRadius !== undefined) ? 'border-radius: ' + st.inputRadius + 'px !important;' : '';
 
         var cardShapeClip = '';
@@ -967,8 +988,8 @@ export async function GET(request: Request) {
         var cardGlowCss = ef.cardGlowBorder ? 'box-shadow: 0 0 25px rgba(6, 182, 212, 0.4), inset 0 0 15px rgba(6, 182, 212, 0.2) !important; border-color: rgba(6, 182, 212, 0.8) !important;' : '';
         var btnPulseCss = ef.btnPulse ? 'animation: mgBtnPulse 1.8s infinite ease-in-out !important;' : '';
 
-        var cardSelector = 'html body #box, html body .login-card, html body .login-box';
-        var btnSelector = 'html body .btn-login, html body #btnConnect, html body #btnSubmit, html body button[type="submit"]' + (config.enabled !== false ? ', html body .btn-cad, html body #btnSignup, html body .btn-register' : '') + ', html body .btn-trial';
+        var cardSelector = 'html body #box, html body .card, html body .login-card, html body .login-box';
+        var btnSelector = 'html body .btn-login, html body #btnLogin, html body #btnConnect, html body #btnSubmit, html body button[type="submit"]' + (config.enabled !== false ? ', html body .btn-cad, html body #btnSignup, html body .btn-register' : '') + ', html body .btn-trial';
         var inpSelector = 'html body input[type="text"], html body input[type="password"], html body select, html body textarea, html body .form-input';
         var titleSelector = 'html body h1, html body h2, html body .brand-title, html body #businessName, html body .title, html body legend, html body .logo-text';
 
@@ -978,7 +999,9 @@ export async function GET(request: Request) {
           'html body, html body button, html body input, html body select, html body textarea, ' + cardSelector + ' { ' + fontCss + ' } ' +
           titleSelector + ' { ' + titleSizeCss + ' ' + titleAlignCss + ' ' + titleWeightCss + ' } ' +
           cardSelector + ' { ' + cardRadiusCss + ' ' + cardPaddingCss + ' ' + cardShapeClip + ' ' + cardGlowCss + ' } ' +
-          'html body #box .actions, html body form .actions, html body .actions { ' + cardGapCss + ' margin-top: ' + (st.cardGap || 14) + 'px !important; } ' +
+          'html body #box .actions, html body form .actions, html body .actions { ' + cardGapCss + ' margin-top: ' + Math.max(16, (st.cardGap || 14)) + 'px !important; } ' +
+          'html body #btnLogin + #btnSignup, html body .btn-submit + .btn-cad, html body .btn-submit + .btn-signup { margin-top: ' + cardGapValStudio + 'px !important; } ' +
+          'html body #trial-container { margin-top: 14px !important; margin-bottom: 8px !important; } ' +
           btnSelector + ' { ' + btnHeightCss + ' ' + btnRadiusCss + ' ' + btnPulseCss + ' } ' +
           inpSelector + ' { ' + inputRadiusCss + ' margin-top: 0 !important; margin-bottom: ' + inputMarginBottom + 'px !important; } ' +
           'html body .mg-input-wrap { margin-top: 0 !important; margin-bottom: ' + inputMarginBottom + 'px !important; } ' +
