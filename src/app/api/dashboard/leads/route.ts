@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { routerErrorResponse } from '@/lib/api-error';
 import { MikrotikAPI } from '@/lib/routeros';
+import { getMikrotikClient } from '@/lib/session';
 
 export async function GET() {
   try {
@@ -342,26 +343,18 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, message: 'Lead não encontrado.' }, { status: 404 });
     }
 
-    // 2. Try to delete the user from MikroTik Hotspot
+    // 2. Try to delete the user from MikroTik Hotspot (uses getMikrotikClient which handles VPN and candidate routers)
     let mk;
     try {
-      const activeRouter = await prisma.router.findFirst({ where: { active: true } });
-      if (activeRouter) {
-        mk = new MikrotikAPI();
-        const connected = await mk.connect(activeRouter.host, activeRouter.user, activeRouter.password, activeRouter.port);
-        if (connected) {
-          const existingUsers = (await mk.getHotspotUsers()) as Record<string, unknown>[];
-          const found = existingUsers.find(u => String(u['name']) === String(lead.hotspotUser));
-          const foundId = (found?.['id'] || found?.['.id']) as string | undefined;
-          if (foundId) {
-            await mk.removeHotspotUser(foundId);
-          }
-          mk.disconnect();
-        }
+      mk = await getMikrotikClient();
+      if (lead.hotspotUser) {
+        await mk.removeHotspotUserByName(lead.hotspotUser);
+        await mk.removeHotspotActiveByUser(lead.hotspotUser);
       }
+      mk.disconnect();
     } catch (mkErr) {
       if (mk) mk.disconnect();
-      console.error('Failed to remove user from Mikrotik during lead delete:', mkErr);
+      console.warn('Failed to remove user from Mikrotik during lead delete:', mkErr);
     }
 
     // 3. Delete associated payments first to prevent foreign key errors

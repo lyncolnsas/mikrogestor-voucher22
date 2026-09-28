@@ -294,7 +294,7 @@ export default function Users() {
       const res = await fetch('/api/hotspot/users', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ id, name })
       });
       const data = await res.json();
       if (data.success) {
@@ -304,6 +304,31 @@ export default function Users() {
       }
     } catch {
       alert('Erro ao apagar usuário.');
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Tem certeza que deseja apagar os ${selectedIds.length} usuários selecionados?`)) return;
+
+    try {
+      const selectedUsers = users.filter(u => selectedIds.includes(u.id || u.name));
+      const payload = selectedUsers.map(u => ({ id: u.id, name: u.name }));
+
+      const res = await fetch('/api/hotspot/users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: payload })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedIds([]);
+        fetchUsers();
+      } else {
+        alert(data.message);
+      }
+    } catch {
+      alert('Erro ao apagar usuários selecionados.');
     }
   };
 
@@ -1048,6 +1073,12 @@ export default function Users() {
               className="mg-btn mg-btn-secondary text-xs"
             >
               Limpar
+            </button>
+            <button 
+              onClick={handleDeleteSelected}
+              className="mg-btn mg-btn-danger text-xs"
+            >
+              🗑️ Excluir Selecionados
             </button>
             <button 
               onClick={handlePrintSelected}

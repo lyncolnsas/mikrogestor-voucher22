@@ -33,26 +33,112 @@ export async function GET() {
 export async function DELETE(request: Request) {
   let mk;
   try {
-    const { id, batchComment } = await request.json();
+    const { id, name, ids, batchComment } = await request.json();
     mk = await getMikrotikClient();
 
+    // 1. Delete by batch comment
     if (batchComment) {
       const count = await mk.removeHotspotUsersByComment(batchComment);
       mk.disconnect();
       return NextResponse.json({ success: true, message: `Lote apagado: ${count} vouchers removidos.` });
     }
 
-    if (id) {
-      await mk.removeHotspotUser(id);
+    // 2. Delete multiple selected users
+    if (Array.isArray(ids) && ids.length > 0) {
+      let deletedCount = 0;
+      for (const item of ids) {
+        const targetId = typeof item === 'string' ? item : item?.id;
+        const targetName = typeof item === 'object' ? item?.name : (targetId && !targetId.startsWith('*') ? targetId : undefined);
+        
+        try {
+          if (targetId && targetId.startsWith('*')) {
+            await mk.removeHotspotUser(targetId);
+          } else if (targetName) {
+            await mk.removeHotspotUserByName(targetName);
+          } else if (targetId) {
+            await mk.removeHotspotUser(targetId);
+          }
+          deletedCount++;
+        } catch (e) {
+          console.warn(`[DELETE /api/hotspot/users] Error removing user ${targetId || targetName}:`, e);
+        }
+
+        // Clean active session & DB
+        const cleanName = targetName || (targetId && !targetId.startsWith('*') ? targetId : undefined);
+        if (cleanName) {
+          try {
+            await mk.removeHotspotActiveByUser(cleanName);
+          } catch {}
+          try {
+            const lead = await prisma.hotspotLead.findUnique({ where: { hotspotUser: cleanName } });
+            if (lead) {
+              await prisma.payment.deleteMany({ where: { leadId: lead.id } });
+              await prisma.hotspotLead.delete({ where: { id: lead.id } });
+            }
+            await prisma.voucher.deleteMany({ where: { code: cleanName } });
+          } catch (dbErr) {
+            console.warn('[DELETE /api/hotspot/users] DB cleanup warning:', dbErr);
+          }
+        }
+      }
+
       mk.disconnect();
-      return NextResponse.json({ success: true, message: 'Usuário removido.' });
+      return NextResponse.json({ success: true, message: `${deletedCount} usuário(s) removido(s) com sucesso.` });
+    }
+
+    // 3. Delete single user by id / name
+    if (id || name) {
+      let removedFromMikrotik = false;
+      const userName = name || (id && !id.startsWith('*') ? id : null);
+
+      // Attempt by internal ID if present
+      if (id && id.startsWith('*')) {
+        try {
+          await mk.removeHotspotUser(id);
+          removedFromMikrotik = true;
+        } catch (err) {
+          console.warn('[DELETE /api/hotspot/users] Failed removeHotspotUser by ID, trying by name:', err);
+        }
+      }
+
+      // If not yet removed or if username is available, remove by name
+      if (userName) {
+        try {
+          await mk.removeHotspotUserByName(userName);
+          removedFromMikrotik = true;
+        } catch (err) {
+          console.warn('[DELETE /api/hotspot/users] Failed removeHotspotUserByName:', err);
+        }
+
+        // Terminate any active sessions for this user
+        try {
+          await mk.removeHotspotActiveByUser(userName);
+        } catch {}
+
+        // Clean up database if this user was a HotspotLead or Voucher
+        try {
+          const lead = await prisma.hotspotLead.findUnique({ where: { hotspotUser: userName } });
+          if (lead) {
+            await prisma.payment.deleteMany({ where: { leadId: lead.id } });
+            await prisma.hotspotLead.delete({ where: { id: lead.id } });
+          }
+          await prisma.voucher.deleteMany({ where: { code: userName } });
+        } catch (dbErr) {
+          console.warn('[DELETE /api/hotspot/users] DB cleanup warning:', dbErr);
+        }
+      } else if (!removedFromMikrotik && id) {
+        await mk.removeHotspotUser(id);
+      }
+
+      mk.disconnect();
+      return NextResponse.json({ success: true, message: 'Usuário removido com sucesso.' });
     }
 
     mk.disconnect();
-    return NextResponse.json({ success: false, message: 'Nenhum ID ou Lote fornecido.' }, { status: 400 });
+    return NextResponse.json({ success: false, message: 'Nenhum ID ou Nome fornecido para exclusão.' }, { status: 400 });
   } catch (error: any) {
     if (mk) mk.disconnect();
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: error.message || 'Erro ao remover usuário.' }, { status: 500 });
   }
 }
 

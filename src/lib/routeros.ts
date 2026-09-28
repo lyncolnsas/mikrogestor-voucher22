@@ -180,7 +180,21 @@ export class MikrotikAPI {
   async removeHotspotUser(id: string) {
     if (!this.client) throw new Error('Not connected');
     const menu = this.client.menu('/ip/hotspot/user');
-    return await menu.remove(id);
+    try {
+      return await menu.remove(id);
+    } catch (err: any) {
+      // Fallback: If id is a username or the .id changed, remove by name
+      try {
+        const users = await menu.where('name', id).get() as any[];
+        for (const u of users) {
+          const uid = u['.id'] ?? u.id;
+          if (uid) await menu.remove(uid);
+        }
+        return true;
+      } catch {
+        throw err;
+      }
+    }
   }
 
   async removeHotspotUsersByComment(comment: string) {
