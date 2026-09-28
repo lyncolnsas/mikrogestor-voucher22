@@ -1891,14 +1891,35 @@ ${newConfig.brand?.displayMode === 'none' ? `
       const MG_SERVER_BASE = systemUrl.replace(/\/$/, '');
 
       // ═══════════════════════════════════════════════════════════════
-      // BRAND LOGO INJECTION (MIKROGESTOR_BRAND_LOGO)
+      // BRAND LOGO INJECTION & VISIBILITY PRESERVATION
       // ═══════════════════════════════════════════════════════════════
       const logoBlockRegex = /<!--\s*MIKROGESTOR_BRAND_LOGO\s*-->[\s\S]*?<!--\s*END_MIKROGESTOR_BRAND_LOGO\s*-->/i;
+      const logoVisibilityRegex = /<!--\s*MIKROGESTOR_LOGO_VISIBILITY\s*-->[\s\S]*?<!--\s*END_MIKROGESTOR_LOGO_VISIBILITY\s*-->/i;
       const isLogoEnabled = newConfig.brand?.displayMode !== 'none';
-      let logoHtml = '';
+      const hasNativeTemplateLogo = html.includes('edu-logo') || html.includes('header-brand');
+      const explicitLogoUrl = newConfig.brand?.logoUrl ? String(newConfig.brand.logoUrl).trim() : '';
 
-      if (isLogoEnabled) {
-        const explicitLogoUrl = newConfig.brand?.logoUrl ? String(newConfig.brand.logoUrl).trim() : '';
+      // Gerenciar estilo de ocultação (sem eliminar código nativo/SVG do template)
+      let visibilityHtml = '';
+      if (!isLogoEnabled) {
+        visibilityHtml = `<!-- MIKROGESTOR_LOGO_VISIBILITY -->\n<style id="mg-logo-visibility">#mg-brand-container, #mg-live-brand-container, .mg-brand-container, .logo, #logo, .brand-logo, .edu-logo, .header-brand { display: none !important; }</style>\n<!-- END_MIKROGESTOR_LOGO_VISIBILITY -->`;
+      } else {
+        visibilityHtml = `<!-- MIKROGESTOR_LOGO_VISIBILITY -->\n<!-- END_MIKROGESTOR_LOGO_VISIBILITY -->`;
+      }
+
+      if (logoVisibilityRegex.test(html)) {
+        html = html.replace(logoVisibilityRegex, visibilityHtml);
+      } else if (!isLogoEnabled) {
+        if (html.includes('</head>')) {
+          html = html.replace('</head>', `${visibilityHtml}\n</head>`);
+        } else {
+          html = visibilityHtml + html;
+        }
+      }
+
+      let logoHtml = '';
+      // Injeta container de imagem apenas se a logo estiver ativa E (não for template com logo nativa OU tiver logoUrl personalizada)
+      if (isLogoEnabled && (!hasNativeTemplateLogo || explicitLogoUrl)) {
         const logoSrc = explicitLogoUrl
           ? (explicitLogoUrl.startsWith('http') ? explicitLogoUrl : `${MG_SERVER_BASE}${explicitLogoUrl.startsWith('/') ? '' : '/'}${explicitLogoUrl}`)
           : `${MG_SERVER_BASE}/api/portal/logo?template=${encodeURIComponent(template)}`;
@@ -1915,7 +1936,7 @@ ${newConfig.brand?.displayMode === 'none' ? `
 
       if (logoBlockRegex.test(html)) {
         html = html.replace(logoBlockRegex, logoHtml);
-      } else if (isLogoEnabled) {
+      } else if (logoHtml.includes('<div id="mg-brand-container"')) {
         if (html.includes('<div id="box">')) {
           html = html.replace('<div id="box">', `<div id="box">\n        ${logoHtml}`);
         } else if (html.includes('<div class="login-card">')) {
@@ -1927,7 +1948,6 @@ ${newConfig.brand?.displayMode === 'none' ? `
 
       if (!isLogoEnabled) {
         html = html.replace(/<div[^>]*id=["']mg-(?:live-)?brand-container["'][^>]*>[\s\S]*?<\/div>/gi, '');
-        html = html.replace(/<img[^>]*class=["'][^"']*\b(?:logo|brand-logo)\b[^"']*["'][^>]*>/gi, '');
       }
 
       const bgBlockRegex = /(<!--\s*MIKROGESTOR_BG_SCRIPT\s*-->|<!--\s*MIKROGESTOR BG\s*-->)[\s\S]*?(<!--\s*END_MIKROGESTOR_BG_SCRIPT\s*-->|<!--\s*END MIKROGESTOR BG\s*-->)/i;

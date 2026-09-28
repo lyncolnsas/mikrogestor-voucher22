@@ -619,6 +619,11 @@ export async function GET(request: Request) {
       var brandContainers = document.querySelectorAll('#mg-brand-container, #mg-live-brand-container, .mg-brand-container');
       var allLogos = document.querySelectorAll('.logo, #logo, .brand-logo, .edu-logo, .header-brand, #mg-brand-container img, #mg-live-brand-container img');
 
+      var nativeEduLogo = document.querySelector('.edu-logo');
+      var nativeHeaderBrand = document.querySelector('.header-brand');
+      var hasNativeLogo = !!(nativeEduLogo || nativeHeaderBrand);
+      var customLogoUrl = brandCfg.logoUrl ? String(brandCfg.logoUrl).trim() : '';
+
       if (isLogoOff) {
         brandContainers.forEach(function(el) {
           el.style.setProperty('display', 'none', 'important');
@@ -626,74 +631,98 @@ export async function GET(request: Request) {
         allLogos.forEach(function(el) {
           el.style.setProperty('display', 'none', 'important');
         });
+        if (nativeEduLogo) nativeEduLogo.style.setProperty('display', 'none', 'important');
+        if (nativeHeaderBrand) nativeHeaderBrand.style.setProperty('display', 'none', 'important');
       } else {
-        var logoContainer = document.getElementById('mg-brand-container') || document.getElementById('mg-live-brand-container');
-        if (!logoContainer) {
-          var targetBox = document.querySelector('#box') || document.querySelector('.card') || document.querySelector('.login-card') || document.querySelector('form') || document.body;
-          if (targetBox) {
-            logoContainer = document.createElement('div');
-            logoContainer.id = 'mg-brand-container';
-            logoContainer.className = 'mg-brand-container';
-            logoContainer.style.cssText = 'display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; width: 100%; text-align: center;';
-            targetBox.prepend(logoContainer);
-          }
+        // Restaurar elementos nativos de páginas com logo padrão (como FAP)
+        if (nativeHeaderBrand) {
+          nativeHeaderBrand.style.removeProperty('display');
+          nativeHeaderBrand.style.display = '';
+        }
+        if (nativeEduLogo) {
+          nativeEduLogo.style.removeProperty('display');
+          nativeEduLogo.style.display = '';
         }
 
-        if (logoContainer) {
-          logoContainer.style.removeProperty('display');
-          logoContainer.style.display = 'flex';
-          logoContainer.style.animation = 'none';
-          var tAlign = brandCfg.textAlign || 'center';
-          logoContainer.style.alignItems = tAlign === 'left' ? 'flex-start' : tAlign === 'right' ? 'flex-end' : 'center';
-          logoContainer.style.textAlign = tAlign;
-
-          var logoEl = logoContainer.querySelector('img') || document.querySelector('img.brand-logo') || document.querySelector('img.logo');
-          if (!logoEl) {
-            logoEl = document.createElement('img');
-            logoEl.className = 'logo brand-logo';
-            logoEl.alt = '';
-            logoContainer.prepend(logoEl);
+        // Se tem logo nativo (ex: FAP) e o usuário NÃO selecionou imagem personalizada, usar o logo nativo sem injetar container extra
+        if (hasNativeLogo && !customLogoUrl) {
+          brandContainers.forEach(function(el) {
+            el.style.setProperty('display', 'none', 'important');
+          });
+        } else {
+          // Se o usuário selecionou uma imagem personalizada em template com logo nativa, oculta apenas o SVG nativo
+          if (hasNativeLogo && customLogoUrl && nativeEduLogo) {
+            nativeEduLogo.style.setProperty('display', 'none', 'important');
           }
 
-          if (logoEl) {
-            logoEl.alt = '';
-            logoEl.onerror = function() {
-              this.style.setProperty('display', 'none', 'important');
-              if (logoContainer && brandCfg.displayMode === 'image') {
-                logoContainer.style.setProperty('display', 'none', 'important');
-              }
-            };
-            logoEl.onload = function() {
-              this.style.setProperty('display', 'block', 'important');
-              if (logoContainer) logoContainer.style.setProperty('display', 'flex', 'important');
-            };
-
-            var currentTmpl = config.template || 'default';
-            var effectiveLogoUrl = brandCfg.logoUrl || ('/api/portal/logo?template=' + currentTmpl);
-            if (logoEl.dataset.loadedSrc !== effectiveLogoUrl) {
-              logoEl.dataset.loadedSrc = effectiveLogoUrl;
-              logoEl.src = effectiveLogoUrl + (effectiveLogoUrl.indexOf('?') === -1 ? '?' : '&') + 't=' + Date.now();
+          var logoContainer = document.getElementById('mg-brand-container') || document.getElementById('mg-live-brand-container');
+          if (!logoContainer) {
+            var targetBox = document.querySelector('#box') || document.querySelector('.card') || document.querySelector('.login-card') || document.querySelector('form') || document.body;
+            if (targetBox) {
+              logoContainer = document.createElement('div');
+              logoContainer.id = 'mg-brand-container';
+              logoContainer.className = 'mg-brand-container';
+              logoContainer.style.cssText = 'display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; width: 100%; text-align: center;';
+              targetBox.prepend(logoContainer);
             }
-            
-            var lSize = brandCfg.logoSize || 120;
-            var lPad = brandCfg.logoPadding || 0;
-            var lShape = brandCfg.logoShape || 'rounded';
-            var rad = lShape === 'circle' ? '50%' : (lShape === 'rounded' ? '12px' : '0');
-            
-            logoEl.style.setProperty('width', 'auto', 'important');
-            logoEl.style.setProperty('max-width', lSize + 'px', 'important');
-            logoEl.style.setProperty('max-height', lSize + 'px', 'important');
-            logoEl.style.setProperty('padding', lPad + 'px', 'important');
-            logoEl.style.setProperty('border-radius', rad, 'important');
-            logoEl.style.setProperty('object-fit', 'contain', 'important');
-            logoEl.style.setProperty('background', 'transparent', 'important');
-            logoEl.style.setProperty('border', 'none', 'important');
-            logoEl.style.setProperty('box-shadow', 'none', 'important');
+          }
 
-            if (logoEl.complete && logoEl.naturalWidth > 0) {
-              logoEl.style.setProperty('display', 'block', 'important');
-            } else if (logoEl.complete && logoEl.naturalWidth === 0) {
-              logoEl.style.setProperty('display', 'none', 'important');
+          if (logoContainer) {
+            logoContainer.style.removeProperty('display');
+            logoContainer.style.display = 'flex';
+            logoContainer.style.animation = 'none';
+            var tAlign = brandCfg.textAlign || 'center';
+            logoContainer.style.alignItems = tAlign === 'left' ? 'flex-start' : tAlign === 'right' ? 'flex-end' : 'center';
+            logoContainer.style.textAlign = tAlign;
+
+            var logoEl = logoContainer.querySelector('img') || document.querySelector('img.brand-logo') || document.querySelector('img.logo');
+            if (!logoEl) {
+              logoEl = document.createElement('img');
+              logoEl.className = 'logo brand-logo';
+              logoEl.alt = '';
+              logoContainer.prepend(logoEl);
+            }
+
+            if (logoEl) {
+              logoEl.alt = '';
+              logoEl.onerror = function() {
+                this.style.setProperty('display', 'none', 'important');
+                if (logoContainer && brandCfg.displayMode === 'image') {
+                  logoContainer.style.setProperty('display', 'none', 'important');
+                }
+              };
+              logoEl.onload = function() {
+                this.style.setProperty('display', 'block', 'important');
+                if (logoContainer) logoContainer.style.setProperty('display', 'flex', 'important');
+              };
+
+              var currentTmpl = config.template || 'default';
+              var effectiveLogoUrl = customLogoUrl || ('/api/portal/logo?template=' + currentTmpl);
+              if (logoEl.dataset.loadedSrc !== effectiveLogoUrl) {
+                logoEl.dataset.loadedSrc = effectiveLogoUrl;
+                logoEl.src = effectiveLogoUrl + (effectiveLogoUrl.indexOf('?') === -1 ? '?' : '&') + 't=' + Date.now();
+              }
+              
+              var lSize = brandCfg.logoSize || 120;
+              var lPad = brandCfg.logoPadding || 0;
+              var lShape = brandCfg.logoShape || 'rounded';
+              var rad = lShape === 'circle' ? '50%' : (lShape === 'rounded' ? '12px' : '0');
+              
+              logoEl.style.setProperty('width', 'auto', 'important');
+              logoEl.style.setProperty('max-width', lSize + 'px', 'important');
+              logoEl.style.setProperty('max-height', lSize + 'px', 'important');
+              logoEl.style.setProperty('padding', lPad + 'px', 'important');
+              logoEl.style.setProperty('border-radius', rad, 'important');
+              logoEl.style.setProperty('object-fit', 'contain', 'important');
+              logoEl.style.setProperty('background', 'transparent', 'important');
+              logoEl.style.setProperty('border', 'none', 'important');
+              logoEl.style.setProperty('box-shadow', 'none', 'important');
+
+              if (logoEl.complete && logoEl.naturalWidth > 0) {
+                logoEl.style.setProperty('display', 'block', 'important');
+              } else if (logoEl.complete && logoEl.naturalWidth === 0) {
+                logoEl.style.setProperty('display', 'none', 'important');
+              }
             }
           }
         }
