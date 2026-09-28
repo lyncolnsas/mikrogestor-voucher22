@@ -206,6 +206,7 @@ export default function WhatsappConnection() {
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [savingGroup, setSavingGroup] = useState(false);
   const [groupSearchQuery, setGroupSearchQuery] = useState('');
+  const [manualGroupJid, setManualGroupJid] = useState('');
   const [applyGroupToAll, setApplyGroupToAll] = useState(false);
 
   const showFeedback = (success: boolean, message: string) => {
@@ -217,6 +218,7 @@ export default function WhatsappConnection() {
     setSelectedGroupInstance(inst);
     setIsGroupModalOpen(true);
     setGroupSearchQuery('');
+    setManualGroupJid(inst.libraryGroupJid || '');
     setApplyGroupToAll(false);
     setLoadingGroups(true);
     setGroupsList([]);
@@ -233,6 +235,36 @@ export default function WhatsappConnection() {
       showFeedback(false, 'Falha ao buscar grupos no WhatsApp');
     } finally {
       setLoadingGroups(false);
+    }
+  };
+
+  const handleSaveManualGroup = async () => {
+    if (!selectedGroupInstance || !manualGroupJid.trim()) return;
+    setSavingGroup(true);
+    try {
+      const cleanJid = manualGroupJid.trim();
+      const res = await fetch('/api/admin/whatsapp-groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instanceId: selectedGroupInstance.id,
+          groupJid: cleanJid,
+          groupName: cleanJid.split('@')[0],
+          applyToAll: applyGroupToAll,
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showFeedback(true, data.message || 'Grupo vinculado com sucesso!');
+        setIsGroupModalOpen(false);
+        loadData();
+      } else {
+        showFeedback(false, data.error || 'Erro ao vincular grupo');
+      }
+    } catch {
+      showFeedback(false, 'Falha ao salvar grupo');
+    } finally {
+      setSavingGroup(false);
     }
   };
 
@@ -883,18 +915,14 @@ export default function WhatsappConnection() {
                                   <Library className="w-3.5 h-3.5 text-emerald-600" />
                                   Grupo de Mídias
                                 </span>
-                                {inst.status === 'connected' ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenGroupModal(inst)}
-                                    className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer"
-                                  >
-                                    <FolderPlus className="w-3 h-3" />
-                                    {inst.libraryGroupJid ? 'Alterar' : 'Escolher Grupo'}
-                                  </button>
-                                ) : (
-                                  <span className="text-[10px] text-slate-400">Requer Conexão</span>
-                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenGroupModal(inst)}
+                                  className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  <FolderPlus className="w-3 h-3" />
+                                  {inst.libraryGroupJid ? 'Alterar' : 'Escolher Grupo'}
+                                </button>
                               </div>
                               {inst.libraryGroupJid ? (
                                 <div className="flex items-center justify-between gap-1.5 bg-emerald-50/80 border border-emerald-200 rounded-lg px-2.5 py-1.5">
@@ -919,11 +947,13 @@ export default function WhatsappConnection() {
                               ) : (
                                 <p className="text-[10px] text-slate-600 leading-tight">
                                   Nenhum grupo vinculado.{' '}
-                                  {inst.status === 'connected' ? (
-                                    <span>Clique em <strong>Escolher Grupo</strong> para ler seus grupos no WhatsApp.</span>
-                                  ) : (
-                                    <span>Conecte o aparelho para selecionar.</span>
-                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenGroupModal(inst)}
+                                    className="font-bold text-emerald-600 hover:underline cursor-pointer"
+                                  >
+                                    Clique em Escolher Grupo para vincular.
+                                  </button>
                                 </p>
                               )}
                             </div>
@@ -1543,8 +1573,34 @@ export default function WhatsappConnection() {
               </p>
             </div>
 
+            {/* Vínculo Manual ou Busca */}
+            <div className="mt-4 p-3 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <span>🔗</span> Vincular Grupo por ID / JID (funciona mesmo com WhatsApp desconectado):
+                </span>
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Ex: 120363430512775259@g.us"
+                  value={manualGroupJid}
+                  onChange={(e) => setManualGroupJid(e.target.value)}
+                  className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveManualGroup}
+                  disabled={savingGroup || !manualGroupJid.trim()}
+                  className="px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl disabled:opacity-50 cursor-pointer shadow-xs transition-all"
+                >
+                  {savingGroup ? 'Salvando...' : 'Salvar Grupo'}
+                </button>
+              </div>
+            </div>
+
             {/* Barra de busca e atualizar */}
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-3 flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input

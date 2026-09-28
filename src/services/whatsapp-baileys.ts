@@ -477,6 +477,39 @@ export class BaileysAdapter implements IWhatsappAdapter {
         }
       });
 
+      // ── Tratamento de Mídia Deletada no WhatsApp (messages.delete) ─────────
+      session.sock.ev.on('messages.delete', async (item: any) => {
+        try {
+          if (item?.keys && Array.isArray(item.keys)) {
+            for (const k of item.keys) {
+              if (k?.id) {
+                await this.handleMediaDeleted(k.id);
+              }
+            }
+          }
+        } catch (err) {
+          console.error(`[Baileys][${session!.id}] Erro ao processar messages.delete:`, err);
+        }
+      });
+
+      // ── Tratamento de Mensagem Revogada ("Apagar para todos" - messages.update) ─
+      session.sock.ev.on('messages.update', async (updates: any[]) => {
+        try {
+          for (const update of updates || []) {
+            const msg = update?.update?.message;
+            if (msg?.protocolMessage && (msg.protocolMessage.type === 0 || msg.protocolMessage.type === 'REVOKE')) {
+              const revokedKey = msg.protocolMessage.key;
+              if (revokedKey?.id) {
+                console.log(`[Baileys][MediaLibrary] Mídia revogada no WhatsApp: ${revokedKey.id}`);
+                await this.handleMediaDeleted(revokedKey.id);
+              }
+            }
+          }
+        } catch (err) {
+          console.error(`[Baileys][${session!.id}] Erro ao processar messages.update:`, err);
+        }
+      });
+
     } catch (err: any) {
       session.status = 'error';
       session.isConnecting = false;
@@ -1005,8 +1038,79 @@ export class BaileysAdapter implements IWhatsappAdapter {
   }
 
   /**
+   * Remove mídia da MediaLibrary e limpa gatilhos vinculados quando a mensagem
+   * for deletada ou revogada no WhatsApp, mantendo o sistema online.
+   */
+  public async handleMediaDeleted(messageId: string): Promise<void> {
+    try {
+      const libEntry = await prisma.mediaLibrary.findFirst({
+        where: { messageId }
+      });
+      if (libEntry) {
+        console.log(`[Baileys][MediaLibrary] Mídia ${libEntry.id} ("${libEntry.caption}") foi apagada no WhatsApp (${messageId}). Removendo da biblioteca...`);
+        await prisma.mediaLibrary.delete({ where: { id: libEntry.id } });
+
+        // Limpa referências órfãs em gatilhos para que não tentem reenviar mídia inexistente
+        await prisma.systemConfig.deleteMany({
+          where: {
+            key: { endsWith: '_FORWARD_ID' },
+            value: libEntry.id
+          }
+        });
+        console.log(`[Baileys][MediaLibrary] ✅ Gatilhos limpos com sucesso para evitar mensagens offline.`);
+      }
+    } catch (err: any) {
+      console.error(`[Baileys][MediaLibrary] Erro ao limpar mídia deletada (${messageId}):`, err?.message || err);
+    }
+  }
+
+  /**
+   * Envia uma mídia recém-carregada para o grupo de mídias vinculado
+   * através de qualquer sessão Baileys online, enriquecendo a biblioteca com o payload nativo da Meta.
+   */
+  async broadcastMediaToLibraryGroup(
+    mediaId: string,
+    filePath: string,
+    mediaType: string,
+    mimeType: string,
+    caption: string
+  ): Promise<void> {
+    try {
+      const readySession = Array.from(this.sessions.values()).find(s => this.isSocketReady(s) && s.libraryGroupJid);
+      if (!readySession || !readySession.libraryGroupJid || !readySession.sock) {
+        console.log(`[Baileys][MediaLibrary] Upload local salvo na biblioteca. Nenhum aparelho com grupo ativo online para broadcast imediato.`);
+        return;
+      }
+
+      console.log(`[Baileys][MediaLibrary] Enviando mídia carregada para o grupo ${readySession.libraryGroupJid} via ${readySession.name}...`);
+      const buffer = fs.readFileSync(filePath);
+      const payload: any = { caption };
+      if (mediaType === 'image') payload.image = buffer;
+      else if (mediaType === 'video') payload.video = buffer;
+      else if (mediaType === 'audio') { payload.audio = buffer; payload.mimetype = mimeType || 'audio/mp4'; }
+      else payload.document = buffer;
+
+      const sentMsg = await readySession.sock.sendMessage(readySession.libraryGroupJid, payload);
+      if (sentMsg?.key?.id) {
+        await prisma.mediaLibrary.update({
+          where: { id: mediaId },
+          data: {
+            messageId: sentMsg.key.id,
+            messageJson: JSON.stringify(sentMsg),
+            sourceJid: readySession.libraryGroupJid,
+            instanceId: readySession.id,
+          }
+        }).catch(() => {});
+        console.log(`[Baileys][MediaLibrary] Mídia enriquecida com ID nativo do WhatsApp: ${sentMsg.key.id}`);
+      }
+    } catch (err: any) {
+      console.warn(`[Baileys][MediaLibrary] Aviso ao sincronizar upload com grupo:`, err?.message || err);
+    }
+  }
+
+  /**
    * Busca em tempo real todos os grupos nos quais esta instância participa.
-   * Executa groupFetchAllParticipating() nativo do Baileys no socket do aparelho.
+   * Se o aparelho estiver desconectado, recorre a outro aparelho conectado ou aos grupos já salvos no banco.
    */
   async fetchInstanceGroups(instanceId: string): Promise<Array<{
     jid: string;
@@ -1015,28 +1119,59 @@ export class BaileysAdapter implements IWhatsappAdapter {
     creation?: number;
     desc?: string;
   }>> {
-    const session = this.sessions.get(instanceId);
+    let session = this.sessions.get(instanceId);
+
+    // Se o aparelho selecionado não estiver pronto, tenta qualquer outro que esteja online
     if (!session || !this.isSocketReady(session)) {
-      throw new Error(`Aparelho "${session?.name || instanceId}" não está conectado ao WhatsApp. Conecte-o antes de consultar os grupos.`);
+      const anyReady = Array.from(this.sessions.values()).find(s => this.isSocketReady(s));
+      if (anyReady) {
+        console.log(`[Baileys][fetchInstanceGroups] Aparelho ${instanceId} desconectado. Usando aparelho conectado "${anyReady.name}" para consultar grupos.`);
+        session = anyReady;
+      }
     }
 
-    try {
-      const rawGroups = await session.sock.groupFetchAllParticipating();
-      const groupsList = Object.values(rawGroups || {}).map((g: any) => ({
-        jid: g.id as string,
-        subject: (g.subject as string) || 'Grupo sem nome',
-        participantsCount: Array.isArray(g.participants) ? g.participants.length : 0,
-        creation: g.creation as number | undefined,
-        desc: g.desc ? g.desc.toString() : '',
-      }));
+    // Se algum aparelho estiver conectado, busca via Baileys em tempo real
+    if (session && this.isSocketReady(session)) {
+      try {
+        const rawGroups = await session.sock.groupFetchAllParticipating();
+        const groupsList = Object.values(rawGroups || {}).map((g: any) => ({
+          jid: g.id as string,
+          subject: (g.subject as string) || 'Grupo sem nome',
+          participantsCount: Array.isArray(g.participants) ? g.participants.length : 0,
+          creation: g.creation as number | undefined,
+          desc: g.desc ? g.desc.toString() : '',
+        }));
 
-      // Ordena alfabeticamente pelo nome do grupo
-      groupsList.sort((a, b) => a.subject.localeCompare(b.subject, 'pt-BR', { sensitivity: 'base' }));
-      return groupsList;
-    } catch (err: any) {
-      console.error(`[Baileys][${instanceId}] Erro ao buscar grupos participantes:`, err);
-      throw new Error(`Falha ao ler grupos do WhatsApp: ${err.message || err}`);
+        groupsList.sort((a, b) => a.subject.localeCompare(b.subject, 'pt-BR', { sensitivity: 'base' }));
+        return groupsList;
+      } catch (err: any) {
+        console.error(`[Baileys][${instanceId}] Erro ao buscar grupos participantes em tempo real:`, err);
+      }
     }
+
+    // Fallback offline: se nenhum aparelho estiver conectado, retorna grupos já configurados no banco
+    const dbGroups = await prisma.whatsappInstance.findMany({
+      where: { libraryGroupJid: { not: null } },
+      select: { libraryGroupJid: true, libraryGroupName: true }
+    });
+
+    const unique = new Map<string, { jid: string; subject: string; participantsCount: number }>();
+    for (const g of dbGroups) {
+      if (g.libraryGroupJid && !unique.has(g.libraryGroupJid)) {
+        unique.set(g.libraryGroupJid, {
+          jid: g.libraryGroupJid,
+          subject: g.libraryGroupName || 'Grupo Salvo',
+          participantsCount: 0
+        });
+      }
+    }
+
+    const global = await prisma.systemConfig.findUnique({ where: { key: 'WHATSAPP_MEDIA_LIBRARY_GROUP' } });
+    if (global?.value && !unique.has(global.value)) {
+      unique.set(global.value, { jid: global.value, subject: 'Grupo Central (Configurado)', participantsCount: 0 });
+    }
+
+    return Array.from(unique.values());
   }
 
   /**

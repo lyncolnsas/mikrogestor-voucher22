@@ -486,12 +486,32 @@ export async function getCustomTemplateForwardId(key: string): Promise<string | 
 
 /**
  * Retorna opções completas de envio para o gatilho (mídia ou forward nativo da biblioteca)
+ * Se a mídia vinculada foi deletada da MediaLibrary, auto-limpa a referência para evitar
+ * que o disparo fique travado ou 'offline'.
  */
 export async function getTriggerSendOptions(key: string): Promise<{
   media?: { url: string; type: 'image' | 'video' | 'audio' | 'document' };
   forwardLibraryId?: string;
 }> {
-  const forwardLibraryId = await getCustomTemplateForwardId(key);
+  let forwardLibraryId = await getCustomTemplateForwardId(key);
+  if (forwardLibraryId) {
+    try {
+      const exists = await prisma.mediaLibrary.findUnique({
+        where: { id: forwardLibraryId },
+        select: { id: true }
+      });
+      if (!exists) {
+        console.warn(`[WhatsAppCustomMessages] Mídia "${forwardLibraryId}" foi excluída da biblioteca. Auto-limpando gatilho "${key}" para não quebrar envios.`);
+        await prisma.systemConfig.deleteMany({
+          where: { key: `${key}_FORWARD_ID` }
+        }).catch(() => {});
+        forwardLibraryId = undefined;
+      }
+    } catch {
+      // Ignora erro transitório de verificação
+    }
+  }
+
   const media = await getCustomTemplateMedia(key);
   return {
     forwardLibraryId: forwardLibraryId || undefined,

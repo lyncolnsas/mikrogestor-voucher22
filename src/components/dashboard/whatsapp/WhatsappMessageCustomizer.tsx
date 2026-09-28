@@ -1,13 +1,14 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   MessageSquare, Sparkles, RefreshCcw, Save, RotateCcw,
   CheckCircle2, AlertCircle, Tag, Eye, Info, Check,
   Clock, ArrowRight, Sliders, ToggleLeft, ToggleRight,
   ShieldCheck, Zap, UserCheck, ShoppingCart, Bot,
-  Image as ImageIcon, Video, Music, FileText, Library, X, Shuffle, ChevronDown, ChevronUp, Wifi
+  Image as ImageIcon, Video, Music, FileText, Library, X, Shuffle, ChevronDown, ChevronUp, Wifi,
+  Upload, Trash2
 } from 'lucide-react';
 import { spinText, hasSpintax } from '@/utils/spintax';
 
@@ -89,6 +90,9 @@ export function WhatsappMessageCustomizer() {
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [showLibraryModal, setShowLibraryModal] = useState(false);
   const [libraryTargetKey, setLibraryTargetKey] = useState<string>('');
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [deletingMediaId, setDeletingMediaId] = useState<string | null>(null);
+  const mediaFileInputRef = useRef<HTMLInputElement>(null);
   const [feedback, setFeedback] = useState<{ key: string; success: boolean; message: string } | null>(null);
   const [copiedTag, setCopiedTag] = useState<string | null>(null);
 
@@ -160,6 +164,64 @@ export function WhatsappMessageCustomizer() {
       .catch(console.error)
       .finally(() => setLibraryLoading(false));
   }, []);
+
+  const handleUploadMedia = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingMedia(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('caption', file.name.replace(/\.[^/.]+$/, ''));
+      const res = await fetch('/api/admin/media-library', {
+        method: 'POST',
+        body: fd,
+      });
+      const data = await res.json();
+      if (data.success && data.item) {
+        setLibraryItems(prev => [data.item, ...prev]);
+        setFeedback({ key: 'LIBRARY', success: true, message: 'Mídia adicionada com sucesso!' });
+      } else {
+        alert(data.message || 'Erro ao enviar mídia.');
+      }
+    } catch {
+      alert('Falha na comunicação ao enviar arquivo.');
+    } finally {
+      setUploadingMedia(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleDeleteLibraryItem = async (itemId: string) => {
+    if (!confirm('Deseja excluir esta mídia da Biblioteca Central? Os gatilhos vinculados serão atualizados automaticamente para manter os envios ativos.')) {
+      return;
+    }
+    setDeletingMediaId(itemId);
+    try {
+      const res = await fetch('/api/admin/media-library', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: itemId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLibraryItems(prev => prev.filter(i => i.id !== itemId));
+        setEditedForwardIds(prev => {
+          const next = { ...prev };
+          for (const k of Object.keys(next)) {
+            if (next[k] === itemId) next[k] = '';
+          }
+          return next;
+        });
+      } else {
+        alert(data.message || 'Erro ao excluir mídia.');
+      }
+    } catch {
+      alert('Falha na comunicação ao excluir.');
+    } finally {
+      setDeletingMediaId(null);
+    }
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -1071,6 +1133,20 @@ export function WhatsappMessageCustomizer() {
                       {editedForwardIds[currentTrigger.key] || currentTrigger.forwardLibraryId ? (() => {
                         const selId = editedForwardIds[currentTrigger.key] || currentTrigger.forwardLibraryId || '';
                         const item = libraryItems.find(i => i.id === selId);
+                        if (!item) {
+                          return (
+                            <div className="flex-1 flex items-center justify-between gap-2.5 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2 text-xs">
+                              <div className="flex items-center gap-2 text-amber-900 font-medium">
+                                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                                <span>Mídia anterior foi excluída da biblioteca. Selecione outra mídia para manter o envio ativo.</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button type="button" onClick={() => openLibraryModal(currentTrigger.key)} className="text-[11px] font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-200 px-2.5 py-1 rounded-lg cursor-pointer">Trocar</button>
+                                <button type="button" onClick={() => { setEditedForwardIds(p => ({ ...p, [currentTrigger.key]: '' })); setMediaTab(p => ({ ...p, [currentTrigger.key]: 'url' })); }} className="text-amber-600 hover:text-rose-600 p-1 cursor-pointer"><X className="w-3.5 h-3.5" /></button>
+                              </div>
+                            </div>
+                          );
+                        }
                         return (
                           <div className="flex-1 flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
                             <div className="text-emerald-600">{mediaTypeIcon(item?.mediaType || 'image')}</div>
@@ -1158,24 +1234,51 @@ export function WhatsappMessageCustomizer() {
         </div>
       </div>
 
+      {/* Input oculto para upload de mídia diretamente do dispositivo */}
+      <input
+        type="file"
+        ref={mediaFileInputRef}
+        onChange={handleUploadMedia}
+        accept="image/*,video/*,audio/*,application/pdf"
+        className="hidden"
+      />
+
       {/* Modal da Biblioteca de Mídias */}
       {showLibraryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setShowLibraryModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Library className="w-5 h-5 text-emerald-600" />
-                <h3 className="text-sm font-bold text-slate-800">Biblioteca de Mídias Central</h3>
-                <span className="text-[11px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">{libraryItems.length} mídias</span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowLibraryModal(false)}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/60">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                  <Library className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800">Biblioteca de Mídias Central</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">{libraryItems.length} mídias</span>
+                    <span className="text-[10px] text-slate-400">• Ativa online/offline</span>
+                  </div>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  onClick={() => mediaFileInputRef.current?.click()}
+                  disabled={uploadingMedia}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm cursor-pointer disabled:opacity-50 transition-all"
+                  title="Enviar foto, banner ou vídeo diretamente do seu dispositivo"
+                >
+                  <Upload className={`w-3.5 h-3.5 ${uploadingMedia ? 'animate-bounce' : ''}`} />
+                  {uploadingMedia ? 'Enviando...' : 'Fazer Upload'}
+                </button>
+                <button
+                  type="button"
                   onClick={fetchLibrary}
                   disabled={libraryLoading}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer disabled:opacity-50 transition-all"
+                  title="Atualizar mídias do grupo do WhatsApp"
                 >
-                  <RefreshCcw className={`w-3.5 h-3.5 ${libraryLoading ? 'animate-spin' : ''}`} /> Atualizar
+                  <RefreshCcw className={`w-3.5 h-3.5 ${libraryLoading ? 'animate-spin text-emerald-600' : ''}`} /> Atualizar
                 </button>
                 <button type="button" onClick={() => setShowLibraryModal(false)} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 cursor-pointer">
                   <X className="w-5 h-5" />
@@ -1183,47 +1286,83 @@ export function WhatsappMessageCustomizer() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4">
+            {/* Aviso informativo de funcionamento */}
+            <div className="px-6 py-2 bg-emerald-50/70 border-b border-emerald-100/80 text-[11px] text-emerald-900 flex items-center justify-between">
+              <span>💡 Você pode enviar fotos no grupo do WhatsApp vinculado ou fazer upload direto acima (funciona mesmo com WhatsApp desconectado).</span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
               {libraryLoading ? (
-                <div className="flex items-center justify-center py-12 text-slate-400 text-sm gap-2">
-                  <RefreshCcw className="w-4 h-4 animate-spin" /> Carregando mídias...
+                <div className="flex flex-col items-center justify-center py-16 text-slate-400 text-xs gap-2">
+                  <RefreshCcw className="w-6 h-6 animate-spin text-emerald-600" />
+                  <span>Sincronizando mídias da biblioteca central...</span>
                 </div>
               ) : libraryItems.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-                  <Library className="w-10 h-10 text-slate-200" />
-                  <p className="text-sm font-semibold text-slate-600">Nenhuma mídia capturada ainda</p>
-                  <p className="text-[11px] text-slate-500 max-w-sm">
-                    Envie uma foto ou banner no grupo do WhatsApp vinculado e clique em Atualizar.
+                <div className="flex flex-col items-center justify-center py-14 text-center gap-3 border-2 border-dashed border-slate-200 rounded-2xl">
+                  <Library className="w-12 h-12 text-slate-300" />
+                  <p className="text-sm font-bold text-slate-700">Nenhuma mídia capturada ainda</p>
+                  <p className="text-xs text-slate-500 max-w-sm">
+                    Envie fotos/banners no grupo do WhatsApp ou faça upload direto pelo botão abaixo.
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => mediaFileInputRef.current?.click()}
+                    disabled={uploadingMedia}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm cursor-pointer transition-all"
+                  >
+                    <Upload className="w-4 h-4" /> Fazer Upload de Mídia
+                  </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
                   {libraryItems.map(item => (
-                    <button key={item.id} type="button" onClick={() => selectLibraryItem(item)} className="group relative flex flex-col bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-400 rounded-xl overflow-hidden transition-all cursor-pointer text-left">
-                      <div className="w-full aspect-video bg-slate-100 flex items-center justify-center overflow-hidden">
+                    <div
+                      key={item.id}
+                      className="group relative flex flex-col bg-slate-50 hover:bg-emerald-50/30 border border-slate-200 hover:border-emerald-300 rounded-2xl overflow-hidden transition-all text-left shadow-xs hover:shadow-md"
+                    >
+                      <div className="w-full aspect-video bg-slate-100 flex items-center justify-center overflow-hidden relative">
                         {item.thumbnailUrl ? (
                           <img src={item.thumbnailUrl} alt={item.caption || ''} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="text-slate-300">{mediaTypeIcon(item.mediaType)}</div>
+                          <div className="text-slate-400">{mediaTypeIcon(item.mediaType)}</div>
                         )}
+                        {/* Botão de Excluir da Biblioteca */}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleDeleteLibraryItem(item.id); }}
+                          disabled={deletingMediaId === item.id}
+                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/70 hover:bg-rose-600 text-white transition-all cursor-pointer z-20 opacity-0 group-hover:opacity-100"
+                          title="Excluir mídia permanentemente da biblioteca"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                      <div className="p-2">
-                        <p className="text-[11px] font-semibold text-slate-700 truncate">{item.caption || '(sem legenda)'}</p>
-                        <p className="text-[10px] text-slate-400">{item.mediaType.toUpperCase()}</p>
-                      </div>
-                      <div className="absolute inset-0 bg-emerald-500/0 group-hover:bg-emerald-500/10 transition-colors flex items-center justify-center">
-                        <div className="opacity-0 group-hover:opacity-100 bg-emerald-600 text-white text-[11px] font-bold px-3 py-1 rounded-full transition-opacity">
-                          Selecionar
+                      <div className="p-2.5 flex-1 flex flex-col justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-slate-800 truncate" title={item.caption || ''}>
+                            {item.caption || '(sem legenda)'}
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            {item.mediaType.toUpperCase()}
+                          </p>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => selectLibraryItem(item)}
+                          className="mt-2.5 w-full py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1 shadow-xs"
+                        >
+                          <Check className="w-3.5 h-3.5" /> Usar Esta Mídia
+                        </button>
                       </div>
-                    </button>
+                    </div>
                   ))}
                 </div>
               )}
             </div>
 
-            <div className="px-6 py-3 border-t border-slate-100 flex justify-end">
-              <button type="button" onClick={() => setShowLibraryModal(false)} className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl cursor-pointer">
+            <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+              <span className="text-[11px] text-slate-500">Mídias deletadas são removidas dos gatilhos automaticamente para evitar envios offline.</span>
+              <button type="button" onClick={() => setShowLibraryModal(false)} className="px-4 py-2 text-xs font-bold text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl cursor-pointer transition-all">
                 Fechar
               </button>
             </div>
