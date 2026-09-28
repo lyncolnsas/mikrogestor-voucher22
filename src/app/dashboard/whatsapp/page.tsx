@@ -390,7 +390,11 @@ export default function WhatsappConnection() {
         })
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      if (res.ok) {
+        if (data.qrCode) {
+          setPairingInstance(prev => prev ? { ...prev, qrCode: data.qrCode, status: 'waiting_qr' } : null);
+        }
+      } else {
         showFeedback(false, data.error || 'Erro ao inicializar pareamento.');
       }
       loadData();

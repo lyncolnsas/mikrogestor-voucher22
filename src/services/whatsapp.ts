@@ -199,9 +199,10 @@ class WhatsappSpecialist {
   }
 
   /** Conecta uma nova instância Baileys e gera seu QR Code exclusivo */
-  public async connectBaileysInstance(instanceId: string, name?: string, forceNewPairing = false): Promise<void> {
+  public async connectBaileysInstance(instanceId: string, name?: string, forceNewPairing = false): Promise<string | null> {
     const adapter = this.getBaileysAdapter();
-    await adapter.connectInstance(instanceId, name, forceNewPairing);
+    const session = await adapter.connectInstance(instanceId, name, forceNewPairing);
+    return session?.qrCode || adapter.getQrCode(instanceId) || null;
   }
 
   /** Desconecta de forma graciosa o Baileys ou uma instância específica */

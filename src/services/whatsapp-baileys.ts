@@ -248,6 +248,11 @@ export class BaileysAdapter implements IWhatsappAdapter {
     // Se solicitado novo pareamento ou se aparelho não está conectado e sem número, reseta credenciais antigas
     if (forceNewPairing) {
       console.log(`[Baileys][${instanceId}] Forçando novo pareamento: limpando credenciais antigas para gerar novo QR Code...`);
+      session.isConnecting = false;
+      if (session.reconnectTimeout) {
+        clearTimeout(session.reconnectTimeout);
+        session.reconnectTimeout = undefined;
+      }
       if (session.sock) {
         try {
           session.sock.ev?.removeAllListeners();
@@ -277,7 +282,7 @@ export class BaileysAdapter implements IWhatsappAdapter {
       }
     } catch {}
 
-    if (session.isConnecting) return session;
+    if (session.isConnecting && !forceNewPairing) return session;
     session.isConnecting = true;
 
     try {
@@ -377,9 +382,10 @@ export class BaileysAdapter implements IWhatsappAdapter {
           session!.isConnecting = false;
           const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
           const isLoggedOut = statusCode === DisconnectReason.loggedOut || statusCode === 401;
+          const isTimeout = statusCode === 408 || statusCode === 515;
           const shouldReconnect = !isLoggedOut;
 
-          session!.status = shouldReconnect ? 'reconnecting' : 'disconnected';
+          session!.status = shouldReconnect ? (isTimeout ? 'waiting_qr' : 'reconnecting') : 'disconnected';
           console.log(`[Baileys][${session!.id}] Conexão encerrada (código: ${statusCode}). Reconectar: ${shouldReconnect}`);
 
           if (isLoggedOut) {
@@ -393,16 +399,17 @@ export class BaileysAdapter implements IWhatsappAdapter {
             where: { id: session!.id },
             data: {
               status: session!.status,
-              qrCode: null,
+              qrCode: isLoggedOut ? null : undefined,
               number: isLoggedOut ? null : undefined,
             }
           }).catch(() => {});
 
           if (shouldReconnect) {
             if (session!.reconnectTimeout) clearTimeout(session!.reconnectTimeout);
+            const delay = isTimeout ? 800 : 4000;
             session!.reconnectTimeout = setTimeout(() => {
               this.connectInstance(session!.id).catch(() => {});
-            }, 5000);
+            }, delay);
           } else {
             session!.qrCode = null;
           }
@@ -478,6 +485,15 @@ export class BaileysAdapter implements IWhatsappAdapter {
         where: { id: session.id },
         data: { status: 'error' }
       }).catch(() => {});
+    }
+
+    // Se a instância estiver aguardando QR Code, aguarda até 2.5s para retornar já com o QR Code preenchido
+    if (session.status === 'waiting_qr' || forceNewPairing) {
+      const startWait = Date.now();
+      while (Date.now() - startWait < 2500) {
+        if (session.qrCode || session.status === 'connected') break;
+        await sleep(150);
+      }
     }
 
     return session;

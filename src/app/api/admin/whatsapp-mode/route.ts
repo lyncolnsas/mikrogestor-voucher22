@@ -72,12 +72,13 @@ export async function POST(req: NextRequest) {
 
     if (action === 'connect' && instanceId) {
       const forcePair = body.forceNewPairing !== false;
-      await whatsappService.connectBaileysInstance(instanceId, name, forcePair);
+      const qrCode = await whatsappService.connectBaileysInstance(instanceId, name, forcePair);
       const info = await whatsappService.getModeInfo();
       return NextResponse.json({
         success: true,
         message: 'Conexão iniciada. Escaneie o QR Code para sincronizar.',
-        ...info
+        ...info,
+        qrCode: qrCode || info.qrCode
       });
     }
 
