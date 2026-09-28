@@ -174,8 +174,11 @@ export default function MediaLibraryModal({
         method: 'DELETE'
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.deleted) {
         showToast(`Arquivo "${fileName}" removido com sucesso.`);
+        await fetchMedia();
+      } else if (data.success && !data.deleted) {
+        alert('Arquivo não foi encontrado no servidor. Talvez já tenha sido apagado.');
         await fetchMedia();
       } else {
         alert(data.message || 'Erro ao remover arquivo.');
@@ -524,15 +527,6 @@ export default function MediaLibraryModal({
                             <span>Escolher</span>
                           </button>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteSingle(file.name)}
-                          disabled={isDeleting}
-                          title="Apagar este arquivo da VPS"
-                          className="p-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white cursor-pointer shadow-md"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
 
@@ -545,6 +539,15 @@ export default function MediaLibraryModal({
                         >
                           {file.name}
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSingle(file.name)}
+                          disabled={isDeleting}
+                          title="Apagar este arquivo da VPS"
+                          className="shrink-0 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
 
                       <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
