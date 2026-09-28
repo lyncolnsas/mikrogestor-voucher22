@@ -10,7 +10,8 @@ import {
   Code2,
   Cpu,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ExternalLink
 } from 'lucide-react';
 
 export type StudioTab = 
@@ -19,7 +20,7 @@ export type StudioTab =
   | 'leads_form' 
   | 'ads' 
   | 'walled_garden' 
-  | 'css_pro' 
+  | 'css_pro'
   | 'provisioning';
 
 interface StudioNavRailProps {
@@ -39,34 +40,38 @@ export default function StudioNavRail({
   isCollapsed = false,
   onToggleCollapse,
 }: StudioNavRailProps) {
-  const tabs = [
+  const mainTabs = [
     {
       id: 'branding' as StudioTab,
       label: 'Identidade & Estilo',
       description: 'Logo, paleta de cores, tipografia e fundos',
       icon: Palette,
-      badge: null
+      badge: null,
+      advanced: false,
     },
     {
       id: 'auth_methods' as StudioTab,
       label: 'Métodos de Login',
       description: 'Voucher, usuário/senha, 1-clique e PIX',
       icon: KeyRound,
-      badge: null
+      badge: null,
+      advanced: false,
     },
     {
       id: 'leads_form' as StudioTab,
       label: 'Captura de Leads',
       description: 'Campos do formulário e termos LGPD',
       icon: FileSpreadsheet,
-      badge: hasRegistrationEnabled ? 'Ativo' : 'Desativado'
+      badge: hasRegistrationEnabled ? 'Ativo' : 'Desativado',
+      advanced: false,
     },
     {
       id: 'ads' as StudioTab,
       label: 'Banners & Mídia',
       description: 'Anúncios patrocinados e carrossel',
       icon: Megaphone,
-      badge: null
+      badge: null,
+      advanced: false,
     },
     {
       id: 'walled_garden' as StudioTab,
@@ -74,22 +79,17 @@ export default function StudioNavRail({
       description: 'Auditor de domínios e liberação MikroTik',
       icon: Globe,
       badge: walledGardenAlertCount > 0 ? `${walledGardenAlertCount} pendente` : null,
-      badgeColor: walledGardenAlertCount > 0 ? 'amber' : 'gray'
+      badgeColor: walledGardenAlertCount > 0 ? 'amber' : 'gray',
+      advanced: true,
     },
     {
       id: 'css_pro' as StudioTab,
       label: 'CSS & Código Pro',
       description: 'Injeção avançada de CSS e scripts',
       icon: Code2,
-      badge: null
+      badge: null,
+      advanced: true,
     },
-    {
-      id: 'provisioning' as StudioTab,
-      label: 'Provisionamento',
-      description: 'Wizard de 4 etapas do roteador',
-      icon: Cpu,
-      badge: null
-    }
   ];
 
   return (
@@ -113,7 +113,8 @@ export default function StudioNavRail({
         )}
       </div>
 
-      {tabs.map((tab) => {
+      {/* Main Tabs */}
+      {mainTabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
 
@@ -143,17 +144,24 @@ export default function StudioNavRail({
                   <span className={`text-xs font-bold truncate ${isActive ? 'text-white' : 'text-slate-900 dark:text-slate-100'}`}>
                     {tab.label}
                   </span>
-                  {tab.badge && (
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md leading-none ${
-                      isActive
-                        ? 'bg-white/20 text-white'
-                        : tab.badgeColor === 'amber'
-                          ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
-                          : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                    }`}>
-                      {tab.badge}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {tab.advanced && !isActive && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md leading-none bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
+                        Pro
+                      </span>
+                    )}
+                    {tab.badge && (
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md leading-none ${
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : (tab as any).badgeColor === 'amber'
+                            ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                            : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      }`}>
+                        {tab.badge}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <p className={`text-[11px] truncate mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-600 dark:text-slate-300'}`}>
                   {tab.description}
@@ -164,6 +172,35 @@ export default function StudioNavRail({
         );
       })}
 
+      {/* Divider before Provisioning */}
+      {!isCollapsed && (
+        <div className="my-1 border-t border-slate-200 dark:border-slate-800" />
+      )}
+
+      {/* Provisioning — Link to dedicated page */}
+      <a
+        href="/dashboard/roteadores"
+        title={isCollapsed ? 'Provisionamento — Abrir em página dedicada' : undefined}
+        className={`flex items-center ${isCollapsed ? 'justify-center p-2.5' : 'items-start gap-3 p-2.5'} rounded-xl text-left transition-all cursor-pointer group text-slate-800 dark:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800/80`}
+      >
+        <div className="p-2 rounded-lg shrink-0 transition-colors bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 border border-slate-200/60 dark:border-slate-700/60">
+          <Cpu className="w-4 h-4" />
+        </div>
+        {!isCollapsed && (
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-xs font-bold truncate text-slate-900 dark:text-slate-100">
+                Provisionamento
+              </span>
+              <ExternalLink className="w-3 h-3 text-slate-400 shrink-0" />
+            </div>
+            <p className="text-[11px] truncate mt-0.5 text-slate-600 dark:text-slate-300">
+              Configurar o roteador MikroTik
+            </p>
+          </div>
+        )}
+      </a>
+
       {!isCollapsed && (
         <div className="mt-auto pt-4 px-2">
           <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 text-[11px] text-blue-900 dark:text-blue-200 leading-relaxed">
@@ -171,7 +208,7 @@ export default function StudioNavRail({
               <span>💡 Dica MikroStudio</span>
             </p>
             <p className="text-slate-600 dark:text-slate-300">
-              Qualquer alteração feita é sincronizada imediatamente no preview ao lado em tempo real.
+              Qualquer alteração é salva automaticamente. O preview ao lado atualiza em tempo real.
             </p>
           </div>
         </div>

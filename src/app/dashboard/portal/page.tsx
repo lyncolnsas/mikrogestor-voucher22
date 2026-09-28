@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useHistory } from '@/hooks/useHistory';
 import StudioTopBar from '@/components/portal/studio/StudioTopBar';
 import StudioNavRail, { StudioTab } from '@/components/portal/studio/StudioNavRail';
@@ -455,6 +455,11 @@ export default function PortalEditor() {
   });
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lastSavedAt, setLastSavedAt] = useState<string>('');
+  // Ref to track if config was loaded (avoid auto-save on first mount)
+  const configLoadedRef = useRef(false);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
@@ -506,6 +511,62 @@ export default function PortalEditor() {
     inputRadius: 10,
     inputBorderWidth: 1
   });
+
+  // Silent auto-save (no toast, no setSaving) — runs 3s after last change
+  const handleAutoSave = useCallback(async () => {
+    if (!configLoadedRef.current) return;
+    setAutoSaveStatus('saving');
+    try {
+      const res = await fetch(`/api/portal/config?template=${template}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessName, message, systemUrl, colors, effects, studio, brand, social,
+          badges, customCode, bg, ad, fields, enabled, saleMode, systemFreeWifiMode,
+          redirectUrl, loginButtonLabel, registerButtonText, registerTitle,
+          registerSubtitle, registerSubmitText, termsText, trialEnabled, trialText,
+          trialLinkText, trialModalTitle, trialModalMessage, trialModalConfirmText,
+          trialModalCancelText,
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const now = new Date();
+        setLastSavedAt(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
+        setAutoSaveStatus('saved');
+        if (typeof window !== 'undefined') {
+          try { localStorage.setItem('mikrogestor_active_template', template); } catch {}
+        }
+      } else {
+        setAutoSaveStatus('error');
+      }
+    } catch {
+      setAutoSaveStatus('error');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [template, businessName, message, systemUrl, colors, effects, studio, brand, social,
+    badges, customCode, bg, ad, fields, enabled, saleMode, systemFreeWifiMode,
+    redirectUrl, loginButtonLabel, registerButtonText, registerTitle, registerSubtitle,
+    registerSubmitText, termsText, trialEnabled, trialText, trialLinkText,
+    trialModalTitle, trialModalMessage, trialModalConfirmText, trialModalCancelText]);
+
+  // Trigger auto-save 3s after any config change (skips first mount)
+  useEffect(() => {
+    if (!configLoadedRef.current) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    setAutoSaveStatus('idle');
+    autoSaveTimerRef.current = setTimeout(() => {
+      handleAutoSave();
+    }, 3000);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [businessName, message, systemUrl, colors, effects, studio, brand, social,
+    badges, customCode, bg, ad, fields, enabled, saleMode, systemFreeWifiMode,
+    redirectUrl, loginButtonLabel, registerButtonText, registerTitle, registerSubtitle,
+    registerSubmitText, termsText, trialEnabled, trialText, trialLinkText,
+    trialModalTitle, trialModalMessage, trialModalConfirmText, trialModalCancelText]);
 
   // Provisioning States
   const [provInterfaces, setProvInterfaces] = useState<any[]>([]);
@@ -714,6 +775,9 @@ export default function PortalEditor() {
         }
       } catch (err) {
         console.warn('Erro ao carregar configurações do portal:', err);
+      } finally {
+        // Mark config as loaded so auto-save can start firing
+        configLoadedRef.current = true;
       }
     };
 
@@ -1249,6 +1313,8 @@ export default function PortalEditor() {
         setTemplate={handleSelectTemplate}
         availableTemplates={availableTemplates}
         onOpenMediaLibrary={() => handleOpenMediaPicker({ type: 'general', title: 'Gerenciador de Mídias & Limpeza da VPS' })}
+        autoSaveStatus={autoSaveStatus}
+        lastSavedAt={lastSavedAt}
       />
 
       {/* 2. Workspace Body: Rail + Canvas + Inspector */}
@@ -1291,8 +1357,7 @@ export default function PortalEditor() {
               { id: 'leads_form' as StudioTab, label: 'Leads', icon: FileSpreadsheet },
               { id: 'ads' as StudioTab, label: 'Mídias', icon: Megaphone },
               { id: 'walled_garden' as StudioTab, label: 'Walled', icon: Globe },
-              { id: 'css_pro' as StudioTab, label: 'CSS', icon: Code2 },
-              { id: 'provisioning' as StudioTab, label: 'Provisionar', icon: Cpu },
+              { id: 'css_pro' as StudioTab, label: 'CSS Pro', icon: Code2 },
             ].map(tab => {
               const Icon = tab.icon;
               const isCurrent = activeTab === tab.id;
@@ -1312,6 +1377,14 @@ export default function PortalEditor() {
                 </button>
               );
             })}
+            {/* Provisioning: external link on mobile */}
+            <a
+              href="/dashboard/roteadores"
+              className="flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg whitespace-nowrap transition-all cursor-pointer text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 hover:bg-slate-100"
+            >
+              <Cpu className="w-3.5 h-3.5" />
+              <span>Provisionar</span>
+            </a>
           </div>
           {activeTab === 'branding' && (
             <BrandingStudioPanel

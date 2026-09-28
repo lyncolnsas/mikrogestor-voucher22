@@ -34,7 +34,18 @@ export default function StudioCanvas({
   const [simulatedTimer, setSimulatedTimer] = useState(0);
   const [simulatedActiveIndex, setSimulatedActiveIndex] = useState(0);
   const [simulatorMuted, setSimulatorMuted] = useState(true);
+  const [iframeLoading, setIframeLoading] = useState(false);
+  const iframeLoadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Show skeleton when template or previewScreen changes
+  useEffect(() => {
+    setIframeLoading(true);
+    // Safety fallback: remove skeleton after 2.5s even if onLoad doesn’t fire
+    if (iframeLoadTimeoutRef.current) clearTimeout(iframeLoadTimeoutRef.current);
+    iframeLoadTimeoutRef.current = setTimeout(() => setIframeLoading(false), 2500);
+    return () => { if (iframeLoadTimeoutRef.current) clearTimeout(iframeLoadTimeoutRef.current); };
+  }, [template, previewScreen]);
 
   // Iniciar vídeo imediatamente sem telas de espera ou pausas acidentais
   useEffect(() => {
@@ -223,8 +234,26 @@ export default function StudioCanvas({
               }
               className="w-full h-full border-0 bg-transparent select-none"
               title="MikroTik Hotspot Live Preview"
-              onLoad={onIframeLoad}
+              onLoad={() => {
+                if (iframeLoadTimeoutRef.current) clearTimeout(iframeLoadTimeoutRef.current);
+                setIframeLoading(false);
+                if (onIframeLoad) onIframeLoad();
+              }}
             />
+
+            {/* Loading Skeleton Overlay */}
+            {iframeLoading && (
+              <div className="absolute inset-0 z-30 bg-slate-100 dark:bg-slate-900 flex flex-col gap-3 p-5 animate-pulse rounded-[32px]">
+                <div className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-800 mx-auto mt-6" />
+                <div className="w-32 h-4 rounded-full bg-slate-200 dark:bg-slate-800 mx-auto" />
+                <div className="w-24 h-3 rounded-full bg-slate-200 dark:bg-slate-800 mx-auto" />
+                <div className="mt-4 p-4 rounded-2xl bg-slate-200/60 dark:bg-slate-800/60 space-y-3">
+                  <div className="w-full h-10 rounded-xl bg-slate-200 dark:bg-slate-700" />
+                  <div className="w-full h-10 rounded-xl bg-slate-200 dark:bg-slate-700" />
+                  <div className="w-full h-11 rounded-xl bg-slate-300 dark:bg-slate-600" />
+                </div>
+              </div>
+            )}
 
             {/* Ad Simulation Overlay if Triggered */}
             {showSimulatedAd && ad && ad.type !== 'none' && (

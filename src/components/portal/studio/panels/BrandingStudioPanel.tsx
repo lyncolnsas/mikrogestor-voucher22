@@ -15,7 +15,9 @@ import {
   Check,
   AlignLeft,
   AlignCenter,
-  AlignRight
+  AlignRight,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { BrandConfig } from '@/components/portal/DynamicLogoEditor';
 
@@ -91,48 +93,56 @@ export default function BrandingStudioPanel({
   onOpenMediaPicker,
   onSubTabChange,
 }: BrandingStudioPanelProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'presets' | 'layout' | 'palette' | 'logo' | 'background'>('presets');
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['presets']));
   const [logoImgError, setLogoImgError] = useState(false);
 
   React.useEffect(() => {
     setLogoImgError(false);
   }, [logoPreviewUrl]);
 
+  const toggleSection = (id: string) => {
+    setOpenSections(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const isOpen = (id: string) => openSections.has(id);
+
   // Contrast check
   const buttonContrast = getContrastRatio(colors.blue || '#2563eb', colors.loginButtonText || '#ffffff');
   const cardTextContrast = getContrastRatio(colors.cardBg || '#ffffff', colors.ink || '#0f172a');
 
-  return (
-    <div className="flex flex-col h-full bg-white dark:bg-slate-900 overflow-y-auto p-4 space-y-5 select-none">
-      {/* Subtabs for Branding */}
-      <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200 dark:border-slate-700/70 overflow-x-auto scrollbar-none min-w-0">
-        {[
-          { id: 'presets', label: 'Temas' },
-          { id: 'layout', label: 'Estrutura' },
-          { id: 'palette', label: 'Cores' },
-          { id: 'logo', label: 'Logotipo' },
-          { id: 'background', label: 'Fundo' },
-        ].map(sub => (
-          <button
-            key={sub.id}
-            type="button"
-            onClick={() => {
-              setActiveSubTab(sub.id as any);
-              if (onSubTabChange) onSubTabChange();
-            }}
-            className={`flex-1 min-w-fit text-[11px] font-semibold py-1.5 px-2 rounded-lg transition-all cursor-pointer text-center whitespace-nowrap shrink-0 ${
-              activeSubTab === sub.id
-                ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-xs font-bold'
-                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            {sub.label}
-          </button>
-        ))}
+  // Accordion section header component
+  const AccordionHeader = ({ id, label, icon, badge }: { id: string; label: string; icon?: React.ReactNode; badge?: React.ReactNode }) => (
+    <button
+      type="button"
+      onClick={() => { toggleSection(id); if (onSubTabChange) onSubTabChange(); }}
+      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left transition-all cursor-pointer group border ${
+        isOpen(id)
+          ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/15'
+          : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/70 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        {icon && <span className={`${isOpen(id) ? 'text-white' : 'text-blue-500 dark:text-blue-400'}`}>{icon}</span>}
+        <span className="text-xs font-bold">{label}</span>
+        {badge}
       </div>
+      {isOpen(id)
+        ? <ChevronUp className="w-3.5 h-3.5 opacity-80 shrink-0" />
+        : <ChevronDown className="w-3.5 h-3.5 opacity-50 shrink-0" />}
+    </button>
+  );
 
-      {/* 1. PRESETS TAB */}
-      {activeSubTab === 'presets' && (
+  return (
+    <div className="flex flex-col h-full bg-white dark:bg-slate-900 overflow-y-auto p-3 space-y-2 select-none">
+
+      {/* ═══ SEÇÃO 1: TEMAS ═══ */}
+      <AccordionHeader id="presets" label="Temas" icon={<Sparkles className="w-3.5 h-3.5" />} />
+      {isOpen('presets') && (
         <div className="space-y-4">
           {/* Hotspot Layout Templates / Presets */}
           {setTemplate && availableTemplates && availableTemplates.length > 0 && (
@@ -235,8 +245,9 @@ export default function BrandingStudioPanel({
         </div>
       )}
 
-      {/* 2. ESTRUTURA & CAIXAS (LAYOUT) TAB */}
-      {activeSubTab === 'layout' && (
+      {/* ═══ SEÇÃO 2: ESTRUTURA ═══ */}
+      <AccordionHeader id="layout" label="Estrutura & Caixas" icon={<Box className="w-3.5 h-3.5" />} />
+      {isOpen('layout') && (
         <div className="space-y-4">
           {/* Formato e Geometria do Card Principal */}
           <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-3">
@@ -642,8 +653,16 @@ export default function BrandingStudioPanel({
         </div>
       )}
 
-      {/* 3. PALETTE & CONTRAST TAB */}
-      {activeSubTab === 'palette' && (
+      {/* ═══ SEÇÃO 3: CORES ═══ */}
+      <AccordionHeader id="palette" label="Cores & Contraste" icon={<Sliders className="w-3.5 h-3.5" />}
+        badge={<span className={`ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-md leading-none ${
+          isOpen('palette') ? 'bg-white/20 text-white' :
+          (buttonContrast < 4.5 || cardTextContrast < 4.5)
+            ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+            : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+        }`}>{buttonContrast < 4.5 || cardTextContrast < 4.5 ? '⚠ Contraste' : '✓ WCAG'}</span>}
+      />
+      {isOpen('palette') && (
         <div className="space-y-4">
           {/* WCAG Contrast Shield Card */}
           <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 space-y-2">
@@ -713,8 +732,9 @@ export default function BrandingStudioPanel({
         </div>
       )}
 
-      {/* 3. LOGO TAB */}
-      {activeSubTab === 'logo' && (() => {
+      {/* ═══ SEÇÃO 4: LOGOTIPO ═══ */}
+      <AccordionHeader id="logo" label="Logotipo & Título" icon={<ImageIcon className="w-3.5 h-3.5" />} />
+      {isOpen('logo') && (() => {
         const isLogoEnabled = brand.displayMode !== 'none';
 
         return (
@@ -917,8 +937,9 @@ export default function BrandingStudioPanel({
         );
       })()}
 
-      {/* 4. BACKGROUND TAB */}
-      {activeSubTab === 'background' && (
+      {/* ═══ SEÇÃO 5: FUNDO ═══ */}
+      <AccordionHeader id="background" label="Fundo & Efeitos" icon={<Sparkles className="w-3.5 h-3.5" />} />
+      {isOpen('background') && (
         <div className="space-y-4">
           <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-3">
             <div className="flex items-center justify-between">
