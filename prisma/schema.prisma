@@ -77,6 +77,12 @@ model HotspotLead {
   trialBlocked     Boolean   @default(false) // Bloqueado por expiração ou tentativa de burla
   trialGrantedAt   DateTime? // Momento em que recebeu os 15m de carência
   userAgent        String?   // User-Agent do dispositivo no momento do cadastro
+  deviceModel      String?
+  deviceVendor     String?
+  deviceType       String?
+  osName           String?
+  osVersion        String?
+  browserName      String?
   createdAt        DateTime  @default(now())
   payments         Payment[]
 }

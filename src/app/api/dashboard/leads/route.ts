@@ -101,14 +101,7 @@ export async function GET() {
     };
 
     // Device / OS distribution — from real userAgent captured at registration
-    const deviceGroups: Record<string, number> = {
-      'Android': 0,
-      'iOS (iPhone)': 0,
-      'Windows': 0,
-      'Mac': 0,
-      'Linux': 0,
-      'Outros': 0
-    };
+    const deviceGroups: Record<string, number> = {};
 
     // Monthly signups (last 6 months)
     const monthlyStats: Record<string, { novos: number; recorrentes: number; total: number }> = {};
@@ -195,14 +188,25 @@ export async function GET() {
       else if (g === 'outro' || g === 'outros' || g === 'não informar' || g === 'nao informar') genderGroups['Outro']++;
       else genderGroups['Não informado']++;
 
-      // Device groups — detect from real userAgent captured at registration
-      const ua = ((lead as any).userAgent || '').toLowerCase();
-      if (/iphone|ipad|ipod/.test(ua)) deviceGroups['iOS (iPhone)']++;
-      else if (/android/.test(ua)) deviceGroups['Android']++;
-      else if (/windows/.test(ua)) deviceGroups['Windows']++;
-      else if (/mac os|macintosh/.test(ua)) deviceGroups['Mac']++;
-      else if (/linux/.test(ua)) deviceGroups['Linux']++;
-      else deviceGroups['Outros']++;
+      // Device groups — detect from new fields, fallback to userAgent
+      let deviceLabel = 'Outros';
+      const os = (lead.osName || '').toLowerCase();
+      const model = (lead.deviceModel || '').trim();
+      const vendor = (lead.deviceVendor || '').trim();
+
+      if (model || vendor) {
+         deviceLabel = `${vendor} ${model}`.trim();
+      } else if (os) {
+         deviceLabel = lead.osName!;
+      } else {
+        const ua = ((lead as any).userAgent || '').toLowerCase();
+        if (/iphone|ipad|ipod/.test(ua)) deviceLabel = 'iOS (iPhone)';
+        else if (/android/.test(ua)) deviceLabel = 'Android';
+        else if (/windows/.test(ua)) deviceLabel = 'Windows';
+        else if (/mac os|macintosh/.test(ua)) deviceLabel = 'Mac';
+        else if (/linux/.test(ua)) deviceLabel = 'Linux';
+      }
+      deviceGroups[deviceLabel] = (deviceGroups[deviceLabel] || 0) + 1;
 
       // Age calculation
       if (lead.birthDate) {

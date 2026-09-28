@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { getMikrotikClient } from '@/lib/session';
 import { routerErrorResponse } from '@/lib/api-error';

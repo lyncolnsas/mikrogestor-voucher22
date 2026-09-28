@@ -53,7 +53,7 @@ export default function LeadsWorkspace({
     try {
       setLoading(true);
       setError('');
-      const res = await fetch('/api/dashboard/leads');
+      const res = await fetch(`/api/dashboard/leads?_t=${Date.now()}`, { cache: 'no-store' });
       const json = await res.json();
       if (json.success) {
         setData(json.data);

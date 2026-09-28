@@ -201,7 +201,7 @@ export default function Users() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/hotspot/users');
+      const res = await fetch(`/api/hotspot/users?_t=${Date.now()}`, { cache: 'no-store' });
       if (res.status === 401) {
         setNotConnected(true);
         setLoading(false);

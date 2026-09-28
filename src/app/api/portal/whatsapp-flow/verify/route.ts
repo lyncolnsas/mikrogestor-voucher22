@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { whatsappService } from '@/services/whatsapp';
+import { UAParser } from 'ua-parser-js';
 
 export async function POST(request: Request) {
   try {
@@ -29,11 +30,24 @@ export async function POST(request: Request) {
     });
     
     if (!existingLead) {
+       const userAgent = request.headers.get('user-agent') || '';
+       const parser = new UAParser(userAgent);
+       const parsedDevice = parser.getDevice();
+       const parsedOs = parser.getOS();
+       const parsedBrowser = parser.getBrowser();
+
        await prisma.hotspotLead.create({
           data: {
              name: name,
              whatsappNumber: formattedJid,
-             hotspotUser: name.replace(/\s+/g, '').toLowerCase() // temporário até ele escolher um nome
+             hotspotUser: name.replace(/\s+/g, '').toLowerCase(), // temporário até ele escolher um nome
+             userAgent,
+             deviceModel: parsedDevice.model || null,
+             deviceVendor: parsedDevice.vendor || null,
+             deviceType: parsedDevice.type || 'mobile',
+             osName: parsedOs.name || null,
+             osVersion: parsedOs.version || null,
+             browserName: parsedBrowser.name || null,
           }
        });
     }

@@ -9,6 +9,7 @@ import { resolveTemplateDir } from '@/lib/portal-template-utils';
 import { getMaskedPortalDomain, getMaskedPortalUrl, isVpsMode } from '@/lib/domain';
 import { getCustomTemplate, applyTemplateTags, getFlowConfig, getTriggerSendOptions, getEffectiveWifiName } from '@/services/whatsapp-custom-messages';
 import { signCustomerJwt } from '@/lib/jwt';
+import { UAParser } from 'ua-parser-js';
 
 
 interface PortalConfig {
@@ -532,38 +533,45 @@ export async function POST(request: Request) {
     // 4. Save lead in Database
     // Capture user-agent for device detection
     const registrationUserAgent = request.headers.get('user-agent') || '';
+    
+    // Extract device details using UAParser
+    const parser = new UAParser(registrationUserAgent);
+    const parsedDevice = parser.getDevice();
+    const parsedOs = parser.getOS();
+    const parsedBrowser = parser.getBrowser();
 
     let lead;
     try {
       const isGrantingTrial = !isFreeWifi && Boolean(planId);
+      
+      const leadData = {
+        name: finalName,
+        phone: rawPhone || null,
+        whatsappNumber: rawPhone || null,
+        birthDate: parsedBirthDate,
+        email: email || null,
+        cpf: rawCpf,
+        gender: gender || null,
+        userAgent: registrationUserAgent || null,
+        deviceModel: parsedDevice.model || null,
+        deviceVendor: parsedDevice.vendor || null,
+        deviceType: parsedDevice.type || 'mobile',
+        osName: parsedOs.name || null,
+        osVersion: parsedOs.version || null,
+        browserName: parsedBrowser.name || null,
+        password: passwordStr,
+        customFieldValue: customFieldValue || null,
+        optInCourses: isOptedIn,
+      };
+
       lead = await prisma.hotspotLead.upsert({
         where: { hotspotUser },
         update: {
-          name: finalName,
-          phone: rawPhone || null,
-          whatsappNumber: rawPhone || null,
-          birthDate: parsedBirthDate,
-          email: email || null,
-          cpf: rawCpf,
-          gender: gender || null,
-          userAgent: registrationUserAgent || null,
-          password: passwordStr,
-          customFieldValue: customFieldValue || null,
-          optInCourses: isOptedIn,
+          ...leadData,
           trialGrantedAt: isGrantingTrial ? new Date() : undefined,
         },
         create: {
-          name: finalName,
-          phone: rawPhone || null,
-          whatsappNumber: rawPhone || null,
-          birthDate: parsedBirthDate,
-          email: email || null,
-          cpf: rawCpf,
-          gender: gender || null,
-          userAgent: registrationUserAgent || null,
-          password: passwordStr,
-          customFieldValue: customFieldValue || null,
-          optInCourses: isOptedIn,
+          ...leadData,
           hotspotUser,
           trialGrantedAt: isGrantingTrial ? new Date() : null,
         }
