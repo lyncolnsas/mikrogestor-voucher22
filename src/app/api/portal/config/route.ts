@@ -1898,12 +1898,17 @@ ${newConfig.brand?.displayMode === 'none' ? `
       let logoHtml = '';
 
       if (isLogoEnabled) {
+        const explicitLogoUrl = newConfig.brand?.logoUrl ? String(newConfig.brand.logoUrl).trim() : '';
+        const logoSrc = explicitLogoUrl
+          ? (explicitLogoUrl.startsWith('http') ? explicitLogoUrl : `${MG_SERVER_BASE}${explicitLogoUrl.startsWith('/') ? '' : '/'}${explicitLogoUrl}`)
+          : `${MG_SERVER_BASE}/api/portal/logo?template=${encodeURIComponent(template)}`;
+
         const lSize = newConfig.brand?.logoSize || 120;
         const lShape = newConfig.brand?.logoShape || 'rounded';
         const rad = lShape === 'circle' ? '50%' : (lShape === 'rounded' ? '12px' : '0');
         const lAlign = newConfig.brand?.textAlign || 'center';
         const justify = lAlign === 'left' ? 'flex-start' : (lAlign === 'right' ? 'flex-end' : 'center');
-        logoHtml = `<!-- MIKROGESTOR_BRAND_LOGO -->\n<div id="mg-brand-container" style="display: flex; justify-content: ${justify}; align-items: center; margin-bottom: 20px; width: 100%; text-align: ${lAlign};">\n  <img src="${MG_SERVER_BASE}/api/portal/logo?template=${encodeURIComponent(template)}" alt="Logo" style="max-width: ${lSize}px; max-height: ${lSize}px; width: auto; height: auto; border-radius: ${rad}; object-fit: contain; display: block;" onerror="this.style.display='none'; if (this.parentElement) this.parentElement.style.display='none';" />\n</div>\n<!-- END_MIKROGESTOR_BRAND_LOGO -->`;
+        logoHtml = `<!-- MIKROGESTOR_BRAND_LOGO -->\n<div id="mg-brand-container" class="mg-brand-container" style="display: flex; justify-content: ${justify}; align-items: center; margin-bottom: 20px; width: 100%; text-align: ${lAlign};">\n  <img src="${logoSrc}" class="logo brand-logo" alt="" style="max-width: ${lSize}px; max-height: ${lSize}px; width: auto; height: auto; border-radius: ${rad}; object-fit: contain; display: block;" onerror="this.style.display='none'; if (this.parentElement) this.parentElement.style.display='none';" />\n</div>\n<!-- END_MIKROGESTOR_BRAND_LOGO -->`;
       } else {
         logoHtml = `<!-- MIKROGESTOR_BRAND_LOGO -->\n<!-- END_MIKROGESTOR_BRAND_LOGO -->`;
       }
@@ -1918,6 +1923,11 @@ ${newConfig.brand?.displayMode === 'none' ? `
         } else if (/<form[^>]*>/i.test(html)) {
           html = html.replace(/(<form[^>]*>)/i, `$1\n        ${logoHtml}`);
         }
+      }
+
+      if (!isLogoEnabled) {
+        html = html.replace(/<div[^>]*id=["']mg-(?:live-)?brand-container["'][^>]*>[\s\S]*?<\/div>/gi, '');
+        html = html.replace(/<img[^>]*class=["'][^"']*\b(?:logo|brand-logo)\b[^"']*["'][^>]*>/gi, '');
       }
 
       const bgBlockRegex = /(<!--\s*MIKROGESTOR_BG_SCRIPT\s*-->|<!--\s*MIKROGESTOR BG\s*-->)[\s\S]*?(<!--\s*END_MIKROGESTOR_BG_SCRIPT\s*-->|<!--\s*END MIKROGESTOR BG\s*-->)/i;

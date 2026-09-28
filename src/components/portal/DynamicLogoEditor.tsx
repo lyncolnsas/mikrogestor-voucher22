@@ -17,6 +17,7 @@ import {
 export interface BrandConfig {
   headerStyle: 'hidden' | 'transparent' | 'floating' | 'solid';
   displayMode: 'image' | 'text' | 'both' | 'badge' | 'none';
+  logoUrl?: string;
   logoBg: 'none' | 'glass' | 'white' | 'dark' | 'brand' | 'glow' | 'custom';
   logoBgCustomColor: string;
   logoShape: 'circle' | 'rounded' | 'square' | 'pill';

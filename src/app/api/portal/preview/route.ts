@@ -70,8 +70,16 @@ export async function GET(request: Request) {
     const svgWifiIcon = `<svg style="height: 28px; width: 28px; fill: #ffffff;" viewBox="0 0 24 24"><path d="M12 3C6.95 3 2.5 5.56 0 9.42l2.36 2.36C4.12 8.44 7.78 6.5 12 6.5s7.88 1.94 9.64 5.28L24 9.42C21.5 5.56 17.05 3 12 3zm0 5c-3.31 0-6.29 1.52-8.25 3.91l2.36 2.36C7.39 12.87 9.53 12 12 12s4.61.87 5.89 2.27l2.36-2.36C18.29 9.52 15.31 8 12 8zm0 5c-1.38 0-2.5 1.12-2.5 2.5v.5H9c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1h-.5v-.5c0-1.38-1.12-2.5-2.5-2.5zm1 3h-2v-.5c0-.55.45-1 1-1s1 .45 1 1v.5z"/></svg>`;
     html = html.replace(/<img[^>]*wifi-lock\.png[^>]*>/gi, svgWifiIcon);
 
-    // Sanitize onerror handlers to prevent infinite image loops
-    html = html.replace(/onerror\s*=\s*["'][^"']*["']/gi, 'onerror="this.onerror=null;"');
+    // Sanitize onerror handlers: preserve display='none' fallbacks, prevent infinite loops
+    html = html.replace(/onerror\s*=\s*["']([^"']*)["']/gi, (match, body) => {
+      if (body.includes("display='none'") || body.includes('display="none"')) {
+        return `onerror="this.onerror=null; this.style.display='none'; if (this.parentElement && this.parentElement.id && this.parentElement.id.indexOf('brand') !== -1) this.parentElement.style.display='none';"`;
+      }
+      return 'onerror="this.onerror=null;"';
+    });
+
+    // Strip alt="Logo" so broken native image icons never display text [🖼️ Logo]
+    html = html.replace(/(<img[^>]*)\balt=["']Logo["']/gi, '$1alt=""');
 
     // 1. CRITICAL: Normalize any absolute URL pointing to uploads so the admin preview iframe loads it directly from localhost
     html = html.replace(/https?:\/\/[^\/"'\s\\]+\/uploads\//gi, '/uploads/');
@@ -103,7 +111,7 @@ export async function GET(request: Request) {
     // When logo is disabled in initialConfig, enforce hidden state immediately on initial HTML
     const isInitialLogoDisabled = initialConfig.brand?.displayMode === 'none';
     const initialLogoHideStyle = isInitialLogoDisabled
-      ? `<style id="mg-initial-logo-hide">#mg-live-brand-container, #mg-brand-container, .logo, #logo, .brand-logo, .edu-logo, .header-brand { display: none !important; visibility: hidden !important; height: 0 !important; min-height: 0 !important; max-height: 0 !important; padding: 0 !important; margin: 0 !important; border: none !important; opacity: 0 !important; pointer-events: none !important; overflow: hidden !important; }</style>`
+      ? `<style id="mg-initial-logo-hide">#mg-live-brand-container, #mg-brand-container, .mg-brand-container, .logo, #logo, .brand-logo, .edu-logo, .header-brand { display: none !important; visibility: hidden !important; height: 0 !important; min-height: 0 !important; max-height: 0 !important; padding: 0 !important; margin: 0 !important; border: none !important; opacity: 0 !important; pointer-events: none !important; overflow: hidden !important; }</style>`
       : '';
 
     // Remove duplicate fonts.css if already present in template
@@ -607,39 +615,25 @@ export async function GET(request: Request) {
 
       // 5.2 Logo & Tipografia da Marca
       var displayMode = brandCfg.displayMode || 'image'; // 'image' | 'text' | 'both' | 'none'
-      var logoEl = document.querySelector('.logo') || document.querySelector('#logo') || document.querySelector('img.brand-logo');
-      var logoContainer = document.getElementById('mg-live-brand-container');
+      var isLogoOff = displayMode === 'none';
+      var brandContainers = document.querySelectorAll('#mg-brand-container, #mg-live-brand-container, .mg-brand-container');
+      var allLogos = document.querySelectorAll('.logo, #logo, .brand-logo, .edu-logo, .header-brand, #mg-brand-container img, #mg-live-brand-container img');
 
-      if (displayMode === 'none') {
-        if (logoContainer) {
-          logoContainer.style.setProperty('display', 'none', 'important');
-        }
-        if (logoEl) {
-          logoEl.style.setProperty('display', 'none', 'important');
-        }
-        var otherLogos = document.querySelectorAll('.logo, #logo, .brand-logo, .edu-logo, .header-brand');
-        otherLogos.forEach(function(el) {
+      if (isLogoOff) {
+        brandContainers.forEach(function(el) {
+          el.style.setProperty('display', 'none', 'important');
+        });
+        allLogos.forEach(function(el) {
           el.style.setProperty('display', 'none', 'important');
         });
       } else {
-        var otherLogos = document.querySelectorAll('.logo, #logo, .brand-logo, .edu-logo, .header-brand');
-        otherLogos.forEach(function(el) {
-          if (el !== logoEl && el !== logoContainer) {
-            el.style.removeProperty('display');
-          }
-        });
-
+        var logoContainer = document.getElementById('mg-brand-container') || document.getElementById('mg-live-brand-container');
         if (!logoContainer) {
           var targetBox = document.querySelector('#box') || document.querySelector('.card') || document.querySelector('.login-card') || document.querySelector('form') || document.body;
-          if (logoEl && logoEl.parentNode) {
+          if (targetBox) {
             logoContainer = document.createElement('div');
-            logoContainer.id = 'mg-live-brand-container';
-            logoContainer.style.cssText = 'display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; width: 100%; text-align: center;';
-            logoEl.parentNode.insertBefore(logoContainer, logoEl);
-            logoContainer.appendChild(logoEl);
-          } else if (targetBox) {
-            logoContainer = document.createElement('div');
-            logoContainer.id = 'mg-live-brand-container';
+            logoContainer.id = 'mg-brand-container';
+            logoContainer.className = 'mg-brand-container';
             logoContainer.style.cssText = 'display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; width: 100%; text-align: center;';
             targetBox.prepend(logoContainer);
           }
@@ -653,6 +647,7 @@ export async function GET(request: Request) {
           logoContainer.style.alignItems = tAlign === 'left' ? 'flex-start' : tAlign === 'right' ? 'flex-end' : 'center';
           logoContainer.style.textAlign = tAlign;
 
+          var logoEl = logoContainer.querySelector('img') || document.querySelector('img.brand-logo') || document.querySelector('img.logo');
           if (!logoEl) {
             logoEl = document.createElement('img');
             logoEl.className = 'logo brand-logo';
@@ -661,18 +656,23 @@ export async function GET(request: Request) {
           }
 
           if (logoEl) {
+            logoEl.alt = '';
             logoEl.onerror = function() {
               this.style.setProperty('display', 'none', 'important');
+              if (logoContainer && brandCfg.displayMode === 'image') {
+                logoContainer.style.setProperty('display', 'none', 'important');
+              }
             };
             logoEl.onload = function() {
               this.style.setProperty('display', 'block', 'important');
+              if (logoContainer) logoContainer.style.setProperty('display', 'flex', 'important');
             };
 
             var currentTmpl = config.template || 'default';
-            var baseLogoUrl = '/api/portal/logo?template=' + currentTmpl;
-            if (!logoEl.dataset.loadedTmpl || logoEl.dataset.loadedTmpl !== currentTmpl) {
-              logoEl.dataset.loadedTmpl = currentTmpl;
-              logoEl.src = baseLogoUrl + '&t=' + Date.now();
+            var effectiveLogoUrl = brandCfg.logoUrl || ('/api/portal/logo?template=' + currentTmpl);
+            if (logoEl.dataset.loadedSrc !== effectiveLogoUrl) {
+              logoEl.dataset.loadedSrc = effectiveLogoUrl;
+              logoEl.src = effectiveLogoUrl + (effectiveLogoUrl.indexOf('?') === -1 ? '?' : '&') + 't=' + Date.now();
             }
             
             var lSize = brandCfg.logoSize || 120;
@@ -689,7 +689,12 @@ export async function GET(request: Request) {
             logoEl.style.setProperty('background', 'transparent', 'important');
             logoEl.style.setProperty('border', 'none', 'important');
             logoEl.style.setProperty('box-shadow', 'none', 'important');
-            logoEl.style.setProperty('display', 'block', 'important');
+
+            if (logoEl.complete && logoEl.naturalWidth > 0) {
+              logoEl.style.setProperty('display', 'block', 'important');
+            } else if (logoEl.complete && logoEl.naturalWidth === 0) {
+              logoEl.style.setProperty('display', 'none', 'important');
+            }
           }
         }
       }

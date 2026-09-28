@@ -671,7 +671,18 @@ export default function PortalEditor() {
           if (c.social) setSocial((prev: any) => ({ ...prev, ...c.social }));
           if (c.badges) setBadges((prev: any) => ({ ...prev, ...c.badges }));
           if (c.customCode) setCustomCode((prev: any) => ({ ...prev, ...c.customCode }));
-          if (c.brand) setBrand((prev: any) => ({ ...prev, ...c.brand }));
+          if (c.brand) {
+            setBrand((prev: any) => ({ ...prev, ...c.brand }));
+            if (c.brand.logoUrl) {
+              setLogoPreviewUrl(c.brand.logoUrl + (c.brand.logoUrl.includes('?') ? '&' : '?') + 't=' + Date.now());
+            } else if (c.brand.displayMode !== 'none') {
+              setLogoPreviewUrl(`/api/portal/logo?template=${template}&t=` + Date.now());
+            } else {
+              setLogoPreviewUrl('');
+            }
+          } else {
+            setLogoPreviewUrl(`/api/portal/logo?template=${template}&t=` + Date.now());
+          }
           if (c.ad) setAd((prev: any) => ({ ...prev, ...c.ad }));
           if (c.bg) setBg((prev: any) => ({ ...prev, ...c.bg }));
           if (c.fields) setFields((prev: any) => ({ ...prev, ...c.fields }));
@@ -700,7 +711,6 @@ export default function PortalEditor() {
           if (c.trialModalMessage !== undefined) setTrialModalMessage(c.trialModalMessage);
           if (c.trialModalConfirmText !== undefined) setTrialModalConfirmText(c.trialModalConfirmText);
           if (c.trialModalCancelText !== undefined) setTrialModalCancelText(c.trialModalCancelText);
-          setLogoPreviewUrl(`/api/portal/logo?template=${template}&t=` + Date.now());
         }
       } catch (err) {
         console.warn('Erro ao carregar configurações do portal:', err);
@@ -1045,6 +1055,7 @@ export default function PortalEditor() {
       setLogoPreviewUrl(file.url + '?t=' + ts);
       setBrand(prev => ({
         ...prev,
+        logoUrl: file.url,
         displayMode: prev.displayMode === 'none' ? 'image' : (prev.displayMode || 'image')
       }));
     }
@@ -1066,9 +1077,11 @@ export default function PortalEditor() {
       });
       const data = await res.json();
       if (data.success) {
-        setLogoPreviewUrl(`/api/portal/logo?template=${template}&t=` + Date.now());
+        const logoUrl = data.fileUrl || `/api/portal/logo?template=${template}&t=` + Date.now();
+        setLogoPreviewUrl(logoUrl);
         setBrand(prev => ({
           ...prev,
+          logoUrl: data.fileUrl || '',
           displayMode: prev.displayMode === 'none' ? 'image' : (prev.displayMode || 'image')
         }));
       }
@@ -1079,9 +1092,9 @@ export default function PortalEditor() {
 
   const handleLogoRemove = async () => {
     try {
-      setBrand(prev => ({ ...prev, displayMode: 'none' }));
+      setBrand(prev => ({ ...prev, displayMode: 'none', logoUrl: '' }));
       await fetch(`/api/portal/upload?template=${template}&type=logo`, { method: 'DELETE' });
-      setLogoPreviewUrl(`/api/portal/logo?template=${template}&t=` + Date.now());
+      setLogoPreviewUrl('');
     } catch (e) {
       console.error('Erro ao remover logotipo:', e);
     }

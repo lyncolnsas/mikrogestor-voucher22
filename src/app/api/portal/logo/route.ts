@@ -24,11 +24,20 @@ export async function GET(request: Request) {
           }
           return new Response(null, { status: 404, statusText: 'Logo Disabled' });
         }
+        // 1.1 Check if config defines an explicit logoUrl
+        if (cfg.brand && cfg.brand.logoUrl) {
+          let rel = String(cfg.brand.logoUrl).split('?')[0];
+          if (rel.startsWith('/')) rel = rel.substring(1);
+          const candidatePath = path.join(process.cwd(), 'public', rel);
+          if (fs.existsSync(candidatePath) && fs.statSync(candidatePath).isFile()) {
+            targetPath = candidatePath;
+          }
+        }
       } catch (e) {}
     }
 
     // 2. Search in public/uploads for this specific template's logo
-    if (fs.existsSync(uploadDir)) {
+    if (!targetPath && fs.existsSync(uploadDir)) {
       const files = fs.readdirSync(uploadDir);
       const matches = files
         .filter(f => (f.startsWith(`logo_${safeName}_`) || f === `logo_${safeName}.png`) && (f.endsWith('.png') || f.endsWith('.jpg') || f.endsWith('.jpeg') || f.endsWith('.webp') || f.endsWith('.svg')))

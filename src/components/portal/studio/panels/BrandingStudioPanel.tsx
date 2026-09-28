@@ -794,7 +794,7 @@ export default function BrandingStudioPanel({
               <>
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex items-center gap-4">
                   <div className="w-16 h-16 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-300 dark:border-slate-700 shrink-0 relative">
-                    {logoImgError ? (
+                    {logoImgError || !logoPreviewUrl ? (
                       <div className="flex flex-col items-center justify-center text-center p-1">
                         <Sparkles className="w-5 h-5 text-slate-400 dark:text-slate-500 mb-0.5" />
                         <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 leading-tight">Sem Logo</span>
@@ -803,7 +803,7 @@ export default function BrandingStudioPanel({
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img 
                         src={logoPreviewUrl} 
-                        alt="Logo" 
+                        alt="" 
                         onError={() => setLogoImgError(true)}
                         onLoad={() => setLogoImgError(false)}
                         className="w-full h-full object-contain p-1" 
