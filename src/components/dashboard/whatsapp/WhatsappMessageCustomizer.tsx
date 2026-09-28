@@ -7,7 +7,7 @@ import {
   CheckCircle2, AlertCircle, Tag, Eye, Info, Check,
   Clock, ArrowRight, Sliders, ToggleLeft, ToggleRight,
   ShieldCheck, Zap, UserCheck, ShoppingCart, Bot,
-  Image as ImageIcon, Video, Music, FileText, Library, X, Shuffle, ChevronDown, ChevronUp
+  Image as ImageIcon, Video, Music, FileText, Library, X, Shuffle, ChevronDown, ChevronUp, Wifi
 } from 'lucide-react';
 import { spinText, hasSpintax } from '@/utils/spintax';
 
@@ -92,6 +92,9 @@ export function WhatsappMessageCustomizer() {
   const [feedback, setFeedback] = useState<{ key: string; success: boolean; message: string } | null>(null);
   const [copiedTag, setCopiedTag] = useState<string | null>(null);
 
+  const [wifiNetworkName, setWifiNetworkName] = useState<string>('');
+  const [savingWifiName, setSavingWifiName] = useState(false);
+
   // Régua / Fluxograma
   const [flowMap, setFlowMap] = useState<SystemFlowMap | null>(null);
   const [savingFlow, setSavingFlow] = useState(false);
@@ -104,6 +107,9 @@ export function WhatsappMessageCustomizer() {
       .then((data) => {
         if (data.success && data.triggers) {
           setTriggers(data.triggers);
+          if (data.wifiName) {
+            setWifiNetworkName(data.wifiName);
+          }
           if (data.flowConfig) {
             setFlowMap(data.flowConfig);
           }
@@ -193,6 +199,30 @@ export function WhatsappMessageCustomizer() {
       setFeedback({ key: 'SYSTEM_MODE', success: false, message: 'Falha na conexão' });
     } finally {
       setUpdatingSystemMode(false);
+      setTimeout(() => setFeedback(null), 4000);
+    }
+  };
+
+  const handleSaveWifiName = async () => {
+    if (!wifiNetworkName.trim()) return;
+    setSavingWifiName(true);
+    try {
+      const res = await fetch('/api/admin/whatsapp-messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'setWifiName', wifiName: wifiNetworkName.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setWifiNetworkName(data.wifiName);
+        setFeedback({ key: 'WIFI_NAME', success: true, message: data.message });
+      } else {
+        setFeedback({ key: 'WIFI_NAME', success: false, message: data.message || 'Erro ao salvar' });
+      }
+    } catch {
+      setFeedback({ key: 'WIFI_NAME', success: false, message: 'Falha na conexão com o servidor' });
+    } finally {
+      setSavingWifiName(false);
       setTimeout(() => setFeedback(null), 4000);
     }
   };
@@ -339,7 +369,11 @@ export function WhatsappMessageCustomizer() {
     let preview = text;
     tags.forEach((t) => {
       const regex = new RegExp(t.tag.replace(/[{}]/g, '\\$&'), 'gi');
-      preview = preview.replace(regex, t.example);
+      let val = t.example;
+      if (t.tag === '{rede_wifi}') {
+        val = wifiNetworkName.trim() || 'Faculdade Adventista do Paraná';
+      }
+      preview = preview.replace(regex, val);
     });
     return spinText(preview);
   };
@@ -414,6 +448,62 @@ export function WhatsappMessageCustomizer() {
             <span>{feedback.message}</span>
           </div>
         )}
+
+        {/* ── Banner de Configuração Exata do Nome da Rede Wi-Fi (SSID) ─────── */}
+        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-slate-50 border-2 border-blue-200 rounded-2xl p-4 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                <Wifi className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-black text-slate-900">
+                    Nome Exato da Rede Wi-Fi (SSID)
+                  </h3>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                    Tag {'{rede_wifi}'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5 max-w-2xl">
+                  Digite o nome exato da sua rede Wi-Fi como ela aparece no celular do cliente (SSID). A tag <code className="font-bold text-blue-700 bg-blue-100/60 px-1 py-0.5 rounded">{'{rede_wifi}'}</code> e o link de login em todas as mensagens usarão exatamente este nome.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:shrink-0 w-full sm:w-auto">
+              <input
+                type="text"
+                value={wifiNetworkName}
+                onChange={(e) => setWifiNetworkName(e.target.value)}
+                placeholder="Ex: Faculdade Adventista do Paraná"
+                className="flex-1 sm:w-72 px-3.5 py-2 text-xs font-semibold bg-white text-slate-900 border-2 border-slate-300 rounded-xl focus:border-blue-500 focus:outline-hidden transition-all shadow-xs"
+              />
+              <button
+                type="button"
+                onClick={handleSaveWifiName}
+                disabled={savingWifiName || !wifiNetworkName.trim()}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                {savingWifiName ? (
+                  <RefreshCcw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Save className="w-3.5 h-3.5" />
+                )}
+                <span>Salvar Nome</span>
+              </button>
+            </div>
+          </div>
+
+          {feedback && feedback.key === 'WIFI_NAME' && (
+            <div className={`mt-3 p-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 animate-fade-in ${
+              feedback.success ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-rose-50 border-rose-300 text-rose-800'
+            }`}>
+              {feedback.success ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />}
+              <span>{feedback.message}</span>
+            </div>
+          )}
+        </div>
 
         {/* ── Grid Principal de 2 Colunas: Jornada vs Editor ────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

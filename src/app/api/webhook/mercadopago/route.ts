@@ -4,7 +4,7 @@ import { MikrotikAPI } from '@/lib/routeros';
 import { whatsappService } from '@/services/whatsapp';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { getMaskedPortalDomain } from '@/lib/domain';
-import { getCustomTemplate, applyTemplateTags, getTriggerSendOptions } from '@/services/whatsapp-custom-messages';
+import { getCustomTemplate, applyTemplateTags, getTriggerSendOptions, getEffectiveWifiName } from '@/services/whatsapp-custom-messages';
 
 export async function POST(request: Request) {
   try {
@@ -195,7 +195,7 @@ export async function POST(request: Request) {
                          if (contactPhone) {
                             const plan = await (prisma.whatsappPlan as any).findFirst({ where: { profile: payment.profile } });
                             const planTitle = plan?.title || payment.profile || 'Plano de Acesso';
-                            const wifiName = process.env.HOTSPOT_WIFI_NAME || 'nossa rede Wi-Fi';
+                            const wifiName = await getEffectiveWifiName();
                             const portalDomain = getMaskedPortalDomain();
                             
                             const rawTemplate = await getCustomTemplate('WA_MSG_PAYMENT_APPROVED_HOTSPOT');

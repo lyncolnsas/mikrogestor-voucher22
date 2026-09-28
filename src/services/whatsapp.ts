@@ -617,13 +617,13 @@ class WhatsappSpecialist {
     // ── Passo Inicial (Cliente chamou no WhatsApp sem cadastro prévio) ──
     if (!state.step || state.step === 0) {
       const portalUrl = getMaskedPortalUrl();
-      const wifiName = process.env.HOTSPOT_WIFI_NAME || 'nossa rede Wi-Fi';
+      const { getCustomTemplate, applyTemplateTags, getTriggerSendOptions, getEffectiveWifiName } = await import('@/services/whatsapp-custom-messages');
+      const wifiName = await getEffectiveWifiName();
 
       const isFree = (await prisma.systemConfig.findUnique({ where: { key: 'free_wifi_mode' } }))?.value === 'true' ||
                      (await prisma.systemConfig.findUnique({ where: { key: 'PORTAL_SALES_MODE' } }))?.value === 'free';
 
       const chatbotKey = isFree ? 'WA_MSG_CHATBOT_GREETING_FREE' : 'WA_MSG_CHATBOT_GREETING_PAID';
-      const { getCustomTemplate, applyTemplateTags, getTriggerSendOptions } = await import('@/services/whatsapp-custom-messages');
       const rawChatbotTemplate = await getCustomTemplate(chatbotKey);
       const sendOpts = await getTriggerSendOptions(chatbotKey);
 

@@ -5,7 +5,8 @@ import {
   MessageTriggerDefinition,
   getFlowConfig,
   saveFlowConfig,
-  SystemFlowMap
+  SystemFlowMap,
+  getEffectiveWifiName
 } from '@/services/whatsapp-custom-messages';
 
 export async function GET() {
@@ -49,7 +50,9 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ success: true, triggers, activeSystemMode, flowConfig });
+    const wifiName = await getEffectiveWifiName();
+
+    return NextResponse.json({ success: true, triggers, activeSystemMode, flowConfig, wifiName });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error?.message || 'Erro ao carregar templates' }, { status: 500 });
   }
@@ -58,7 +61,34 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { key, template, action, mode, flowConfig, mediaUrl, mediaType, forwardLibraryId } = body;
+    const { key, template, action, mode, flowConfig, mediaUrl, mediaType, forwardLibraryId, wifiName } = body;
+
+    // Ação para configurar o nome exato da rede Wi-Fi (SSID)
+    if (action === 'setWifiName') {
+      const newWifiName = (wifiName || '').trim();
+      if (!newWifiName) {
+        return NextResponse.json({ success: false, message: 'O nome da rede Wi-Fi não pode ser vazio' }, { status: 400 });
+      }
+
+      await Promise.all([
+        prisma.systemConfig.upsert({
+          where: { key: 'HOTSPOT_WIFI_NAME' },
+          update: { value: newWifiName },
+          create: { key: 'HOTSPOT_WIFI_NAME', value: newWifiName }
+        }),
+        prisma.systemConfig.upsert({
+          where: { key: 'HOTSPOT_NETWORK_NAME' },
+          update: { value: newWifiName },
+          create: { key: 'HOTSPOT_NETWORK_NAME', value: newWifiName }
+        })
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        message: `Nome da rede Wi-Fi configurado para: "${newWifiName}"`,
+        wifiName: newWifiName
+      });
+    }
 
     // Ação para salvar o fluxograma completo
     if (action === 'saveFlow') {

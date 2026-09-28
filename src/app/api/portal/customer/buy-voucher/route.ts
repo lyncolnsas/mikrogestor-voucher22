@@ -176,7 +176,8 @@ export async function POST(request: Request) {
       const contactPhone = lead.phone || lead.whatsappNumber;
       if (contactPhone) {
         const { whatsappService } = await import('@/services/whatsapp');
-        const { getCustomTemplate, applyTemplateTags, getTriggerSendOptions } = await import('@/services/whatsapp-custom-messages');
+        const { getCustomTemplate, applyTemplateTags, getTriggerSendOptions, getEffectiveWifiName } = await import('@/services/whatsapp-custom-messages');
+        const wifiName = await getEffectiveWifiName();
         const codesStr = payments.map((p, idx) => `🎟️ *Voucher ${idx+1}:*\nUsuário: ${p.voucherCode}\nSenha: ${p.voucherCode}`).join('\n\n');
         const giftLine = forFriend && friendName ? `\n👤 *Para:* ${friendName}` : '';
         const totalValor = `R$ ${(plan.price * voucherQty).toFixed(2).replace('.', ',')}`;
@@ -192,7 +193,7 @@ export async function POST(request: Request) {
             pix_copia_cola: pixPayload,
             usuario: payments[0]?.voucherCode || lead.hotspotUser,
             senha: payments[0]?.voucherCode || lead.hotspotUser,
-            rede_wifi: process.env.HOTSPOT_WIFI_NAME || 'nossa rede Wi-Fi'
+            rede_wifi: wifiName
           });
 
           // 1. Envia mensagem do PIX

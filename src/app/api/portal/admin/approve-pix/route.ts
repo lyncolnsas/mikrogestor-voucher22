@@ -5,6 +5,7 @@ import { verifyJwt } from '@/lib/jwt';
 import { MikrotikAPI } from '@/lib/routeros';
 import { whatsappService } from '@/services/whatsapp';
 import { getMaskedPortalDomain } from '@/lib/domain';
+import { getEffectiveWifiName } from '@/services/whatsapp-custom-messages';
 
 export async function POST(request: Request) {
   try {
@@ -267,7 +268,7 @@ export async function POST(request: Request) {
           if (contactPhone) {
             const plan = await (prisma.whatsappPlan as any).findFirst({ where: { profile: payment.profile } });
             const planTitle = plan?.title || payment.profile || 'Plano de Acesso';
-            const wifiName = process.env.HOTSPOT_WIFI_NAME || 'nossa rede Wi-Fi';
+            const wifiName = await getEffectiveWifiName();
             const portalDomain = getMaskedPortalDomain();
             
             const msg = `🎉 *Pagamento Confirmado!*\n\nSeu plano *${planTitle}* foi ativado com sucesso após verificação manual!\n\n🌐 *Status da Conexão:* Ativa\n👤 *Usuário:* ${finalUsername}\n🔑 *Senha:* ${finalPassword}\n\nVocê pode acompanhar o seu plano através do portal:\n👉 http://${portalDomain}/portal/planos\n\n⚠️ *Atenção:* Este link só funciona se você estiver conectado(a) ao Wi-Fi ${wifiName}.\n\nObrigado pela paciência e bom uso!`;

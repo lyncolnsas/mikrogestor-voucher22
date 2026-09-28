@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { spinText } from '@/utils/spintax';
 
@@ -367,6 +369,62 @@ export async function getCustomTemplate(key: string): Promise<string> {
 }
 
 /**
+ * Retorna o nome exato da rede Wi-Fi (SSID) pré-configurado
+ */
+export async function getEffectiveWifiName(): Promise<string> {
+  // 1. Configuração explícita salva no banco de dados (prioridade máxima)
+  try {
+    const configs = await prisma.systemConfig.findMany({
+      where: {
+        key: { in: ['HOTSPOT_WIFI_NAME', 'HOTSPOT_NETWORK_NAME'] },
+      },
+    });
+    const wifiConf = configs.find((c) => c.key === 'HOTSPOT_WIFI_NAME')?.value?.trim();
+    if (wifiConf) return wifiConf;
+
+    const netConf = configs.find((c) => c.key === 'HOTSPOT_NETWORK_NAME')?.value?.trim();
+    if (netConf) return netConf;
+  } catch (err) {
+    console.error('[getEffectiveWifiName] Erro ao buscar no banco:', err);
+  }
+
+  // 2. Variável de ambiente do sistema
+  if (process.env.HOTSPOT_WIFI_NAME?.trim()) {
+    return process.env.HOTSPOT_WIFI_NAME.trim();
+  }
+  if (process.env.HOTSPOT_NETWORK_NAME?.trim()) {
+    return process.env.HOTSPOT_NETWORK_NAME.trim();
+  }
+
+  // 3. Metadata do template ativo em uso (ex: FAP -> "Faculdade Adventista do Paraná")
+  try {
+    const lastTpl = await prisma.systemConfig.findUnique({
+      where: { key: 'LAST_DEPLOYED_TEMPLATE' },
+    });
+    const tplName = lastTpl?.value?.trim() || 'FAP';
+    const configPath = path.join(process.cwd(), 'hotspot', tplName, 'config.json');
+    if (fs.existsSync(configPath)) {
+      const parsed = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      if (parsed.businessName?.trim()) return parsed.businessName.trim();
+      if (parsed.brand?.subtitleText?.trim()) return parsed.brand.subtitleText.trim();
+    }
+  } catch (err) {
+    console.error('[getEffectiveWifiName] Erro ao ler template ativo:', err);
+  }
+
+  // 4. Nome ou descrição do roteador MikroTik ativo (se houver e não for teste)
+  try {
+    const router = await prisma.router.findFirst({ where: { active: true } });
+    if (router?.name && router.name !== 'teste' && router.name !== 'default') {
+      return router.name.trim();
+    }
+  } catch {}
+
+  // 5. Default padrão institucional exato
+  return 'Faculdade Adventista do Paraná';
+}
+
+/**
  * Interpola tags {variavel} no texto do template
  */
 export function applyTemplateTags(template: string, vars: Record<string, string>): string {
@@ -383,6 +441,11 @@ export function applyTemplateTags(template: string, vars: Record<string, string>
   if (!finalVars.link_da_pagina_de_login && finalVars.link_portal) {
     finalVars.link_da_pagina_de_login = finalVars.link_portal.replace(/\/portal\/planos\/?$/i, '/portal/login');
     finalVars.link_login = finalVars.link_da_pagina_de_login;
+  }
+
+  // Pré-configuração estrita da rede Wi-Fi: se vazia ou genérica, usa o fallback exato
+  if (!finalVars.rede_wifi || finalVars.rede_wifi.trim() === '' || finalVars.rede_wifi === 'nossa rede Wi-Fi') {
+    finalVars.rede_wifi = 'Faculdade Adventista do Paraná';
   }
 
   for (const [key, val] of Object.entries(finalVars)) {

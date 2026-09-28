@@ -7,7 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { resolveTemplateDir } from '@/lib/portal-template-utils';
 import { getMaskedPortalDomain, getMaskedPortalUrl, isVpsMode } from '@/lib/domain';
-import { getCustomTemplate, applyTemplateTags, getFlowConfig, getTriggerSendOptions } from '@/services/whatsapp-custom-messages';
+import { getCustomTemplate, applyTemplateTags, getFlowConfig, getTriggerSendOptions, getEffectiveWifiName } from '@/services/whatsapp-custom-messages';
 import { signCustomerJwt } from '@/lib/jwt';
 
 
@@ -793,15 +793,15 @@ export async function POST(request: Request) {
     const targetPhone = lead?.phone || rawPhone;
     if (targetPhone) {
       const portalDomain = getMaskedPortalDomain(request.headers.get('host'));
-      const wifiName = process.env.HOTSPOT_WIFI_NAME || 'nossa rede Wi-Fi';
 
       // Executa de forma assíncrona respeitando o Fluxograma e Régua de Sequências configurada
       (async () => {
         try {
-          const [salesModeConfig, officialNumbers, flowMap] = await Promise.all([
+          const [salesModeConfig, officialNumbers, flowMap, wifiName] = await Promise.all([
             prisma.systemConfig.findUnique({ where: { key: 'PORTAL_SALES_MODE' } }),
             whatsappService.getOnlineOfficialNumbers(),
-            getFlowConfig()
+            getFlowConfig(),
+            getEffectiveWifiName()
           ]);
 
           const isPaidMode = salesModeConfig?.value !== 'free';

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { whatsappService } from '@/services/whatsapp';
 import { prisma } from '@/lib/prisma';
-import { getCustomTemplate, applyTemplateTags, getTriggerSendOptions } from '@/services/whatsapp-custom-messages';
+import { getCustomTemplate, applyTemplateTags, getTriggerSendOptions, getEffectiveWifiName } from '@/services/whatsapp-custom-messages';
 
 export async function GET() {
   try {
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
                      (await prisma.systemConfig.findUnique({ where: { key: 'PORTAL_SALES_MODE' } }))?.value === 'free';
       const triggerKey = isFree ? 'WA_MSG_VOUCHER_DELIVERY_FREE' : 'WA_MSG_VOUCHER_DELIVERY';
       const rawTemplate = await getCustomTemplate(triggerKey);
-      const wifiName = process.env.HOTSPOT_WIFI_NAME || 'nossa rede Wi-Fi';
+      const wifiName = await getEffectiveWifiName();
       const text = applyTemplateTags(rawTemplate, {
         cliente: 'Cliente',
         codigo_voucher: voucherCode,
