@@ -48,7 +48,26 @@ export async function GET(req: Request) {
       whereClause.instanceId = instanceIdFilter;
     }
 
-    const [items, instances, globalGroup] = await Promise.all([
+    const globalGroup = await prisma.systemConfig.findUnique({
+      where: { key: "WHATSAPP_MEDIA_LIBRARY_GROUP" }
+    }).then(r => r?.value || null);
+    
+    const instancesForGroups = await prisma.whatsappInstance.findMany({
+      where: { engine: "baileys", libraryGroupJid: { not: null } },
+      select: { libraryGroupJid: true }
+    });
+
+    const activeGroupJids = new Set<string>();
+    if (globalGroup) activeGroupJids.add(globalGroup);
+    instancesForGroups.forEach(inst => {
+      if (inst.libraryGroupJid) activeGroupJids.add(inst.libraryGroupJid);
+    });
+
+    if (activeGroupJids.size > 0) {
+      whereClause.sourceJid = { in: Array.from(activeGroupJids) };
+    }
+
+    const [items, instances] = await Promise.all([
       prisma.mediaLibrary.findMany({
         where: whereClause,
         orderBy: { createdAt: "desc" },
@@ -74,10 +93,7 @@ export async function GET(req: Request) {
           libraryGroupName: true,
           status: true,
         }
-      }),
-      prisma.systemConfig.findUnique({
-        where: { key: "WHATSAPP_MEDIA_LIBRARY_GROUP" }
-      }).then(r => r?.value || null)
+      })
     ]);
 
     return NextResponse.json({

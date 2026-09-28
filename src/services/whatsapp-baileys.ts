@@ -1164,6 +1164,34 @@ export class BaileysAdapter implements IWhatsappAdapter {
       return { success: false, message: 'Nenhum grupo de mídias vinculado nas instâncias ou no sistema.' };
     }
 
+    // --- LIMPEZA DE MÍDIAS ÓRFÃS DE GRUPOS ANTIGOS ---
+    try {
+      const globalGroup = await prisma.systemConfig.findUnique({
+        where: { key: 'WHATSAPP_MEDIA_LIBRARY_GROUP' }
+      }).then(r => r?.value || null);
+      
+      const instances = await prisma.whatsappInstance.findMany({
+        where: { engine: 'baileys', libraryGroupJid: { not: null } },
+        select: { libraryGroupJid: true }
+      });
+      
+      const activeGroupJids = new Set<string>();
+      if (globalGroup) activeGroupJids.add(globalGroup);
+      instances.forEach(inst => { if (inst.libraryGroupJid) activeGroupJids.add(inst.libraryGroupJid); });
+      
+      if (activeGroupJids.size > 0) {
+        const deletedOrphans = await prisma.mediaLibrary.deleteMany({
+          where: { sourceJid: { notIn: Array.from(activeGroupJids) } }
+        });
+        if (deletedOrphans.count > 0) {
+          console.log(`[Baileys][MediaSync] Limpeza: apagou ${deletedOrphans.count} mídias órfãs de grupos antigos desvinculados.`);
+        }
+      }
+    } catch (cleanErr) {
+      console.warn(`[Baileys][MediaSync] Falha na limpeza de mídias órfãs:`, cleanErr);
+    }
+    // ------------------------------------------------
+
     console.log(`[Baileys][MediaSync] Solicitando histórico de mídias para o grupo: ${targetGroup} via "${readySession.name}"...`);
 
     try {
