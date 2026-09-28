@@ -12,7 +12,7 @@ export async function GET() {
 
     // Incluímos a senha ('pass') necessária para impressão e reimpressão de vouchers
     const safeUsers = users.map((u: any) => ({
-      id: u.id,
+      id: u['.id'] || u.id,
       server: u.server || 'all',
       name: u.name,
       pass: u.password || u.name,
