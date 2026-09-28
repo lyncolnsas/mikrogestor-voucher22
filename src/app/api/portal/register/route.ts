@@ -838,6 +838,7 @@ export async function POST(request: Request) {
                 ? `R$ ${Number(pixData.amount).toFixed(2).replace('.', ',')}`
                 : '';
 
+              const linkLoginUrl = `${portalUrl}/portal/login?ssid=${encodeURIComponent(wifiName)}`;
               const msgBody = applyTemplateTags(rawTemplate, {
                 cliente: finalName,
                 usuario: hotspotUser,
@@ -846,6 +847,8 @@ export async function POST(request: Request) {
                 rede_wifi: wifiName,
                 canais_oficiais: officialNumbersSection,
                 link_portal: `${portalUrl}/portal/planos`,
+                link_login: linkLoginUrl,
+                link_da_pagina_de_login: linkLoginUrl,
                 chave_pix: pixChave ? `\n\n💳 *Pagamento PIX:*\nChave: \`${pixChave}\`\nValor: ${pixValor}\n_Envie o comprovante após o pagamento para agilizar a liberação._` : '',
                 valor_pix: pixValor,
               });
@@ -875,6 +878,7 @@ export async function POST(request: Request) {
                   try {
                     const rawNextTemplate = await getCustomTemplate(nextStep.key);
                     const nextSendOpts = await getTriggerSendOptions(nextStep.key);
+                    const linkLoginUrl = `${portalUrl}/portal/login?ssid=${encodeURIComponent(wifiName)}`;
                     const nextMsgBody = applyTemplateTags(rawNextTemplate, {
                       cliente: finalName,
                       usuario: hotspotUser,
@@ -883,6 +887,8 @@ export async function POST(request: Request) {
                       rede_wifi: wifiName,
                       canais_oficiais: officialNumbersSection,
                       link_portal: `${portalUrl}/portal/planos`,
+                      link_login: linkLoginUrl,
+                      link_da_pagina_de_login: linkLoginUrl,
                     });
                     await whatsappService.sendWhatsAppMessage('admin', targetPhone, nextMsgBody, {
                       skipStandby: true,
@@ -920,6 +926,7 @@ export async function POST(request: Request) {
                 officialNumbersSection = `\n\n🛡️ *Canais Oficiais:*\n${formattedList}`;
               }
 
+              const linkLoginUrl = `${portalUrl}/portal/login?ssid=${encodeURIComponent(wifiName)}`;
               const pixMsgBody = applyTemplateTags(rawPixTemplate, {
                 cliente: finalName,
                 plano: pixData.planTitle || selectedPlan?.title || 'Acesso Wi-Fi',
@@ -929,6 +936,8 @@ export async function POST(request: Request) {
                 usuario: hotspotUser,
                 senha: passwordStr,
                 link_portal: `${portalUrl}/portal/planos`,
+                link_login: linkLoginUrl,
+                link_da_pagina_de_login: linkLoginUrl,
                 rede_wifi: wifiName,
                 canais_oficiais: officialNumbersSection
               });

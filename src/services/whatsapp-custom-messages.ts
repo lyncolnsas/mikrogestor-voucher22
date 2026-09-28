@@ -36,6 +36,10 @@ Olá, *{cliente}*!
 • *Senha:* \`{senha}\`
 • *Cortesia:* {cortesia} ⚡
 
+📶 *Como se reconectar:*
+Conecte-se na nossa rede Wi-Fi *{rede_wifi}*. Se não abrir a página de login automaticamente, toque aqui:
+👉 {link_da_pagina_de_login}
+
 Para escolher um plano após a cortesia:
 👉 {link_portal}`,
     availableTags: [
@@ -44,8 +48,10 @@ Para escolher um plano após a cortesia:
       { tag: '{senha}', label: 'Senha de Acesso', example: '99123456' },
       { tag: '{cortesia}', label: 'Tempo de Cortesia', example: '15 minutos' },
       { tag: '{rede_wifi}', label: 'Nome da Rede Wi-Fi', example: 'Wi-Fi Visitantes' },
+      { tag: '{link_da_pagina_de_login}', label: 'Link da Página de Login', example: 'https://mikrogestor.com/portal/login' },
+      { tag: '{link_login}', label: 'Link de Login (Curto)', example: 'https://mikrogestor.com/portal/login' },
       { tag: '{canais_oficiais}', label: 'Lista de Números Oficiais', example: '• +55 44 9999-9999' },
-      { tag: '{link_portal}', label: 'Link do Portal de Planos', example: 'http://portal.wifi.local/portal/planos' },
+      { tag: '{link_portal}', label: 'Link do Portal de Planos', example: 'https://mikrogestor.com/portal/planos' },
     ],
   },
   {
@@ -140,13 +146,15 @@ _Assim que pagar, sua conexão continuará ativa automaticamente!_`,
     categoryLabel: 'Portal Hotspot',
     title: 'Boas-Vindas no Hotspot (Modo Grátis / Evento)',
     triggerEvent: 'Quando o cliente se cadastra no portal captive com navegação gratuita liberada.',
-    description: 'Envia apenas as credenciais de acesso liberado e instruções simples de uso, sem nenhuma menção a cobrança.',
-    defaultTemplate: `🌐 *Bem-vindo(a) à nossa Rede Wi-Fi!*\n\nOlá, *{cliente}*! Seu cadastro foi concluído com sucesso.\n\n🔑 *Suas Credenciais de Acesso:*\n• *Usuário:* \`{usuario}\`\n• *Senha:* \`{senha}\`\n• *Status:* Acesso Livre e Gratuito ⚡\n\nTenha uma excelente navegação na nossa rede *{rede_wifi}*! 🚀`,
+    description: 'Envia credenciais de acesso liberado e link de reconexão sem menção a cobrança.',
+    defaultTemplate: `🌐 *Bem-vindo(a) à nossa Rede Wi-Fi!*\n\nOlá, *{cliente}*! Seu cadastro foi concluído com sucesso.\n\n🔑 *Suas Credenciais de Acesso:*\n• *Usuário:* \`{usuario}\`\n• *Senha:* \`{senha}\`\n• *Status:* Acesso Livre e Gratuito ⚡\n\n📶 *Como se reconectar se cair a conexão:*\nConecte-se na nossa rede Wi-Fi *{rede_wifi}*. Se não abrir a página de login automaticamente no seu aparelho, toque aqui:\n👉 {link_da_pagina_de_login}\n\nTenha uma excelente navegação na nossa rede *{rede_wifi}*! 🚀`,
     availableTags: [
       { tag: '{cliente}', label: 'Nome do Cliente', example: 'Maria Oliveira' },
       { tag: '{usuario}', label: 'Usuário Hotspot', example: 'maria.oliveira' },
       { tag: '{senha}', label: 'Senha de Acesso', example: '88123456' },
       { tag: '{rede_wifi}', label: 'Nome da Rede Wi-Fi', example: 'Wi-Fi Evento' },
+      { tag: '{link_da_pagina_de_login}', label: 'Link da Página de Login', example: 'https://mikrogestor.com/portal/login' },
+      { tag: '{link_login}', label: 'Link de Login (Curto)', example: 'https://mikrogestor.com/portal/login' },
     ],
   },
   {
@@ -158,12 +166,14 @@ _Assim que pagar, sua conexão continuará ativa automaticamente!_`,
     title: 'Entrega de Voucher Gratuito / Cortesia / Evento',
     triggerEvent: 'Quando um voucher gratuito ou passe de evento é distribuído aos convidados.',
     description: 'Envia o voucher de cortesia com instruções simples de conexão sem dados de pagamento.',
-    defaultTemplate: `🎟️ *Seu Voucher Cortesia de Wi-Fi Chegou!*\n\nOlá, *{cliente}*! Você recebeu um passe de acesso para a nossa rede Wi-Fi *{rede_wifi}*.\n\n🔑 *Código de Acesso:* \`{codigo_voucher}\`\n⏳ *Validade:* {validade}\n\nConecte-se na rede e navegue à vontade! 🚀`,
+    defaultTemplate: `🎟️ *Seu Voucher Cortesia de Wi-Fi Chegou!*\n\nOlá, *{cliente}*! Você recebeu um passe de acesso para a nossa rede Wi-Fi *{rede_wifi}*.\n\n🔑 *Código de Acesso:* \`{codigo_voucher}\`\n⏳ *Validade:* {validade}\n\n📶 *Página de Login:*\nSe a tela de login não abrir automaticamente ao conectar no Wi-Fi, acesse:\n👉 {link_da_pagina_de_login}\n\nNavegue à vontade! 🚀`,
     availableTags: [
       { tag: '{cliente}', label: 'Nome do Cliente', example: 'Lucas Gabriel' },
       { tag: '{codigo_voucher}', label: 'Código do Voucher', example: 'FREE-2024' },
       { tag: '{validade}', label: 'Tempo de Validade', example: 'Dia Todo' },
       { tag: '{rede_wifi}', label: 'Nome da Rede Wi-Fi', example: 'Wi-Fi Visitantes' },
+      { tag: '{link_da_pagina_de_login}', label: 'Link da Página de Login', example: 'https://mikrogestor.com/portal/login' },
+      { tag: '{link_login}', label: 'Link de Login (Curto)', example: 'https://mikrogestor.com/portal/login' },
     ],
   },
   {
@@ -361,7 +371,21 @@ export async function getCustomTemplate(key: string): Promise<string> {
  */
 export function applyTemplateTags(template: string, vars: Record<string, string>): string {
   let result = template;
-  for (const [key, val] of Object.entries(vars)) {
+  const finalVars = { ...vars };
+
+  // Suporte flexível e intercambiável para tags de link de login e portal
+  if (!finalVars.link_da_pagina_de_login && finalVars.link_login) {
+    finalVars.link_da_pagina_de_login = finalVars.link_login;
+  }
+  if (!finalVars.link_login && finalVars.link_da_pagina_de_login) {
+    finalVars.link_login = finalVars.link_da_pagina_de_login;
+  }
+  if (!finalVars.link_da_pagina_de_login && finalVars.link_portal) {
+    finalVars.link_da_pagina_de_login = finalVars.link_portal.replace(/\/portal\/planos\/?$/i, '/portal/login');
+    finalVars.link_login = finalVars.link_da_pagina_de_login;
+  }
+
+  for (const [key, val] of Object.entries(finalVars)) {
     const pattern = new RegExp(`\\{${key}\\}`, 'gi');
     result = result.replace(pattern, val || '');
   }

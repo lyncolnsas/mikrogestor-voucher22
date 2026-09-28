@@ -627,10 +627,13 @@ class WhatsappSpecialist {
       const rawChatbotTemplate = await getCustomTemplate(chatbotKey);
       const sendOpts = await getTriggerSendOptions(chatbotKey);
 
+      const linkLoginUrl = `${portalUrl}/portal/login?ssid=${encodeURIComponent(wifiName)}`;
       const greetingBody = applyTemplateTags(rawChatbotTemplate, {
         rede_wifi: wifiName,
         link_portal_registro: `${portalUrl}/portal/register`,
         link_portal: `${portalUrl}/portal/planos`,
+        link_login: linkLoginUrl,
+        link_da_pagina_de_login: linkLoginUrl,
       });
 
       const res = await this.sendWhatsAppMessage('admin', remoteJid, greetingBody, {
