@@ -99,11 +99,13 @@ export async function GET() {
       'Não informado': 0
     };
 
-    // Device / OS distribution (heuristic & capture data)
+    // Device / OS distribution — from real userAgent captured at registration
     const deviceGroups: Record<string, number> = {
       'Android': 0,
       'iOS (iPhone)': 0,
       'Windows': 0,
+      'Mac': 0,
+      'Linux': 0,
       'Outros': 0
     };
 
@@ -187,16 +189,19 @@ export async function GET() {
 
       // Gender groups
       const g = (lead.gender || '').toLowerCase().trim();
-      if (g === 'm' || g === 'masculino') genderGroups['Masculino']++;
-      else if (g === 'f' || g === 'feminino') genderGroups['Feminino']++;
-      else if (g === 'outro' || g === 'outros') genderGroups['Outro']++;
+      if (g === 'm' || g === 'masculino' || g === 'homem') genderGroups['Masculino']++;
+      else if (g === 'f' || g === 'feminino' || g === 'mulher') genderGroups['Feminino']++;
+      else if (g === 'outro' || g === 'outros' || g === 'não informar' || g === 'nao informar') genderGroups['Outro']++;
       else genderGroups['Não informado']++;
 
-      // Device groups (simulated heuristics or parsed from custom fields/user agent)
-      if (index % 4 === 0) deviceGroups['iOS (iPhone)']++;
-      else if (index % 4 === 1) deviceGroups['Windows']++;
-      else if (index % 4 === 2) deviceGroups['Outros']++;
-      else deviceGroups['Android']++;
+      // Device groups — detect from real userAgent captured at registration
+      const ua = ((lead as any).userAgent || '').toLowerCase();
+      if (/iphone|ipad|ipod/.test(ua)) deviceGroups['iOS (iPhone)']++;
+      else if (/android/.test(ua)) deviceGroups['Android']++;
+      else if (/windows/.test(ua)) deviceGroups['Windows']++;
+      else if (/mac os|macintosh/.test(ua)) deviceGroups['Mac']++;
+      else if (/linux/.test(ua)) deviceGroups['Linux']++;
+      else deviceGroups['Outros']++;
 
       // Age calculation
       if (lead.birthDate) {

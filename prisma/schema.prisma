@@ -76,6 +76,7 @@ model HotspotLead {
   drawnInRaffle    Boolean   @default(false) // Flag to prevent duplicate drawing
   trialBlocked     Boolean   @default(false) // Bloqueado por expiração ou tentativa de burla
   trialGrantedAt   DateTime? // Momento em que recebeu os 15m de carência
+  userAgent        String?   // User-Agent do dispositivo no momento do cadastro
   createdAt        DateTime  @default(now())
   payments         Payment[]
 }

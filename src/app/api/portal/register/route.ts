@@ -530,6 +530,9 @@ export async function POST(request: Request) {
     }
 
     // 4. Save lead in Database
+    // Capture user-agent for device detection
+    const registrationUserAgent = request.headers.get('user-agent') || '';
+
     let lead;
     try {
       const isGrantingTrial = !isFreeWifi && Boolean(planId);
@@ -543,6 +546,7 @@ export async function POST(request: Request) {
           email: email || null,
           cpf: rawCpf,
           gender: gender || null,
+          userAgent: registrationUserAgent || null,
           password: passwordStr,
           customFieldValue: customFieldValue || null,
           optInCourses: isOptedIn,
@@ -556,6 +560,7 @@ export async function POST(request: Request) {
           email: email || null,
           cpf: rawCpf,
           gender: gender || null,
+          userAgent: registrationUserAgent || null,
           password: passwordStr,
           customFieldValue: customFieldValue || null,
           optInCourses: isOptedIn,
