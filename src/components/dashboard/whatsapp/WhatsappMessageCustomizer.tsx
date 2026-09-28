@@ -88,6 +88,7 @@ export function WhatsappMessageCustomizer() {
   const [libraryItems, setLibraryItems] = useState<LibItem[]>([]);
   const [configuredGroups, setConfiguredGroups] = useState<ConfiguredGroup[]>([]);
   const [libraryLoading, setLibraryLoading] = useState(false);
+  const [syncingGroup, setSyncingGroup] = useState(false);
   const [showLibraryModal, setShowLibraryModal] = useState(false);
   const [libraryTargetKey, setLibraryTargetKey] = useState<string>('');
   const [uploadingMedia, setUploadingMedia] = useState(false);
@@ -149,9 +150,11 @@ export function WhatsappMessageCustomizer() {
       .finally(() => setLoading(false));
   }, []);
 
-  const fetchLibrary = useCallback(() => {
+  const fetchLibrary = useCallback((sync = false) => {
     setLibraryLoading(true);
-    fetch('/api/admin/media-library')
+    if (sync) setSyncingGroup(true);
+    const url = sync ? '/api/admin/media-library?sync=true' : '/api/admin/media-library';
+    fetch(url)
       .then(r => r.json())
       .then(data => {
         if (data.success) {
@@ -162,7 +165,10 @@ export function WhatsappMessageCustomizer() {
         }
       })
       .catch(console.error)
-      .finally(() => setLibraryLoading(false));
+      .finally(() => {
+        setLibraryLoading(false);
+        setSyncingGroup(false);
+      });
   }, []);
 
   const handleUploadMedia = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -411,7 +417,7 @@ export function WhatsappMessageCustomizer() {
   const openLibraryModal = (triggerKey: string) => {
     setLibraryTargetKey(triggerKey);
     setShowLibraryModal(true);
-    if (libraryItems.length === 0) fetchLibrary();
+    fetchLibrary(true);
   };
 
   const selectLibraryItem = (item: { id: string; caption: string | null; mediaType: string }) => {
@@ -1273,12 +1279,13 @@ export function WhatsappMessageCustomizer() {
                 </button>
                 <button
                   type="button"
-                  onClick={fetchLibrary}
+                  onClick={() => fetchLibrary(true)}
                   disabled={libraryLoading}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer disabled:opacity-50 transition-all"
-                  title="Atualizar mídias do grupo do WhatsApp"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer disabled:opacity-50 transition-all shadow-xs"
+                  title="Buscar e sincronizar todas as mídias existentes no grupo do WhatsApp"
                 >
-                  <RefreshCcw className={`w-3.5 h-3.5 ${libraryLoading ? 'animate-spin text-emerald-600' : ''}`} /> Atualizar
+                  <RefreshCcw className={`w-3.5 h-3.5 ${libraryLoading ? 'animate-spin text-emerald-600' : ''}`} />
+                  {syncingGroup ? 'Sincronizando grupo...' : 'Atualizar'}
                 </button>
                 <button type="button" onClick={() => setShowLibraryModal(false)} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 cursor-pointer">
                   <X className="w-5 h-5" />
@@ -1295,7 +1302,7 @@ export function WhatsappMessageCustomizer() {
               {libraryLoading ? (
                 <div className="flex flex-col items-center justify-center py-16 text-slate-400 text-xs gap-2">
                   <RefreshCcw className="w-6 h-6 animate-spin text-emerald-600" />
-                  <span>Sincronizando mídias da biblioteca central...</span>
+                  <span>{syncingGroup ? 'Buscando todas as mídias existentes no grupo do WhatsApp...' : 'Sincronizando mídias da biblioteca central...'}</span>
                 </div>
               ) : libraryItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-14 text-center gap-3 border-2 border-dashed border-slate-200 rounded-2xl">

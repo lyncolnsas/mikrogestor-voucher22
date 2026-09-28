@@ -873,6 +873,11 @@ class WhatsappSpecialist {
     const adapter = this.getBaileysAdapter();
     await adapter.broadcastMediaToLibraryGroup(mediaId, filePath, mediaType, mimeType, caption);
   }
+
+  async syncMediaLibraryFromGroup(groupJid?: string) {
+    const adapter = this.getBaileysAdapter();
+    return await adapter.syncGroupMedia(groupJid);
+  }
 }
 
 // ─── Singleton global (compatível com Next.js hot reload) ───────────────────

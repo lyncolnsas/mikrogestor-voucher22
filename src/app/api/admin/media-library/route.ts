@@ -32,6 +32,17 @@ export async function GET(req: Request) {
       console.warn('[MediaLibrary] Aviso ao sanitizar gatilhos órfãos:', cleanErr);
     }
 
+    // Se solicitado parâmetro sync=true, dispara busca ativa de histórico no WhatsApp
+    const shouldSync = searchParams.get("sync") === "true";
+    if (shouldSync) {
+      try {
+        console.log('[MediaLibrary][API] Parâmetro sync=true recebido. Sincronizando com WhatsApp...');
+        await whatsappService.syncMediaLibraryFromGroup();
+      } catch (syncErr: any) {
+        console.warn('[MediaLibrary] Aviso ao executar syncMediaLibraryFromGroup:', syncErr?.message || syncErr);
+      }
+    }
+
     const whereClause: any = {};
     if (instanceIdFilter) {
       whereClause.instanceId = instanceIdFilter;
@@ -89,6 +100,29 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const contentType = req.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const body = await req.json().catch(() => ({}));
+      if (body.action === 'sync') {
+        const syncResult = await whatsappService.syncMediaLibraryFromGroup(body.groupJid);
+        const items = await prisma.mediaLibrary.findMany({
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            caption: true,
+            mediaType: true,
+            mimeType: true,
+            thumbnailUrl: true,
+            sourceJid: true,
+            messageId: true,
+            instanceId: true,
+            createdAt: true,
+          }
+        });
+        return NextResponse.json({ success: true, syncResult, items });
+      }
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     const caption = (formData.get('caption') as string) || '';

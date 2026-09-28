@@ -464,11 +464,38 @@ export class BaileysAdapter implements IWhatsappAdapter {
       session.sock.ev.on('messaging-history.set', async (history: any) => {
         try {
           const messages = history?.messages || [];
-          if (messages.length > 0) {
-            console.log(`[Baileys][${session!.id}] Sincronizando histórico (${messages.length} mensagens)... Verificando mídias do grupo.`);
-            for (const msg of messages) {
-              if (msg?.key?.remoteJid?.endsWith('@g.us')) {
-                await this.processMessageForLibrary(session!, msg);
+          const chats = history?.chats || [];
+          console.log(`[Baileys][${session!.id}] Sincronizando histórico: ${messages.length} mensagens, ${chats.length} conversas (tipo: ${history?.syncType})...`);
+
+          const targetGroupJid = session?.libraryGroupJid;
+
+          // 1. Processa mensagens da lista geral
+          for (const msg of messages) {
+            if (!msg) continue;
+            let remoteJid = msg.key?.remoteJid || (msg as any)?.chatId || '';
+            if (!remoteJid && chats.length === 1 && chats[0]?.id?.endsWith('@g.us')) {
+              remoteJid = chats[0].id;
+            }
+            if (!remoteJid && targetGroupJid) {
+              remoteJid = targetGroupJid;
+            }
+            if (msg.key && !msg.key.remoteJid && remoteJid) {
+              msg.key.remoteJid = remoteJid;
+            }
+            if (remoteJid?.endsWith('@g.us')) {
+              await this.processMessageForLibrary(session!, msg);
+            }
+          }
+
+          // 2. Processa mensagens aninhadas nos chats
+          for (const chat of chats) {
+            if (chat?.id?.endsWith('@g.us') && Array.isArray(chat.messages)) {
+              for (const m of chat.messages) {
+                const rawMsg = m.message || m;
+                if (rawMsg?.key && !rawMsg.key.remoteJid) {
+                  rawMsg.key.remoteJid = chat.id;
+                }
+                await this.processMessageForLibrary(session!, rawMsg);
               }
             }
           }
@@ -1109,6 +1136,74 @@ export class BaileysAdapter implements IWhatsappAdapter {
   }
 
   /**
+   * Força a sincronização e carregamento de todas as mídias existentes no grupo central do WhatsApp.
+   * Utiliza fetchMessageHistory (historySyncOnDemandRequest) para solicitar o histórico do grupo ao WhatsApp.
+   */
+  async syncGroupMedia(groupJid?: string): Promise<{ success: boolean; message: string; count?: number }> {
+    // 1. Procura por qualquer sessão pronta
+    const readySession = Array.from(this.sessions.values()).find(s => this.isSocketReady(s) && s.sock);
+    if (!readySession || !readySession.sock) {
+      return { success: false, message: 'Nenhum WhatsApp conectado no momento para buscar mídias do grupo.' };
+    }
+
+    let targetGroup = groupJid || readySession.libraryGroupJid;
+    if (!targetGroup) {
+      const dbInst = await prisma.whatsappInstance.findFirst({
+        where: { libraryGroupJid: { not: null } },
+        select: { libraryGroupJid: true }
+      });
+      targetGroup = dbInst?.libraryGroupJid || null;
+    }
+    if (!targetGroup) {
+      targetGroup = await prisma.systemConfig
+        .findUnique({ where: { key: 'WHATSAPP_MEDIA_LIBRARY_GROUP' } })
+        .then(r => r?.value || null);
+    }
+
+    if (!targetGroup) {
+      return { success: false, message: 'Nenhum grupo de mídias vinculado nas instâncias ou no sistema.' };
+    }
+
+    console.log(`[Baileys][MediaSync] Solicitando histórico de mídias para o grupo: ${targetGroup} via "${readySession.name}"...`);
+
+    try {
+      if (typeof readySession.sock.fetchMessageHistory === 'function') {
+        const oldest = await prisma.mediaLibrary.findFirst({
+          where: { sourceJid: targetGroup },
+          orderBy: { createdAt: 'asc' }
+        });
+
+        const oldestKey = {
+          remoteJid: targetGroup,
+          fromMe: false,
+          id: oldest?.messageId || undefined
+        };
+        const oldestTimestamp = oldest ? new Date(oldest.createdAt).getTime() : Date.now();
+
+        // Solicita ao WhatsApp os pacotes de histórico desse grupo (até 100 mensagens)
+        await readySession.sock.fetchMessageHistory(100, oldestKey as any, oldestTimestamp);
+        console.log(`[Baileys][MediaSync] fetchMessageHistory disparado com sucesso para ${targetGroup}.`);
+      }
+
+      // Aguarda 2 segundos para o WhatsApp responder e o listener processar as mensagens recebidas
+      await new Promise(r => setTimeout(r, 2000));
+
+      const count = await prisma.mediaLibrary.count({
+        where: { sourceJid: targetGroup }
+      });
+
+      return {
+        success: true,
+        message: `Sincronização com o grupo executada com sucesso.`,
+        count
+      };
+    } catch (err: any) {
+      console.error(`[Baileys][MediaSync] Erro ao sincronizar histórico:`, err);
+      return { success: false, message: `Erro ao comunicar com WhatsApp: ${err?.message || err}` };
+    }
+  }
+
+  /**
    * Busca em tempo real todos os grupos nos quais esta instância participa.
    * Se o aparelho estiver desconectado, recorre a outro aparelho conectado ou aos grupos já salvos no banco.
    */
@@ -1256,6 +1351,17 @@ export class BaileysAdapter implements IWhatsappAdapter {
           .findUnique({ where: { key: 'WHATSAPP_MEDIA_LIBRARY_GROUP' } })
           .then(r => r?.value || '');
         if (globalLibGroupJid && remoteJid.toLowerCase() === globalLibGroupJid.toLowerCase()) {
+          isTargetGroup = true;
+        }
+      }
+
+      // Fallback: Grupo configurado em qualquer outra instância cadastrada
+      if (!isTargetGroup) {
+        const anyInstanceGroup = await prisma.whatsappInstance.findFirst({
+          where: { libraryGroupJid: remoteJid },
+          select: { id: true, libraryGroupName: true }
+        });
+        if (anyInstanceGroup) {
           isTargetGroup = true;
         }
       }
