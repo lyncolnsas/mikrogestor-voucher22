@@ -21,22 +21,13 @@ export class WaitingListService {
     this.isChecking = true;
 
     try {
-      // 1. Get first pending user in queue
-      const nextUser = await prisma.waitingList.findFirst({
-        where: { status: 'pending' },
-        orderBy: { createdAt: 'asc' }
-      });
-
-      if (!nextUser) {
-        return; // No one in queue
-      }
-
-      // 2. Check if we have capacity
+      // 1. Check if we have capacity configured
       const configMaxUsers = await prisma.systemConfig.findUnique({ where: { key: 'MAX_HOTSPOT_USERS' } });
       const maxUsersLimit = parseInt(configMaxUsers?.value || '0', 10);
 
       if (maxUsersLimit === 0) return; // No limit configured
 
+      // 2. Query current active users from MikroTik
       let currentUsers = 0;
       let mk;
       try {
@@ -49,15 +40,27 @@ export class WaitingListService {
         return;
       }
 
-      // 3. If there is space, notify the user and mark as notified
-      if (currentUsers < maxUsersLimit) {
-        // Send WhatsApp using Template to bypass the 24-hour service window limit
-        const networkName = process.env.HOTSPOT_NETWORK_NAME || 'nossa rede Wi-Fi';
-        
+      // 3. Check if there are available slots
+      const availableSlots = maxUsersLimit - currentUsers;
+      if (availableSlots <= 0) {
+        return; // Full capacity, nobody to notify
+      }
+
+      // 4. Fetch pending users according to available slots (up to 5 per cycle)
+      const usersToNotify = await prisma.waitingList.findMany({
+        where: { status: 'pending' },
+        orderBy: { createdAt: 'asc' },
+        take: Math.min(availableSlots, 5),
+      });
+
+      if (usersToNotify.length === 0) {
+        return; // No one in queue
+      }
+
+      const networkName = process.env.HOTSPOT_NETWORK_NAME || 'nossa rede Wi-Fi';
+
+      for (const nextUser of usersToNotify) {
         try {
-          // sendWhatsAppTemplate funciona nos dois modos:
-          // - Meta: envia o template aprovado com components (usa a janela fora das 24h)
-          // - Baileys: converte o template em mensagem de texto livre (sem custo)
           await whatsappService.sendWhatsAppTemplate(
             'admin',
             nextUser.whatsapp,
@@ -87,6 +90,10 @@ export class WaitingListService {
         });
 
         console.log(`[WaitingList] Notified user ${nextUser.whatsapp} (Current Active: ${currentUsers}/${maxUsersLimit})`);
+
+        if (usersToNotify.length > 1) {
+          await new Promise((r) => setTimeout(r, 1000));
+        }
       }
     } catch (e) {
       console.error('[WaitingList] Critical error:', e);

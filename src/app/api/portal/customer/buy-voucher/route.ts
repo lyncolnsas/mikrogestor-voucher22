@@ -61,6 +61,26 @@ export async function POST(request: Request) {
     const isTestMode = !mpToken || mpToken.startsWith('TEST-') || mpToken === 'test';
     const isFreeWifiMode = configMap['free_wifi_mode'] === 'true';
 
+    // Verificação de Limite de Capacidade (Fila de Espera)
+    const maxUsersLimit = parseInt(configMap['MAX_HOTSPOT_USERS'] || '0', 10);
+    if (maxUsersLimit > 0) {
+      try {
+        const { getMikrotikClient } = await import('@/lib/session');
+        const mkSession = await getMikrotikClient();
+        const activeUsers = await mkSession.getHotspotActive();
+        mkSession.disconnect();
+        if (activeUsers.length >= maxUsersLimit) {
+          return NextResponse.json({
+            success: false,
+            limitReached: true,
+            message: 'Capacidade máxima de conexões atingida. Entre na fila de espera para ser notificado assim que uma vaga for liberada.'
+          }, { status: 429 });
+        }
+      } catch (err) {
+        console.warn('[buy-voucher] Erro ao checar capacidade:', err);
+      }
+    }
+
     let pixId: string | null = null;
     let pixPayload: string | null = null;
     let pixQrCodeBase64: string | null = null;

@@ -10,12 +10,14 @@ export async function GET() {
     const maxUsersLimit = parseInt(configMaxUsers?.value || '0', 10);
     
     let limitReached = false;
+    let currentUsers = 0;
     
     if (maxUsersLimit > 0) {
       try {
         const mk = await getMikrotikClient();
         const activeUsers = await mk.getHotspotActive();
-        if (activeUsers.length >= maxUsersLimit) {
+        currentUsers = activeUsers.length;
+        if (currentUsers >= maxUsersLimit) {
           limitReached = true;
         }
         mk.disconnect();
@@ -24,10 +26,14 @@ export async function GET() {
       }
     }
 
+    const pendingQueueCount = await prisma.waitingList.count({ where: { status: 'pending' } });
+
     return NextResponse.json({ 
       success: true, 
       limitReached,
-      maxUsersLimit
+      maxUsersLimit,
+      currentUsers,
+      pendingQueueCount
     });
   } catch (error: any) {
     console.error('[portal/status] Error:', error);

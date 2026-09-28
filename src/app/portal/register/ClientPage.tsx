@@ -1660,6 +1660,52 @@ export default function AutoCadastro({ initialConfig }: { initialConfig: any }) 
   const [submitted, setSubmitted] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isClientIframe, setIsClientIframe] = useState(false);
+  const [limitReached, setLimitReached] = useState(initialConfig?.limitReached === true);
+  const [waitingListPhone, setWaitingListPhone] = useState('');
+  const [waitingListSuccess, setWaitingListSuccess] = useState('');
+  const [waitingListLoading, setWaitingListLoading] = useState(false);
+  const [waitingListError, setWaitingListError] = useState('');
+
+  useEffect(() => {
+    if (!initialConfig?.isPreview) {
+      fetch('/api/portal/status')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.limitReached) {
+            setLimitReached(true);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [initialConfig?.isPreview]);
+
+  const handleJoinWaitingList = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanPhone = waitingListPhone.replace(/\D/g, '');
+    if (!cleanPhone || cleanPhone.length < 10) {
+      setWaitingListError('Informe um WhatsApp válido com DDD.');
+      return;
+    }
+    setWaitingListLoading(true);
+    setWaitingListError('');
+    try {
+      const res = await fetch('/api/portal/waiting-list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ whatsapp: cleanPhone })
+      });
+      const json = await res.json();
+      if (!json.success) {
+        setWaitingListError(json.message || 'Erro ao entrar na fila.');
+      } else {
+        setWaitingListSuccess(json.message);
+      }
+    } catch {
+      setWaitingListError('Erro de conexão ao entrar na fila.');
+    } finally {
+      setWaitingListLoading(false);
+    }
+  };
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -2447,6 +2493,11 @@ export default function AutoCadastro({ initialConfig }: { initialConfig: any }) 
         }
 
       } else {
+        if (res.status === 429 || data?.limitReached || data?.data?.limitReached) {
+          setLimitReached(true);
+          const fullPhone = `${ddd}${celular}`.replace(/\D/g, '');
+          if (fullPhone) setWaitingListPhone(fullPhone);
+        }
         setError(data.message || 'Erro ao cadastrar.');
       }
     } catch (err: any) {
@@ -3121,8 +3172,86 @@ export default function AutoCadastro({ initialConfig }: { initialConfig: any }) 
             </div>
           )}
 
-          {/* Registration Form */}
-          <form onSubmit={handleSubmit} action="/api/portal/register" method="POST">
+          {limitReached ? (
+            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '20px',
+                background: 'rgba(245, 158, 11, 0.15)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px',
+                fontSize: '32px'
+              }}>
+                📶
+              </div>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f59e0b', marginBottom: '8px' }}>
+                Rede Temporariamente Lotada
+              </h2>
+              <p style={{ fontSize: '0.875rem', color: colors.muted || '#94a3b8', lineHeight: 1.6, marginBottom: '20px' }}>
+                Para garantir qualidade e estabilidade de navegação a todos, atingimos o limite de aparelhos simultâneos.
+                <br /><br />
+                Informe seu WhatsApp abaixo para <strong>entrar na fila de espera</strong>. Assim que uma vaga for liberada, enviaremos um aviso no seu celular!
+              </p>
+
+              {waitingListSuccess ? (
+                <div style={{
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  color: '#10b981',
+                  fontWeight: 600,
+                  fontSize: '0.9rem'
+                }}>
+                  ✅ {waitingListSuccess}
+                </div>
+              ) : (
+                <form onSubmit={handleJoinWaitingList} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div style={{ textAlign: 'left' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: colors.muted || '#94a3b8', textTransform: 'uppercase', marginBottom: '6px', display: 'block', letterSpacing: '0.5px' }}>
+                      Seu WhatsApp (com DDD)
+                    </label>
+                    <input
+                      type="tel"
+                      value={waitingListPhone}
+                      onChange={(e) => setWaitingListPhone(e.target.value)}
+                      placeholder="(11) 99999-9999"
+                      required
+                      className="mg-reg-input"
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  {waitingListError && (
+                    <div style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', fontWeight: 600 }}>
+                      ⚠️ {waitingListError}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={waitingListLoading}
+                    className="mg-reg-submit-btn"
+                    style={{
+                      marginTop: '6px',
+                      cursor: waitingListLoading ? 'not-allowed' : 'pointer',
+                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                      color: '#ffffff',
+                      boxShadow: '0 4px 14px rgba(245, 158, 11, 0.35)'
+                    }}
+                  >
+                    {waitingListLoading ? '⏳ Entrando na fila...' : '🎟️ Entrar na Fila de Espera'}
+                  </button>
+                </form>
+              )}
+            </div>
+          ) : (
+            /* Registration Form */
+            <form onSubmit={handleSubmit} action="/api/portal/register" method="POST">
             <input type="hidden" name="link-login-only" value={linkLoginOnly} />
             <input type="hidden" name="link-orig" value={linkOrig} />
             <input type="hidden" name="template" value={initialConfig?.template || 'default'} />
@@ -3512,6 +3641,7 @@ export default function AutoCadastro({ initialConfig }: { initialConfig: any }) 
               {loading ? 'Processando...' : success ? 'Conectando...' : timerActive ? `Aguarde ${timeLeft}s...` : (!termsAccepted ? '🔒 Aceite os Termos para Continuar' : (!isFreeWifi && saleMode && plans.length > 0 ? 'Pagar com PIX & Conectar' : registerSubmitText))}
             </button>
           </form>
+        )}
 
           {/* Terms Footer */}
           <div className="mg-reg-terms">

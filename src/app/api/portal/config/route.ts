@@ -1853,6 +1853,15 @@ ${newConfig.enabled !== false ? `.actions { display: grid !important; grid-templ
   #box { padding: 16px; }
   .actions { grid-template-columns: 1fr !important; gap: 8px !important; }
 }
+${newConfig.brand?.displayMode === 'none' ? `
+#mg-brand-container, #mg-live-brand-container, .logo, #logo, .brand-logo, .edu-logo, .header-brand {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+` : ''}
 `;
 
       const colorsRegex = /(<!--\s*MIKROGESTOR_THEME_LINK\s*-->|<!--\s*MIKROGESTOR COLORS\s*-->)[\s\S]*?(<!--\s*END_MIKROGESTOR_THEME_LINK\s*-->|<!--\s*END MIKROGESTOR COLORS\s*-->)/i;
@@ -1873,9 +1882,6 @@ ${newConfig.enabled !== false ? `.actions { display: grid !important; grid-templ
         html = html.replace(/(<title>)[^<]*(<\/title>)/i, `$1Hotspot - ${bName}$2`);
       }
 
-      // ═══════════════════════════════════════════════════════════════
-      // BACKGROUND INJECTION (MIKROGESTOR_BG_SCRIPT)
-      // ═══════════════════════════════════════════════════════════════
       const dbSystemUrl = await prisma.systemConfig.findUnique({ where: { key: 'SYSTEM_URL' } });
       const fallbackUrl = getMaskedPortalUrl();
       let systemUrl = newConfig.systemUrl || dbSystemUrl?.value || fallbackUrl;
@@ -1883,6 +1889,36 @@ ${newConfig.enabled !== false ? `.actions { display: grid !important; grid-templ
         systemUrl = fallbackUrl;
       }
       const MG_SERVER_BASE = systemUrl.replace(/\/$/, '');
+
+      // ═══════════════════════════════════════════════════════════════
+      // BRAND LOGO INJECTION (MIKROGESTOR_BRAND_LOGO)
+      // ═══════════════════════════════════════════════════════════════
+      const logoBlockRegex = /<!--\s*MIKROGESTOR_BRAND_LOGO\s*-->[\s\S]*?<!--\s*END_MIKROGESTOR_BRAND_LOGO\s*-->/i;
+      const isLogoEnabled = newConfig.brand?.displayMode !== 'none';
+      let logoHtml = '';
+
+      if (isLogoEnabled) {
+        const lSize = newConfig.brand?.logoSize || 120;
+        const lShape = newConfig.brand?.logoShape || 'rounded';
+        const rad = lShape === 'circle' ? '50%' : (lShape === 'rounded' ? '12px' : '0');
+        const lAlign = newConfig.brand?.textAlign || 'center';
+        const justify = lAlign === 'left' ? 'flex-start' : (lAlign === 'right' ? 'flex-end' : 'center');
+        logoHtml = `<!-- MIKROGESTOR_BRAND_LOGO -->\n<div id="mg-brand-container" style="display: flex; justify-content: ${justify}; align-items: center; margin-bottom: 20px; width: 100%; text-align: ${lAlign};">\n  <img src="${MG_SERVER_BASE}/api/portal/logo?template=${encodeURIComponent(template)}" alt="Logo" style="max-width: ${lSize}px; max-height: ${lSize}px; width: auto; height: auto; border-radius: ${rad}; object-fit: contain; display: block;" onerror="this.style.display='none'; if (this.parentElement) this.parentElement.style.display='none';" />\n</div>\n<!-- END_MIKROGESTOR_BRAND_LOGO -->`;
+      } else {
+        logoHtml = `<!-- MIKROGESTOR_BRAND_LOGO -->\n<!-- END_MIKROGESTOR_BRAND_LOGO -->`;
+      }
+
+      if (logoBlockRegex.test(html)) {
+        html = html.replace(logoBlockRegex, logoHtml);
+      } else if (isLogoEnabled) {
+        if (html.includes('<div id="box">')) {
+          html = html.replace('<div id="box">', `<div id="box">\n        ${logoHtml}`);
+        } else if (html.includes('<div class="login-card">')) {
+          html = html.replace('<div class="login-card">', `<div class="login-card">\n        ${logoHtml}`);
+        } else if (/<form[^>]*>/i.test(html)) {
+          html = html.replace(/(<form[^>]*>)/i, `$1\n        ${logoHtml}`);
+        }
+      }
 
       const bgBlockRegex = /(<!--\s*MIKROGESTOR_BG_SCRIPT\s*-->|<!--\s*MIKROGESTOR BG\s*-->)[\s\S]*?(<!--\s*END_MIKROGESTOR_BG_SCRIPT\s*-->|<!--\s*END MIKROGESTOR BG\s*-->)/i;
       let bgHtml = '<!-- MIKROGESTOR_BG_SCRIPT -->\n';

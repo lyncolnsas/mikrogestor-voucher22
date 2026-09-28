@@ -434,6 +434,30 @@ export async function POST(request: Request) {
       console.warn('[Anti-Fraud] Erro ao consultar BlockedClient:', bErr);
     }
 
+    // 3.55. Verificação de Limite de Capacidade (Fila de Espera)
+    if (!isPreview) {
+      try {
+        const configMaxUsers = await prisma.systemConfig.findUnique({ where: { key: 'MAX_HOTSPOT_USERS' } });
+        const maxUsersLimit = parseInt(configMaxUsers?.value || '0', 10);
+        if (maxUsersLimit > 0) {
+          const { getMikrotikClient } = await import('@/lib/session');
+          const mkSession = await getMikrotikClient();
+          const activeUsers = await mkSession.getHotspotActive();
+          mkSession.disconnect();
+          if (activeUsers.length >= maxUsersLimit) {
+            logEvent('CAPACITY_LIMIT_REACHED', { activeCount: activeUsers.length, maxUsersLimit });
+            return createResponse({
+              success: false,
+              message: 'A rede Wi-Fi atingiu a capacidade máxima de aparelhos conectados. Entre na fila de espera para ser notificado assim que uma vaga for liberada.',
+              data: { limitReached: true, maxUsersLimit }
+            }, isForm, 429, request.headers.get('user-agent') || '', linkOrig);
+          }
+        }
+      } catch (capErr) {
+        console.warn('[CapacityCheck] Erro ao consultar capacidade no MikroTik:', capErr);
+      }
+    }
+
     // 3.6. Verificação Anti-Burla de Carência (15 Minutos)
     // Se o cliente já utilizou os 15 minutos e não efetuou o pagamento, ele é categoricamente bloqueado
     const planId = body.planId || searchParams.get('planId');
@@ -842,6 +866,37 @@ export async function POST(request: Request) {
                 targetPhone,
                 dispatchedInstanceId
               });
+
+              // 1.1 Executa passos subsequentes da régua (ex: Passo 2 de engajamento no Free, ou Passo 2/3 no Pago)
+              const remainingSteps = steps.filter(s => s.id !== 'step_1' && s.enabled);
+              for (const nextStep of remainingSteps) {
+                const delayMs = Math.max(1, nextStep.delaySeconds || 10) * 1000;
+                setTimeout(async () => {
+                  try {
+                    const rawNextTemplate = await getCustomTemplate(nextStep.key);
+                    const nextSendOpts = await getTriggerSendOptions(nextStep.key);
+                    const nextMsgBody = applyTemplateTags(rawNextTemplate, {
+                      cliente: finalName,
+                      usuario: hotspotUser,
+                      senha: passwordStr,
+                      cortesia: '15 minutos',
+                      rede_wifi: wifiName,
+                      canais_oficiais: officialNumbersSection,
+                      link_portal: `${portalUrl}/portal/planos`,
+                    });
+                    await whatsappService.sendWhatsAppMessage('admin', targetPhone, nextMsgBody, {
+                      skipStandby: true,
+                      pinnedInstanceId: dispatchedInstanceId,
+                      media: nextSendOpts.media,
+                      forwardLibraryId: nextSendOpts.forwardLibraryId,
+                    });
+                    logEvent('WA_STEP_SENT', { stepId: nextStep.id, stepKey: nextStep.key, targetPhone });
+                  } catch (stepErr: any) {
+                    console.error(`[WhatsApp Flow] Erro ao disparar ${nextStep.id}:`, stepErr);
+                    logEvent('WA_STEP_ERROR', { stepId: nextStep.id, error: stepErr?.message || stepErr });
+                  }
+                }, delayMs);
+              }
             } catch (err: any) {
               logEvent('WA_STEP_ERROR', { stepId: step1?.id, error: err?.message || err });
             }

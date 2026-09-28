@@ -9,7 +9,7 @@ import { generateForwardMessageContent } from '@whiskeysockets/baileys';
 
 const TEMPLATE_TEXTS: Record<string, (...vars: string[]) => string> = {
   liberacao_wifi: (cliente: string, nomeProduto: string) =>
-    `Olá ${cliente}! 🎉 Temos uma ótima notícia:\n\nA sua vaga no plano *${nomeProduto}* foi liberada!\n\nA sua conexão já está pronta para uso no seu dispositivo.\n\nPara gerenciar o seu serviço ou tirar dúvidas, basta responder a esta mensagem.`,
+    `Olá ${cliente}! 🎉 Temos uma ótima notícia:\n\nA sua vaga na rede Wi-Fi *${nomeProduto}* foi liberada!\n\nAcesse a rede Wi-Fi agora e conclua seu acesso no portal.\n\n⚠️ Conecte-se em até 10 minutos para garantir sua vaga antes que ela passe para o próximo da fila.`,
   lembrete_pagamento: (cliente: string, valor: string) =>
     `Olá ${cliente}, tudo bem? Notamos uma pendência na renovação do seu acesso Wi-Fi.\n\nPara evitar interrupções, lembre-se de concluir o pagamento de *R$ ${valor}*.\n\nCaso já tenha pago, por favor desconsidere esta mensagem.`,
   numero_de_serie_: (cliente: string, us: string, sn: string) =>

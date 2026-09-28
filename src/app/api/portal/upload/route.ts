@@ -140,12 +140,12 @@ export async function POST(request: Request) {
       try {
         const hDir = path.join(process.cwd(), 'hotspot', safeName);
         if (fs.existsSync(hDir)) {
-           const hFiles = fs.readdirSync(hDir);
-           hFiles.forEach(f => {
-              if (f.startsWith('bg.') || f === 'human.png' || f === 'logo.png') {
-                 try { fs.unlinkSync(path.join(hDir, f)); } catch (e) {}
-              }
-           });
+          const hFiles = fs.readdirSync(hDir);
+          hFiles.forEach(f => {
+            if (f.startsWith('bg.') || f === 'human.png') {
+              try { fs.unlinkSync(path.join(hDir, f)); } catch (e) {}
+            }
+          });
         }
       } catch (e) {}
 
@@ -431,6 +431,67 @@ export async function DELETE(request: Request) {
         deletedCount,
         freedBytes,
         freedFormatted: formatBytes(freedBytes)
+      });
+    }
+
+    // 2.5 EXCLUSÃO ESPECÍFICA DE LOGOTIPO DO TEMPLATE
+    if (type === 'logo') {
+      let deletedCount = 0;
+      if (fs.existsSync(uploadDir)) {
+        try {
+          const files = fs.readdirSync(uploadDir);
+          files.forEach(f => {
+            if (f.startsWith(`logo_${safeName}_`) || f === `logo_${safeName}.png`) {
+              try {
+                fs.unlinkSync(path.join(uploadDir, f));
+                deletedCount++;
+              } catch (e) {}
+            }
+          });
+        } catch (e) {}
+      }
+
+      if (fs.existsSync(hDir)) {
+        try {
+          const hFiles = fs.readdirSync(hDir);
+          hFiles.forEach(f => {
+            if (f.startsWith('logo.') || f.startsWith('logo_')) {
+              try {
+                fs.unlinkSync(path.join(hDir, f));
+                deletedCount++;
+              } catch (e) {}
+            }
+          });
+        } catch (e) {}
+      }
+
+      // Atualiza config.json para displayMode: 'none'
+      if (fs.existsSync(configPath)) {
+        try {
+          const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+          if (!cfg.brand) cfg.brand = {};
+          cfg.brand.displayMode = 'none';
+          fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), 'utf8');
+        } catch (e) {}
+      }
+
+      // Limpa login.html para remover o bloco de logo
+      const loginHtmlPath = path.join(hDir, 'login.html');
+      if (fs.existsSync(loginHtmlPath)) {
+        try {
+          let html = fs.readFileSync(loginHtmlPath, 'utf8');
+          const logoBlockRegex = /<!--\s*MIKROGESTOR_BRAND_LOGO\s*-->[\s\S]*?<!--\s*END_MIKROGESTOR_BRAND_LOGO\s*-->/i;
+          if (logoBlockRegex.test(html)) {
+            html = html.replace(logoBlockRegex, '<!-- MIKROGESTOR_BRAND_LOGO -->\n<!-- END_MIKROGESTOR_BRAND_LOGO -->');
+            fs.writeFileSync(loginHtmlPath, html, 'utf8');
+          }
+        } catch (e) {}
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Logotipo removido do servidor com sucesso!`,
+        deletedCount
       });
     }
 

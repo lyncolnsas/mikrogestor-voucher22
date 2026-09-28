@@ -1043,6 +1043,10 @@ export default function PortalEditor() {
     } else if (mediaModalTarget.type === 'logo') {
       const ts = Date.now();
       setLogoPreviewUrl(file.url + '?t=' + ts);
+      setBrand(prev => ({
+        ...prev,
+        displayMode: prev.displayMode === 'none' ? 'image' : (prev.displayMode || 'image')
+      }));
     }
   };
 
@@ -1063,9 +1067,23 @@ export default function PortalEditor() {
       const data = await res.json();
       if (data.success) {
         setLogoPreviewUrl(`/api/portal/logo?template=${template}&t=` + Date.now());
+        setBrand(prev => ({
+          ...prev,
+          displayMode: prev.displayMode === 'none' ? 'image' : (prev.displayMode || 'image')
+        }));
       }
     } finally {
       setLogoUploadLoading(false);
+    }
+  };
+
+  const handleLogoRemove = async () => {
+    try {
+      setBrand(prev => ({ ...prev, displayMode: 'none' }));
+      await fetch(`/api/portal/upload?template=${template}&type=logo`, { method: 'DELETE' });
+      setLogoPreviewUrl(`/api/portal/logo?template=${template}&t=` + Date.now());
+    } catch (e) {
+      console.error('Erro ao remover logotipo:', e);
     }
   };
 
@@ -1299,6 +1317,7 @@ export default function PortalEditor() {
               logoPreviewUrl={logoPreviewUrl}
               onLogoUpload={handleLogoUpload}
               logoUploadLoading={logoUploadLoading}
+              onLogoRemove={handleLogoRemove}
               onBgUpload={handleBgUpload}
               bgUploadLoading={bgUploadLoading}
               onBgRemove={handleBgRemove}

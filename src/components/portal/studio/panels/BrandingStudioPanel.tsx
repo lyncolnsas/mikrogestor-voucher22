@@ -8,7 +8,14 @@ import {
   Type,
   ShieldCheck,
   FolderOpen,
-  Box
+  Box,
+  Image as ImageIcon,
+  EyeOff,
+  Trash2,
+  Check,
+  AlignLeft,
+  AlignCenter,
+  AlignRight
 } from 'lucide-react';
 import { BrandConfig } from '@/components/portal/DynamicLogoEditor';
 
@@ -48,6 +55,7 @@ interface BrandingStudioPanelProps {
   logoPreviewUrl: string;
   onLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   logoUploadLoading: boolean;
+  onLogoRemove?: () => void;
   onBgUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   bgUploadLoading: boolean;
   onBgRemove: () => void;
@@ -73,6 +81,7 @@ export default function BrandingStudioPanel({
   logoPreviewUrl,
   onLogoUpload,
   logoUploadLoading,
+  onLogoRemove,
   onBgUpload,
   bgUploadLoading,
   onBgRemove,
@@ -705,86 +714,208 @@ export default function BrandingStudioPanel({
       )}
 
       {/* 3. LOGO TAB */}
-      {activeSubTab === 'logo' && (
-        <div className="space-y-4">
-          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex items-center gap-4">
-            <div className="w-16 h-16 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-300 dark:border-slate-700 shrink-0 relative">
-              {logoImgError ? (
-                <div className="flex flex-col items-center justify-center text-center p-1">
-                  <Sparkles className="w-5 h-5 text-slate-400 dark:text-slate-500 mb-0.5" />
-                  <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 leading-tight">Sem Logo</span>
-                </div>
-              ) : (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img 
-                  src={logoPreviewUrl} 
-                  alt="Logo" 
-                  onError={() => setLogoImgError(true)}
-                  onLoad={() => setLogoImgError(false)}
-                  className="w-full h-full object-contain p-1" 
-                />
-              )}
-            </div>
-            <div className="flex-1">
-              <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">Logotipo Atual</h4>
-              <p className="text-[11px] text-slate-500 mb-2">Suporte a PNG, JPG ou SVG com fundo transparente</p>
-              {onOpenMediaPicker ? (
+      {activeSubTab === 'logo' && (() => {
+        const isLogoEnabled = brand.displayMode !== 'none';
+
+        return (
+          <div className="space-y-4">
+            {/* Opção Segmentada: Com Logotipo vs Sem Logotipo */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <span>Modo de Logotipo</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  isLogoEnabled
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                    : 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                }`}>
+                  {isLogoEnabled ? 'Com Logo Ativo' : 'Sem Logo (Oculto)'}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
                 <button
                   type="button"
-                  onClick={() => onOpenMediaPicker({ type: 'logo', title: 'Selecionar Logotipo da Galeria' })}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-xs"
+                  onClick={() => setBrand(prev => ({
+                    ...prev,
+                    displayMode: prev.displayMode === 'none' ? 'image' : (prev.displayMode || 'image')
+                  }))}
+                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    isLogoEnabled
+                      ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm border border-slate-200/60 dark:border-slate-700'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
                 >
-                  <FolderOpen className="w-3.5 h-3.5" />
-                  <span>Escolher da Galeria / Enviar</span>
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>Com Logotipo</span>
                 </button>
-              ) : (
-                <label className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-xs">
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>{logoUploadLoading ? 'Enviando...' : 'Substituir Logo'}</span>
-                  <input type="file" accept="image/*" onChange={onLogoUpload} className="hidden" disabled={logoUploadLoading} />
-                </label>
-              )}
-            </div>
-          </div>
 
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs font-semibold">
-                <span>Tamanho da Logo</span>
-                <span>{brand.logoSize || 100}px</span>
-              </div>
-              <input
-                type="range"
-                min="40"
-                max="360"
-                value={brand.logoSize || 100}
-                onChange={(e) => setBrand(prev => ({ ...prev, logoSize: parseInt(e.target.value) }))}
-                className="w-full accent-blue-600 cursor-pointer"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Formato do Container</label>
-              <div className="grid grid-cols-3 gap-2">
-                {['rounded', 'circle', 'square'].map((shape) => (
-                  <button
-                    key={shape}
-                    type="button"
-                    onClick={() => setBrand(prev => ({ ...prev, logoShape: shape as any }))}
-                    className={`text-xs py-1.5 px-2 rounded-lg border font-medium capitalize cursor-pointer ${
-                      brand.logoShape === shape
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold'
-                        : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    {shape}
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  onClick={() => setBrand(prev => ({
+                    ...prev,
+                    displayMode: 'none'
+                  }))}
+                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    !isLogoEnabled
+                      ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-sm border border-slate-200/60 dark:border-slate-700'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <EyeOff className="w-3.5 h-3.5" />
+                  <span>Sem Logotipo</span>
+                </button>
               </div>
             </div>
+
+            {/* SE "SEM LOGOTIPO": CARD EXPLICATIVO E AÇÃO RÁPIDA */}
+            {!isLogoEnabled ? (
+              <div className="p-4 rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/60 dark:bg-amber-950/20 flex flex-col items-center text-center gap-2.5">
+                <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                  <EyeOff className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Logotipo Oculto no Portal
+                  </h4>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 max-w-xs leading-relaxed mt-1">
+                    Nenhum logotipo será exibido no topo do portal Hotspot. A tela de login ficará limpa e os campos de login ocuparão o topo do card.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBrand(prev => ({ ...prev, displayMode: 'image' }))}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-xs transition-colors"
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>Ativar e Exibir Logotipo</span>
+                </button>
+              </div>
+            ) : (
+              /* SE "COM LOGOTIPO": CONTROLES COMPLETOS DE LOGO */
+              <>
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-300 dark:border-slate-700 shrink-0 relative">
+                    {logoImgError ? (
+                      <div className="flex flex-col items-center justify-center text-center p-1">
+                        <Sparkles className="w-5 h-5 text-slate-400 dark:text-slate-500 mb-0.5" />
+                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 leading-tight">Sem Logo</span>
+                      </div>
+                    ) : (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img 
+                        src={logoPreviewUrl} 
+                        alt="Logo" 
+                        onError={() => setLogoImgError(true)}
+                        onLoad={() => setLogoImgError(false)}
+                        className="w-full h-full object-contain p-1" 
+                      />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">Logotipo Atual</h4>
+                    <p className="text-[11px] text-slate-500 mb-2">PNG, JPG ou SVG com fundo transparente</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {onOpenMediaPicker ? (
+                        <button
+                          type="button"
+                          onClick={() => onOpenMediaPicker({ type: 'logo', title: 'Selecionar Logotipo da Galeria' })}
+                          className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-xs"
+                        >
+                          <FolderOpen className="w-3.5 h-3.5" />
+                          <span>Galeria / Enviar</span>
+                        </button>
+                      ) : (
+                        <label className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-xs">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{logoUploadLoading ? 'Enviando...' : 'Substituir Logo'}</span>
+                          <input type="file" accept="image/*" onChange={onLogoUpload} className="hidden" disabled={logoUploadLoading} />
+                        </label>
+                      )}
+
+                      {onLogoRemove && (
+                        <button
+                          type="button"
+                          onClick={onLogoRemove}
+                          title="Remover logotipo do portal"
+                          className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Remover</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs font-semibold">
+                      <span>Tamanho da Logo</span>
+                      <span>{brand.logoSize || 100}px</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="40"
+                      max="360"
+                      value={brand.logoSize || 100}
+                      onChange={(e) => setBrand(prev => ({ ...prev, logoSize: parseInt(e.target.value) }))}
+                      className="w-full accent-blue-600 cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Formato do Container</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {['rounded', 'circle', 'square'].map((shape) => (
+                        <button
+                          key={shape}
+                          type="button"
+                          onClick={() => setBrand(prev => ({ ...prev, logoShape: shape as any }))}
+                          className={`text-xs py-1.5 px-2 rounded-lg border font-medium capitalize cursor-pointer transition-colors ${
+                            brand.logoShape === shape
+                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold'
+                              : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
+                          {shape}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Alinhamento da Marca</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'left', label: 'Esquerda', icon: AlignLeft },
+                        { id: 'center', label: 'Centro', icon: AlignCenter },
+                        { id: 'right', label: 'Direita', icon: AlignRight },
+                      ].map((al) => {
+                        const Icon = al.icon;
+                        const isSel = (brand.textAlign || 'center') === al.id;
+                        return (
+                          <button
+                            key={al.id}
+                            type="button"
+                            onClick={() => setBrand(prev => ({ ...prev, textAlign: al.id as any }))}
+                            className={`flex items-center justify-center gap-1.5 text-xs py-1.5 px-2 rounded-lg border font-medium cursor-pointer transition-colors ${
+                              isSel
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold'
+                                : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                            }`}
+                          >
+                            <Icon className="w-3.5 h-3.5" />
+                            <span>{al.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* 4. BACKGROUND TAB */}
       {activeSubTab === 'background' && (

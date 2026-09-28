@@ -42,6 +42,21 @@ export default function AdminSettings() {
   const [tokenStatus, setTokenStatus] = useState<{ available: number; used: number }>({ available: 0, used: 0 });
   const [generatingTokens, setGeneratingTokens] = useState(false);
   const [tokenMessage, setTokenMessage] = useState('');
+  const [capacityStats, setCapacityStats] = useState<{ currentUsers: number; maxUsersLimit: number; pendingQueueCount: number; limitReached: boolean } | null>(null);
+  const [loadingCapacity, setLoadingCapacity] = useState(false);
+
+  const fetchCapacityStats = async () => {
+    setLoadingCapacity(true);
+    try {
+      const res = await fetch('/api/portal/status');
+      const data = await res.json();
+      if (data.success) {
+        setCapacityStats(data);
+      }
+    } catch {} finally {
+      setLoadingCapacity(false);
+    }
+  };
 
   const fetchSystemConfig = async () => {
     try {
@@ -53,6 +68,8 @@ export default function AdminSettings() {
         setAdminPhone(data.data.ADMIN_WHATSAPP_PHONE || '');
       }
     } catch {}
+
+    fetchCapacityStats();
 
     // Busca usuário atual autenticado
     try {
@@ -154,6 +171,7 @@ export default function AdminSettings() {
       const data = await res.json();
       if (data.success) {
         alert('Limite atualizado!');
+        fetchCapacityStats();
       }
     } catch {
       alert('Erro ao salvar limite.');
@@ -584,19 +602,66 @@ export default function AdminSettings() {
 
           {/* Capacidade Máxima Card */}
           <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl p-5 md:p-6 flex flex-col justify-between">
-            <h3 className="text-sm font-bold text-slate-900 mb-1">
-              Limite de Capacidade (Fila)
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed mb-4">
-              Defina o número máximo de usuários ativos (0 = sem limite). Se atingido, novos clientes entrarão em uma fila de espera no WhatsApp.
-            </p>
-            <div className="flex gap-2">
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <h3 className="text-sm font-bold text-slate-900">
+                  Limite de Capacidade (Fila)
+                </h3>
+                {capacityStats && (
+                  <button
+                    onClick={fetchCapacityStats}
+                    disabled={loadingCapacity}
+                    title="Atualizar dados agora"
+                    className="text-[11px] text-blue-600 hover:text-blue-800 font-semibold cursor-pointer"
+                  >
+                    {loadingCapacity ? '...' : '🔄 Atualizar'}
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed mb-3">
+                Defina o número máximo de usuários ativos (0 = sem limite). Se atingido, novos clientes entrarão em uma fila de espera no WhatsApp.
+              </p>
+
+              {/* Status Pills */}
+              {capacityStats && (
+                <div className="mb-4 space-y-2">
+                  <div className="flex items-center justify-between text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+                    <span className="text-slate-600 font-medium">Aparelhos Conectados:</span>
+                    <span className="font-bold flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full ${
+                        capacityStats.limitReached
+                          ? 'bg-rose-500 animate-pulse'
+                          : capacityStats.maxUsersLimit > 0 && capacityStats.currentUsers >= capacityStats.maxUsersLimit * 0.8
+                          ? 'bg-amber-500'
+                          : 'bg-emerald-500'
+                      }`} />
+                      {capacityStats.currentUsers} {capacityStats.maxUsersLimit > 0 ? `/ ${capacityStats.maxUsersLimit}` : '(sem limite)'}
+                      {capacityStats.limitReached && (
+                        <span className="text-[10px] uppercase font-bold text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">
+                          Lotado
+                        </span>
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+                    <span className="text-slate-600 font-medium">Fila no WhatsApp:</span>
+                    <span className={`font-bold ${capacityStats.pendingQueueCount > 0 ? 'text-amber-600' : 'text-slate-700'}`}>
+                      {capacityStats.pendingQueueCount > 0 ? `⏳ ${capacityStats.pendingQueueCount} aguardando` : '✅ Fila vazia'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 mt-2">
               <input 
                 type="number" 
                 value={maxUsers} 
                 onChange={(e) => setMaxUsers(e.target.value)} 
                 className="mg-input text-xs" 
-                placeholder="Ex: 50"
+                placeholder="Ex: 50 (0 = sem limite)"
+                min="0"
               />
               <button 
                 onClick={handleSaveMaxUsers} 

@@ -89,19 +89,41 @@ export default async function RegisterPage({ searchParams }: PageProps) {
     }
   }
 
+  // Checagem de Limite de Capacidade (Fila de Espera)
+  let isLimitReached = false;
+  if (!isPreview) {
+    try {
+      const configMaxUsers = await prisma.systemConfig.findUnique({ where: { key: 'MAX_HOTSPOT_USERS' } });
+      const maxUsersLimit = parseInt(configMaxUsers?.value || '0', 10);
+      if (maxUsersLimit > 0) {
+        const { getMikrotikClient } = await import('@/lib/session');
+        const mkSession = await getMikrotikClient();
+        const activeUsers = await mkSession.getHotspotActive();
+        mkSession.disconnect();
+        if (activeUsers.length >= maxUsersLimit) {
+          isLimitReached = true;
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao checar capacidade no MikroTik:', e);
+    }
+  }
+
   if (initialConfig) {
     initialConfig.template = template;
     initialConfig.isPreview = isPreview;
     initialConfig.freeWifiMode = isFreeWifiMode;
     initialConfig.saleMode = isSaleModeEnabled;
     initialConfig.plans = isSaleModeEnabled ? activePlans : [];
+    initialConfig.limitReached = isLimitReached;
   } else {
     initialConfig = { 
       template, 
       isPreview, 
       freeWifiMode: isFreeWifiMode, 
       saleMode: isSaleModeEnabled, 
-      plans: isSaleModeEnabled ? activePlans : [] 
+      plans: isSaleModeEnabled ? activePlans : [],
+      limitReached: isLimitReached
     };
   }
 

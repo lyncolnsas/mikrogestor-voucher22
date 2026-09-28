@@ -617,12 +617,28 @@ class WhatsappSpecialist {
     // ── Passo Inicial (Cliente chamou no WhatsApp sem cadastro prévio) ──
     if (!state.step || state.step === 0) {
       const portalUrl = getMaskedPortalUrl();
-      const res = await this.sendWhatsAppMessage('admin', remoteJid, spinText(
-        `{👋|🙌|✨|😃|🤖} {Olá|Oi|Opa|Seja bem-vindo}! Bem-vindo ao atendimento automático da nossa Wi-Fi.\n\n` +
-        `{Para liberar seu acesso à internet|Para acessar o portal de conexão}, visite:\n` +
-        `${portalUrl}/portal/register\n\n` +
-        `Ou se deseja comprar um plano de acesso por aqui agora mesmo, responda informando seu *NOME*:`
-      ), { pinnedInstanceId: sessionPinned });
+      const wifiName = process.env.HOTSPOT_WIFI_NAME || 'nossa rede Wi-Fi';
+
+      const isFree = (await prisma.systemConfig.findUnique({ where: { key: 'free_wifi_mode' } }))?.value === 'true' ||
+                     (await prisma.systemConfig.findUnique({ where: { key: 'PORTAL_SALES_MODE' } }))?.value === 'free';
+
+      const chatbotKey = isFree ? 'WA_MSG_CHATBOT_GREETING_FREE' : 'WA_MSG_CHATBOT_GREETING_PAID';
+      const { getCustomTemplate, applyTemplateTags, getTriggerSendOptions } = await import('@/services/whatsapp-custom-messages');
+      const rawChatbotTemplate = await getCustomTemplate(chatbotKey);
+      const sendOpts = await getTriggerSendOptions(chatbotKey);
+
+      const greetingBody = applyTemplateTags(rawChatbotTemplate, {
+        rede_wifi: wifiName,
+        link_portal_registro: `${portalUrl}/portal/register`,
+        link_portal: `${portalUrl}/portal/planos`,
+      });
+
+      const res = await this.sendWhatsAppMessage('admin', remoteJid, greetingBody, {
+        pinnedInstanceId: sessionPinned,
+        media: sendOpts.media,
+        forwardLibraryId: sendOpts.forwardLibraryId,
+      });
+
       // P3: fixa o número que respondeu para toda a conversa
       const fixedInstance = res.instanceId || sessionPinned;
       await this.setState(remoteJid, { step: 1, mac: (state as any).mac, instanceId: fixedInstance });

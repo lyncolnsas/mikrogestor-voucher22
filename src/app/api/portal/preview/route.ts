@@ -100,11 +100,17 @@ export async function GET(request: Request) {
       html = html.replace(/<script[^>]*>[\s\S]*?mgInitVideo[\s\S]*?<\/script>/gi, '');
     }
 
+    // When logo is disabled in initialConfig, enforce hidden state immediately on initial HTML
+    const isInitialLogoDisabled = initialConfig.brand?.displayMode === 'none';
+    const initialLogoHideStyle = isInitialLogoDisabled
+      ? `<style id="mg-initial-logo-hide">#mg-live-brand-container, #mg-brand-container, .logo, #logo, .brand-logo, .edu-logo, .header-brand { display: none !important; visibility: hidden !important; height: 0 !important; min-height: 0 !important; max-height: 0 !important; padding: 0 !important; margin: 0 !important; border: none !important; opacity: 0 !important; pointer-events: none !important; overflow: hidden !important; }</style>`
+      : '';
+
     // Remove duplicate fonts.css if already present in template
     html = html.replace(/<link\s+[^>]*href=["'](?:\/)?fonts\/fonts\.css["'][^>]*>/gi, '');
 
     // 2. Inject live styling hooks into <head> WITHOUT stripping the compiled effects/styles from login.html
-    const fontsTags = `<link href="/fonts/fonts.css" rel="stylesheet">${initialRegHideStyle}<style id="mg-preview-ad-close-fix">#adCloseBtn, .ad-modal-close { display: flex !important; pointer-events: auto !important; cursor: pointer !important; z-index: 9999999 !important; }</style><style id="mg-live-injected-css"></style><style id="mg-live-studio-css"></style><style id="mg-live-colors-css"></style><style id="mg-live-bg-style"></style>`;
+    const fontsTags = `<link href="/fonts/fonts.css" rel="stylesheet">${initialRegHideStyle}${initialLogoHideStyle}<style id="mg-preview-ad-close-fix">#adCloseBtn, .ad-modal-close { display: flex !important; pointer-events: auto !important; cursor: pointer !important; z-index: 9999999 !important; }</style><style id="mg-live-injected-css"></style><style id="mg-live-studio-css"></style><style id="mg-live-colors-css"></style><style id="mg-live-bg-style"></style>`;
     if (html.includes('</head>')) {
       html = html.replace('</head>', `${fontsTags}</head>`);
     } else {
@@ -216,6 +222,12 @@ export async function GET(request: Request) {
       var isRegEnabled = cfg.enabled !== false;
       var cardGapVal = (st.cardGap !== undefined && st.cardGap !== null) ? st.cardGap : 14;
       var inputGapVal = Math.max(8, Math.round(cardGapVal * 0.75));
+
+      var brandCfg = cfg.brand || {};
+      var isLogoEnabled = brandCfg.displayMode !== 'none';
+      if (!isLogoEnabled) {
+        rules.push('#mg-live-brand-container, #mg-brand-container, .logo, #logo, .brand-logo, .edu-logo, .header-brand { display: none !important; visibility: hidden !important; height: 0 !important; min-height: 0 !important; max-height: 0 !important; padding: 0 !important; margin: 0 !important; border: none !important; opacity: 0 !important; pointer-events: none !important; overflow: hidden !important; }');
+      }
 
       rules.push(inpSelector + ' { margin-top: 0 !important; margin-bottom: ' + inputGapVal + 'px !important; }');
       rules.push('html body .mg-input-wrap { margin-top: 0 !important; margin-bottom: ' + inputGapVal + 'px !important; }');
@@ -598,48 +610,64 @@ export async function GET(request: Request) {
       var logoEl = document.querySelector('.logo') || document.querySelector('#logo') || document.querySelector('img.brand-logo');
       var logoContainer = document.getElementById('mg-live-brand-container');
 
-      if (!logoContainer) {
-        var targetBox = document.querySelector('#box') || document.querySelector('.card') || document.querySelector('.login-card') || document.querySelector('form') || document.body;
-        if (logoEl && logoEl.parentNode) {
-          logoContainer = document.createElement('div');
-          logoContainer.id = 'mg-live-brand-container';
-          logoContainer.style.cssText = 'display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; width: 100%; text-align: center;';
-          logoEl.parentNode.insertBefore(logoContainer, logoEl);
-          logoContainer.appendChild(logoEl);
-        } else if (targetBox) {
-          logoContainer = document.createElement('div');
-          logoContainer.id = 'mg-live-brand-container';
-          logoContainer.style.cssText = 'display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; width: 100%; text-align: center;';
-          targetBox.prepend(logoContainer);
+      if (displayMode === 'none') {
+        if (logoContainer) {
+          logoContainer.style.setProperty('display', 'none', 'important');
         }
-      }
-
-      if (logoContainer) {
-        logoContainer.style.animation = 'none';
-        var tAlign = brandCfg.textAlign || 'center';
-        logoContainer.style.alignItems = tAlign === 'left' ? 'flex-start' : tAlign === 'right' ? 'flex-end' : 'center';
-        logoContainer.style.textAlign = tAlign;
-
-        if (!logoEl) {
-          logoEl = document.createElement('img');
-          logoEl.className = 'logo brand-logo';
-          logoEl.alt = '';
-          logoContainer.prepend(logoEl);
-        }
-
         if (logoEl) {
-          logoEl.onerror = function() {
-            this.style.setProperty('display', 'none', 'important');
-          };
-          logoEl.onload = function() {
-            if (displayMode !== 'none' && displayMode !== 'text') {
-              this.style.setProperty('display', 'block', 'important');
-            }
-          };
+          logoEl.style.setProperty('display', 'none', 'important');
+        }
+        var otherLogos = document.querySelectorAll('.logo, #logo, .brand-logo, .edu-logo, .header-brand');
+        otherLogos.forEach(function(el) {
+          el.style.setProperty('display', 'none', 'important');
+        });
+      } else {
+        var otherLogos = document.querySelectorAll('.logo, #logo, .brand-logo, .edu-logo, .header-brand');
+        otherLogos.forEach(function(el) {
+          if (el !== logoEl && el !== logoContainer) {
+            el.style.removeProperty('display');
+          }
+        });
 
-          if (displayMode === 'none' || displayMode === 'text') {
-            logoEl.style.setProperty('display', 'none', 'important');
-          } else {
+        if (!logoContainer) {
+          var targetBox = document.querySelector('#box') || document.querySelector('.card') || document.querySelector('.login-card') || document.querySelector('form') || document.body;
+          if (logoEl && logoEl.parentNode) {
+            logoContainer = document.createElement('div');
+            logoContainer.id = 'mg-live-brand-container';
+            logoContainer.style.cssText = 'display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; width: 100%; text-align: center;';
+            logoEl.parentNode.insertBefore(logoContainer, logoEl);
+            logoContainer.appendChild(logoEl);
+          } else if (targetBox) {
+            logoContainer = document.createElement('div');
+            logoContainer.id = 'mg-live-brand-container';
+            logoContainer.style.cssText = 'display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; width: 100%; text-align: center;';
+            targetBox.prepend(logoContainer);
+          }
+        }
+
+        if (logoContainer) {
+          logoContainer.style.removeProperty('display');
+          logoContainer.style.display = 'flex';
+          logoContainer.style.animation = 'none';
+          var tAlign = brandCfg.textAlign || 'center';
+          logoContainer.style.alignItems = tAlign === 'left' ? 'flex-start' : tAlign === 'right' ? 'flex-end' : 'center';
+          logoContainer.style.textAlign = tAlign;
+
+          if (!logoEl) {
+            logoEl = document.createElement('img');
+            logoEl.className = 'logo brand-logo';
+            logoEl.alt = '';
+            logoContainer.prepend(logoEl);
+          }
+
+          if (logoEl) {
+            logoEl.onerror = function() {
+              this.style.setProperty('display', 'none', 'important');
+            };
+            logoEl.onload = function() {
+              this.style.setProperty('display', 'block', 'important');
+            };
+
             var currentTmpl = config.template || 'default';
             var baseLogoUrl = '/api/portal/logo?template=' + currentTmpl;
             if (!logoEl.dataset.loadedTmpl || logoEl.dataset.loadedTmpl !== currentTmpl) {
@@ -649,16 +677,19 @@ export async function GET(request: Request) {
             
             var lSize = brandCfg.logoSize || 120;
             var lPad = brandCfg.logoPadding || 0;
+            var lShape = brandCfg.logoShape || 'rounded';
+            var rad = lShape === 'circle' ? '50%' : (lShape === 'rounded' ? '12px' : '0');
             
             logoEl.style.setProperty('width', 'auto', 'important');
             logoEl.style.setProperty('max-width', lSize + 'px', 'important');
             logoEl.style.setProperty('max-height', lSize + 'px', 'important');
             logoEl.style.setProperty('padding', lPad + 'px', 'important');
+            logoEl.style.setProperty('border-radius', rad, 'important');
             logoEl.style.setProperty('object-fit', 'contain', 'important');
             logoEl.style.setProperty('background', 'transparent', 'important');
             logoEl.style.setProperty('border', 'none', 'important');
             logoEl.style.setProperty('box-shadow', 'none', 'important');
-            logoEl.style.setProperty('border-radius', '0', 'important');
+            logoEl.style.setProperty('display', 'block', 'important');
           }
         }
       }

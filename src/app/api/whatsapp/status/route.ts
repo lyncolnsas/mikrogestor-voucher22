@@ -84,15 +84,18 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, message: 'Telefone e código do voucher são obrigatórios.' }, { status: 400 });
       }
       
-      const rawTemplate = await getCustomTemplate('WA_MSG_VOUCHER_DELIVERY');
+      const isFree = (await prisma.systemConfig.findUnique({ where: { key: 'free_wifi_mode' } }))?.value === 'true' ||
+                     (await prisma.systemConfig.findUnique({ where: { key: 'PORTAL_SALES_MODE' } }))?.value === 'free';
+      const triggerKey = isFree ? 'WA_MSG_VOUCHER_DELIVERY_FREE' : 'WA_MSG_VOUCHER_DELIVERY';
+      const rawTemplate = await getCustomTemplate(triggerKey);
       const wifiName = process.env.HOTSPOT_WIFI_NAME || 'nossa rede Wi-Fi';
       const text = applyTemplateTags(rawTemplate, {
         cliente: 'Cliente',
         codigo_voucher: voucherCode,
-        validade: timeLimit || '15 minutos',
+        validade: timeLimit || (isFree ? 'Dia Todo' : '15 minutos'),
         rede_wifi: wifiName,
       });
-      const sendOpts = await getTriggerSendOptions('WA_MSG_VOUCHER_DELIVERY');
+      const sendOpts = await getTriggerSendOptions(triggerKey);
       const res = await whatsappService.sendWhatsAppMessage('admin', phone, text, {
         pinnedInstanceId: id,
         media: sendOpts.media,

@@ -340,6 +340,10 @@ export default function PlanosClientPage({ networkName }: Props) {
         return;
       }
       const json = await res.json();
+      if (res.status === 429 || json.limitReached) {
+        setView('limit');
+        return;
+      }
       if (!json.success) { setError(json.message); return; }
       setPendingPayment(json.data);
       if (json.data.amount === 0) {
