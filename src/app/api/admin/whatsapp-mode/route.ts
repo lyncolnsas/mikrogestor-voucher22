@@ -50,7 +50,8 @@ export async function POST(req: NextRequest) {
 
     // Ações de instância
     if (action === 'restart') {
-      await whatsappService.restartBaileys(instanceId);
+      const forcePair = Boolean(body.forceNewPairing);
+      await whatsappService.restartBaileys(instanceId, forcePair);
       const info = await whatsappService.getModeInfo();
       return NextResponse.json({
         success: true,
@@ -70,7 +71,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'connect' && instanceId) {
-      await whatsappService.connectBaileysInstance(instanceId, name);
+      const forcePair = body.forceNewPairing !== false;
+      await whatsappService.connectBaileysInstance(instanceId, name, forcePair);
       const info = await whatsappService.getModeInfo();
       return NextResponse.json({
         success: true,

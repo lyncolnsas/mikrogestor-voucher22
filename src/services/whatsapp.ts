@@ -193,15 +193,15 @@ class WhatsappSpecialist {
   }
 
   /** Reinicia o Baileys ou uma instância específica */
-  public async restartBaileys(instanceId?: string): Promise<void> {
+  public async restartBaileys(instanceId?: string, forceNewPairing = false): Promise<void> {
     const adapter = this.getBaileysAdapter();
-    await adapter.restart(instanceId);
+    await adapter.restart(instanceId, forceNewPairing);
   }
 
   /** Conecta uma nova instância Baileys e gera seu QR Code exclusivo */
-  public async connectBaileysInstance(instanceId: string, name?: string): Promise<void> {
+  public async connectBaileysInstance(instanceId: string, name?: string, forceNewPairing = false): Promise<void> {
     const adapter = this.getBaileysAdapter();
-    await adapter.connectInstance(instanceId, name);
+    await adapter.connectInstance(instanceId, name, forceNewPairing);
   }
 
   /** Desconecta de forma graciosa o Baileys ou uma instância específica */

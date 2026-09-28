@@ -15,18 +15,22 @@ export class MikrotikSessionError extends Error {
 
 /** Returns raw credentials from cookie or active database router without establishing a connection */
 export async function getSessionCredentials(): Promise<{ ip: string; user: string; pass: string }> {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('mikro_session');
-  
-  if (sessionCookie) {
-    try {
-      const decrypted = await decryptData(sessionCookie.value);
-      if (decrypted?.ip && decrypted?.user) {
-        return decrypted as { ip: string; user: string; pass: string };
+  try {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('mikro_session');
+    
+    if (sessionCookie) {
+      try {
+        const decrypted = await decryptData(sessionCookie.value);
+        if (decrypted?.ip && decrypted?.user) {
+          return decrypted as { ip: string; user: string; pass: string };
+        }
+      } catch (err) {
+        // Fallback to database if cookie decryption fails
       }
-    } catch (err) {
-      // Fallback to database if cookie decryption fails
     }
+  } catch {
+    // cookies() unavailable outside request scope (background cron/tasks)
   }
 
   // Fallback to Database: find the active router (prefer VPN enabled with valid vpnIp)

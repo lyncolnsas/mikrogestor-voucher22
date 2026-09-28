@@ -111,19 +111,35 @@ export async function DELETE(req: Request) {
 
     const instance = await prisma.whatsappInstance.findUnique({ where: { id } });
     if (instance && instance.engine === 'baileys') {
-      // Graceful shutdown obrigatório antes de remover os dados
-      await whatsappService.logoutBaileys(id, true);
+      // Graceful shutdown com timeout de 2.5s para nunca travar requisição
+      try {
+        await Promise.race([
+          whatsappService.logoutBaileys(id, true),
+          new Promise(resolve => setTimeout(resolve, 2500))
+        ]);
+      } catch (err) {
+        console.warn(`[DELETE /api/whatsapp/instances] Aviso no logoutBaileys para ${id}:`, err);
+      }
     }
 
-    // Remove roteamentos vinculados e instância
-    await prisma.leadRouting.deleteMany({ where: { whatsappInstanceId: id } });
-    await prisma.dailyConversation.deleteMany({ where: { whatsappInstanceId: id } });
+    // Remove roteamentos, histórico e autenticação vinculados
+    await prisma.leadRouting.deleteMany({ where: { whatsappInstanceId: id } }).catch(() => {});
+    await prisma.dailyConversation.deleteMany({ where: { whatsappInstanceId: id } }).catch(() => {});
+    await prisma.baileysAuth.deleteMany({ where: { instanceId: id } }).catch(() => {});
+    try {
+      await (prisma as any).chatBotState?.deleteMany?.({ where: { instanceId: id } });
+    } catch {}
+
+    // Remove a instância
     await prisma.whatsappInstance.delete({ where: { id } });
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
+    return NextResponse.json({ success: true, message: 'Instância excluída com sucesso.' });
+  } catch (error: any) {
     console.error('[DELETE /api/whatsapp/instances]', error);
-    return NextResponse.json({ success: false, error: 'Erro ao excluir instância' }, { status: 500 });
+    return NextResponse.json({
+      success: false,
+      error: error?.message || 'Erro ao excluir instância'
+    }, { status: 500 });
   }
 }
 

@@ -203,7 +203,24 @@ export class BaileysAdapter implements IWhatsappAdapter {
 
   // ─── Single Instance Connection ─────────────────────────────────────────────
 
-  public async connectInstance(instanceId: string, customName?: string): Promise<BaileysSessionInstance> {
+  /**
+   * Reseta completamente os dados de autenticação de uma instância para permitir novo pareamento do zero
+   */
+  public async resetAuth(instanceId: string): Promise<void> {
+    try {
+      await prisma.baileysAuth.deleteMany({ where: { instanceId } });
+    } catch {}
+    const sessionDir = path.join(this.baseDir, `instance_${instanceId}`);
+    if (fs.existsSync(sessionDir)) {
+      try { fs.rmSync(sessionDir, { recursive: true, force: true }); } catch {}
+    }
+    const legacyDir = path.join(process.cwd(), 'baileys_session');
+    if (fs.existsSync(legacyDir)) {
+      try { fs.rmSync(legacyDir, { recursive: true, force: true }); } catch {}
+    }
+  }
+
+  public async connectInstance(instanceId: string, customName?: string, forceNewPairing = false): Promise<BaileysSessionInstance> {
     let session = this.sessions.get(instanceId);
     const sessionDir = path.join(this.baseDir, `instance_${instanceId}`);
 
@@ -226,6 +243,26 @@ export class BaileysAdapter implements IWhatsappAdapter {
         libraryGroupName: null,
       };
       this.sessions.set(instanceId, session);
+    }
+
+    // Se solicitado novo pareamento ou se aparelho não está conectado e sem número, reseta credenciais antigas
+    if (forceNewPairing) {
+      console.log(`[Baileys][${instanceId}] Forçando novo pareamento: limpando credenciais antigas para gerar novo QR Code...`);
+      if (session.sock) {
+        try {
+          session.sock.ev?.removeAllListeners();
+          session.sock.end(undefined);
+        } catch {}
+        session.sock = null;
+      }
+      await this.resetAuth(instanceId);
+      session.number = null;
+      session.qrCode = null;
+      session.status = 'waiting_qr';
+      await prisma.whatsappInstance.update({
+        where: { id: instanceId },
+        data: { number: null, qrCode: null, status: 'waiting_qr' }
+      }).catch(() => {});
     }
 
     // Garante que o grupo configurado no banco esteja sempre sincronizado em memória
@@ -339,16 +376,25 @@ export class BaileysAdapter implements IWhatsappAdapter {
         if (connection === 'close') {
           session!.isConnecting = false;
           const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
-          const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+          const isLoggedOut = statusCode === DisconnectReason.loggedOut || statusCode === 401;
+          const shouldReconnect = !isLoggedOut;
 
           session!.status = shouldReconnect ? 'reconnecting' : 'disconnected';
           console.log(`[Baileys][${session!.id}] Conexão encerrada (código: ${statusCode}). Reconectar: ${shouldReconnect}`);
+
+          if (isLoggedOut) {
+            console.log(`[Baileys][${session!.id}] Sessão encerrada/desconectada pelo WhatsApp (401). Limpando credenciais antigas para permitir novo pareamento.`);
+            await this.resetAuth(session!.id);
+            session!.number = null;
+            session!.qrCode = null;
+          }
 
           await prisma.whatsappInstance.update({
             where: { id: session!.id },
             data: {
               status: session!.status,
-              qrCode: null
+              qrCode: null,
+              number: isLoggedOut ? null : undefined,
             }
           }).catch(() => {});
 
@@ -462,7 +508,11 @@ export class BaileysAdapter implements IWhatsappAdapter {
     if (session.sock) {
       try {
         if (deleteData) {
-          await session.sock.logout().catch(() => {});
+          // Timeout de 1.5s para evitar que logout() trave caso socket esteja instável
+          await Promise.race([
+            session.sock.logout().catch(() => {}),
+            sleep(1500)
+          ]);
         }
         session.sock.end(new Error('Graceful shutdown solicitado'));
       } catch (e) {
@@ -474,19 +524,11 @@ export class BaileysAdapter implements IWhatsappAdapter {
       session.sock = null;
     }
 
-    await sleep(500); // Aguarda liberação de handle do SO
+    await sleep(300); // Aguarda liberação de handle do SO
 
     if (deleteData) {
-      // Remove do banco de dados SQLite
-      await prisma.baileysAuth.deleteMany({
-        where: { instanceId }
-      }).catch(() => {});
-
-      if (fs.existsSync(session.sessionDir)) {
-        try {
-          fs.rmSync(session.sessionDir, { recursive: true, force: true });
-        } catch {}
-      }
+      // Remove do banco de dados SQLite e sistema de arquivos
+      await this.resetAuth(instanceId);
       console.log(`[Baileys][${instanceId}] Dados de autenticação removidos com sucesso.`);
     }
 
@@ -913,15 +955,15 @@ export class BaileysAdapter implements IWhatsappAdapter {
     }
   }
 
-  async restart(instanceId?: string): Promise<void> {
+  async restart(instanceId?: string, forceNewPairing = false): Promise<void> {
     if (instanceId) {
       await this.gracefulShutdown(instanceId, false);
-      await this.connectInstance(instanceId);
+      await this.connectInstance(instanceId, undefined, forceNewPairing);
       return;
     }
     for (const id of this.sessions.keys()) {
       await this.gracefulShutdown(id, false);
-      await this.connectInstance(id);
+      await this.connectInstance(id, undefined, forceNewPairing);
     }
   }
 

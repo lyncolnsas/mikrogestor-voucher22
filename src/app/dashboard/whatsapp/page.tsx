@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   Bot, Save, ShieldCheck, Link as LinkIcon,
@@ -318,17 +318,23 @@ export default function WhatsappConnection() {
     }
   }, []);
 
+  const pairingInstanceIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    pairingInstanceIdRef.current = pairingInstance?.id || null;
+  }, [pairingInstance?.id]);
+
   useEffect(() => {
     loadData();
+    const pollIntervalMs = isPairingModalOpen ? 2000 : 3500;
     const interval = setInterval(() => {
       fetch('/api/whatsapp/instances')
         .then(r => r.ok ? r.json() : null)
         .then(d => {
-          if (d?.success) {
+          if (d?.success && Array.isArray(d.data)) {
             setInstances(d.data);
-            // Atualiza instância do modal em tempo real se aberto
-            if (pairingInstance) {
-              const updated = d.data.find((inst: WhatsappInstance) => inst.id === pairingInstance.id);
+            if (pairingInstanceIdRef.current) {
+              const currentId = pairingInstanceIdRef.current;
+              const updated = d.data.find((inst: WhatsappInstance) => inst.id === currentId);
               if (updated) setPairingInstance(updated);
             }
           }
@@ -339,9 +345,9 @@ export default function WhatsappConnection() {
         .then(r => r.ok ? r.json() : null)
         .then(d => { if (d) setModeInfo(d); })
         .catch(() => {});
-    }, 3500);
+    }, pollIntervalMs);
     return () => clearInterval(interval);
-  }, [loadData, pairingInstance]);
+  }, [loadData, isPairingModalOpen]);
 
   // Toggle independente de motor
   const handleToggleEngine = async (engine: 'meta' | 'baileys', currentStatus: boolean) => {
@@ -364,6 +370,35 @@ export default function WhatsappConnection() {
       showFeedback(false, 'Erro de comunicação com o servidor.');
     } finally {
       setTogglingEngine(null);
+    }
+  };
+
+  // Inicia pareamento com socket Baileys ativo e geração de QR code fresco
+  const handleStartPairing = async (inst: WhatsappInstance, forceNew = true) => {
+    setPairingInstance(inst);
+    setIsPairingModalOpen(true);
+    setActionInProgress(`pair_${inst.id}`);
+    try {
+      const res = await fetch('/api/admin/whatsapp-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'connect',
+          instanceId: inst.id,
+          name: inst.name,
+          forceNewPairing: forceNew
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showFeedback(false, data.error || 'Erro ao inicializar pareamento.');
+      }
+      loadData();
+    } catch (err) {
+      console.error('[handleStartPairing] Erro:', err);
+      showFeedback(false, 'Falha ao solicitar QR Code ao servidor.');
+    } finally {
+      setActionInProgress(null);
     }
   };
 
@@ -402,16 +437,28 @@ export default function WhatsappConnection() {
     try {
       if (action === 'delete') {
         const res = await fetch(`/api/whatsapp/instances?id=${id}`, { method: 'DELETE' });
-        if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success) {
           showFeedback(true, 'Instância excluída com sucesso.');
-          if (pairingInstance?.id === id) setIsPairingModalOpen(false);
+          // Atualização otimista imediata
+          setInstances(prev => prev.filter(i => i.id !== id));
+          if (pairingInstance?.id === id) {
+            setIsPairingModalOpen(false);
+            setPairingInstance(null);
+          }
           loadData();
+        } else {
+          showFeedback(false, data.error || 'Erro ao excluir instância.');
         }
       } else {
         const res = await fetch('/api/admin/whatsapp-mode', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: action === 'disconnect' ? 'logout' : 'restart', instanceId: id })
+          body: JSON.stringify({
+            action: action === 'disconnect' ? 'logout' : 'restart',
+            instanceId: id,
+            forceNewPairing: action === 'restart'
+          })
         });
         const data = await res.json();
         if (res.ok) {
@@ -905,11 +952,12 @@ export default function WhatsappConnection() {
                               {inst.status !== 'connected' && (
                                 <button
                                   type="button"
-                                  onClick={() => { setPairingInstance(inst); setIsPairingModalOpen(true); }}
-                                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 flex items-center gap-1 cursor-pointer"
+                                  onClick={() => handleStartPairing(inst, true)}
+                                  disabled={actionInProgress === `pair_${inst.id}`}
+                                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 flex items-center gap-1 cursor-pointer disabled:opacity-50"
                                   title="Parear aparelho via QR Code"
                                 >
-                                  <QrCode className="w-3.5 h-3.5" />
+                                  <QrCode className={`w-3.5 h-3.5 ${actionInProgress === `pair_${inst.id}` ? 'animate-spin' : ''}`} />
                                   Parear
                                 </button>
                               )}
@@ -1422,10 +1470,11 @@ export default function WhatsappConnection() {
                   <div className="pt-1">
                     <button
                       type="button"
-                      onClick={() => handleInstanceAction(pairingInstance.id, 'restart')}
-                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 flex items-center gap-2 cursor-pointer shadow-xs transition-colors"
+                      onClick={() => handleStartPairing(pairingInstance, true)}
+                      disabled={actionInProgress === `pair_${pairingInstance.id}`}
+                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 flex items-center gap-2 cursor-pointer shadow-xs transition-colors disabled:opacity-50"
                     >
-                      <RotateCw className="w-3.5 h-3.5 text-sky-600" />
+                      <RotateCw className={`w-3.5 h-3.5 text-sky-600 ${actionInProgress === `pair_${pairingInstance.id}` ? 'animate-spin' : ''}`} />
                       <span>Gerar Novo QR Code</span>
                     </button>
                   </div>
