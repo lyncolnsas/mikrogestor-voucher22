@@ -295,7 +295,7 @@ export default function LeadsWorkspace({
           <Link
             href="/dashboard/leads/sorteio"
             className="text-xs font-black py-2 px-4 rounded-xl bg-gradient-to-r from-red-500 via-red-600 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-md shadow-red-500/25 hover:shadow-red-500/35 transition-all flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
-            title="Abrir Sorteador de Leads Nexus DRAW"
+            title="Abrir Sorteador de Leads MikroGestor"
           >
             <span>🎲</span>
             <span>Sortear Lead</span>

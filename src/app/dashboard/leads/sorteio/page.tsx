@@ -391,10 +391,10 @@ export default function SorteadorPage() {
             
             <div className="text-left">
               <span className="block text-3xl font-black text-slate-900 tracking-tight leading-none">
-                Nexus <span className="text-red-500 font-extrabold text-2xl tracking-normal">DRAW</span>
+                Mikro<span className="text-blue-600 font-extrabold text-3xl tracking-normal">Gestor</span>
               </span>
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mt-0.5">
-                MikroGestor Hotspot Edition
+                Sorteador de Leads Hotspot
               </span>
             </div>
           </div>
@@ -717,7 +717,7 @@ export default function SorteadorPage() {
 
       {/* ── Footer (Matching Nexus DRAW footer) ── */}
       <footer className="relative z-10 py-4 text-center text-[11px] text-slate-400 border-t border-slate-200/50 bg-white/40">
-        MikroGestor Hotspot // Nexus DRAW • Termos de Uso e Privacidade
+        MikroGestor Hotspot // Sorteador Oficial • Termos de Uso e Privacidade
       </footer>
 
     </div>
