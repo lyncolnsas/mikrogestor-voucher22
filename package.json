@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 80",
-    "build": "npx prisma generate && next build",
+    "build": "node scripts/prepare-schema.js && npx prisma generate && next build",
     "start": "node scripts/ensure-schema.js && npx prisma db push --skip-generate --accept-data-loss && node scripts/init-db.js && next start -H 0.0.0.0 -p 80",
     "lint": "eslint",
     "setup": "npm install && npx prisma db push && node scripts/init-db.js",

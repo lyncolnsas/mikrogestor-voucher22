@@ -76,6 +76,13 @@ model HotspotLead {
   drawnInRaffle    Boolean   @default(false) // Flag to prevent duplicate drawing
   trialBlocked     Boolean   @default(false) // Bloqueado por expiração ou tentativa de burla
   trialGrantedAt   DateTime? // Momento em que recebeu os 15m de carência
+  userAgent        String?   // User-Agent do dispositivo no momento do cadastro
+  deviceModel      String?
+  deviceVendor     String?
+  deviceType       String?
+  osName           String?
+  osVersion        String?
+  browserName      String?
   createdAt        DateTime  @default(now())
   payments         Payment[]
 }
@@ -233,6 +240,23 @@ model EmergencyToken {
   usedAt    DateTime?
   clientIp  String?
   createdAt DateTime  @default(now())
+}
+
+/// Estados de conversa do chatbot WhatsApp (persistidos no SQLite para sobreviver a redeploys).
+/// Substitui o whatsapp_states.json volátil que era destruído a cada deploy no Coolify.
+model ChatBotState {
+  remoteJid  String   @id                // JID do cliente (ex: 5511999998888@s.whatsapp.net)
+  step       Int      @default(0)        // Passo atual do fluxo (0=inicial, 1=nome, 2=senha, 3=plano)
+  mac        String?                     // MAC address capturado do hotspot
+  name       String?                     // Nome informado pelo cliente
+  password   String?                     // Senha/chave escolhida
+  token      String?                     // Token de verificação
+  tokenVerified Boolean @default(false)  // Token já confirmado
+  instanceId String?                     // ID da instância Baileys fixada (session pinning)
+  expireAt   DateTime                    // Auto-expiração em 30 minutos de inatividade
+  updatedAt  DateTime @updatedAt
+
+  @@index([expireAt])
 }
 
 
