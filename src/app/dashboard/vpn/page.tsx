@@ -66,6 +66,7 @@ interface VpnPeerClient {
   vpnIp: string;
   publicKey: string;
   status: string;
+  fullTunnel?: boolean;
   lastSeen: string | null;
   createdAt: string;
   transferRx: number;
@@ -643,10 +644,11 @@ interface CreatePeerModalProps {
 function CreatePeerModal({ onClose, onSuccess }: CreatePeerModalProps) {
   const [name, setName] = useState("");
   const [deviceType, setDeviceType] = useState<"windows" | "android" | "ios" | "macos" | "linux">("windows");
+  const [fullTunnel, setFullTunnel] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<{
-    peer: { id: string; name: string; deviceType: string; vpnIp: string };
+    peer: { id: string; name: string; deviceType: string; vpnIp: string; fullTunnel?: boolean };
     clientConfig: string;
   } | null>(null);
 
@@ -661,7 +663,7 @@ function CreatePeerModal({ onClose, onSuccess }: CreatePeerModalProps) {
       const res = await fetch("/api/vpn/peers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, deviceType }),
+        body: JSON.stringify({ name, deviceType, fullTunnel }),
       });
 
       const data = await res.json();
@@ -715,8 +717,8 @@ function CreatePeerModal({ onClose, onSuccess }: CreatePeerModalProps) {
               </h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
                 {result
-                  ? `IP Alocado: ${result.peer.vpnIp} — Pronto para acessar o Winbox`
-                  : "Acesse seus MikroTiks remotamente via Winbox de onde estiver"}
+                  ? `IP Alocado: ${result.peer.vpnIp} — Pronto para usar`
+                  : "Acesse seus MikroTiks e tenha navegação protegida de onde estiver"}
               </p>
             </div>
           </div>
@@ -794,13 +796,47 @@ function CreatePeerModal({ onClose, onSuccess }: CreatePeerModalProps) {
                 </p>
               </div>
 
-              <div className="bg-blue-50/60 border border-blue-200/80 rounded-2xl p-4 flex items-start gap-3 text-xs text-blue-900">
-                <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="font-bold">Split-Tunneling Seguro Ativado</p>
-                  <p className="text-blue-700 leading-relaxed text-[11px]">
-                    Apenas o tráfego destinado aos MikroTiks e à VPS (<code className="font-mono bg-blue-100/70 px-1 py-0.5 rounded">10.8.0.0/24</code>) passará pela VPN. Sua internet e sites locais continuam rápidos e normais.
-                  </p>
+              {/* Seletor de Modo de Acesso / Internet Protegida */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-2">
+                  Modo de Acesso & Proteção do Dispositivo
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setFullTunnel(false)}
+                    className={`p-3.5 rounded-2xl border text-left flex flex-col transition-all cursor-pointer ${
+                      !fullTunnel
+                        ? "bg-blue-50/80 border-blue-500 text-blue-900 shadow-xs ring-2 ring-blue-500/20"
+                        : "bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Lock className={`w-4 h-4 ${!fullTunnel ? "text-blue-600" : "text-slate-500"}`} />
+                      <span className="text-xs font-black">Apenas Rede Interna</span>
+                    </div>
+                    <span className="text-[11px] text-slate-500 leading-tight">
+                      Split-Tunnel (<code className="font-mono">10.8.0.0/24</code>). Apenas Winbox e MikroTiks. Sua navegação web não passa pela VPS.
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFullTunnel(true)}
+                    className={`p-3.5 rounded-2xl border text-left flex flex-col transition-all cursor-pointer ${
+                      fullTunnel
+                        ? "bg-emerald-50/90 border-emerald-500 text-emerald-950 shadow-xs ring-2 ring-emerald-500/20"
+                        : "bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Globe className={`w-4 h-4 ${fullTunnel ? "text-emerald-600" : "text-slate-500"}`} />
+                      <span className="text-xs font-black text-emerald-900">Internet Protegida (Full Tunnel)</span>
+                    </div>
+                    <span className="text-[11px] text-slate-500 leading-tight">
+                      Mascaramento total (<code className="font-mono">0.0.0.0/0</code>). 100% da internet do celular/PC é mascarada e protegida pela VPS.
+                    </span>
+                  </button>
                 </div>
               </div>
 
@@ -847,6 +883,30 @@ function CreatePeerModal({ onClose, onSuccess }: CreatePeerModalProps) {
                   </p>
                 </div>
                 <StatusBadge status="pending" />
+              </div>
+
+              {/* Banner de Modo Ativo */}
+              <div className={`p-3 rounded-2xl border flex items-center gap-3 text-xs ${
+                result.peer.fullTunnel
+                  ? "bg-emerald-50/80 border-emerald-300 text-emerald-900"
+                  : "bg-blue-50/80 border-blue-200 text-blue-900"
+              }`}>
+                {result.peer.fullTunnel ? (
+                  <Globe className="w-5 h-5 text-emerald-600 shrink-0" />
+                ) : (
+                  <Lock className="w-5 h-5 text-blue-600 shrink-0" />
+                )}
+                <div>
+                  <span className="font-black block">
+                    {result.peer.fullTunnel
+                      ? "Modo Ativo: Internet Protegida & Mascaramento Total"
+                      : "Modo Ativo: Apenas Rede Interna (Winbox & MikroTiks)"}
+                  </span>
+                  <span className="text-[11px] text-slate-600">
+                    AllowedIPs: <code className="font-mono font-bold">{result.peer.fullTunnel ? "0.0.0.0/0, ::/0" : "10.8.0.0/24"}</code>
+                    {result.peer.fullTunnel ? " — Todo o tráfego de navegação passará protegido pela VPS." : " — Apenas o tráfego do Winbox passa pela VPN."}
+                  </span>
+                </div>
               </div>
 
               {/* Tabs Switcher */}
@@ -963,11 +1023,15 @@ function CreatePeerModal({ onClose, onSuccess }: CreatePeerModalProps) {
 interface ViewPeerQrModalProps {
   peer: VpnPeerClient;
   onClose: () => void;
+  onPeerUpdated?: (updated: VpnPeerClient) => void;
 }
 
-function ViewPeerQrModal({ peer, onClose }: ViewPeerQrModalProps) {
+function ViewPeerQrModal({ peer, onClose, onPeerUpdated }: ViewPeerQrModalProps) {
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<string>("");
+  const [isFullTunnel, setIsFullTunnel] = useState<boolean>(!!peer.fullTunnel);
+  const [togglingMode, setTogglingMode] = useState<boolean>(false);
+  const [modeNotice, setModeNotice] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"qr" | "conf">(
     peer.deviceType === "android" || peer.deviceType === "ios" ? "qr" : "conf"
   );
@@ -977,10 +1041,44 @@ function ViewPeerQrModal({ peer, onClose }: ViewPeerQrModalProps) {
       .then((res) => res.json())
       .then((data) => {
         if (data.clientConfig) setConfig(data.clientConfig);
+        if (data.peer && typeof data.peer.fullTunnel === "boolean") {
+          setIsFullTunnel(data.peer.fullTunnel);
+        }
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, [peer.id]);
+
+  const handleToggleMode = async () => {
+    const nextMode = !isFullTunnel;
+    setTogglingMode(true);
+    setModeNotice("");
+    try {
+      const res = await fetch(`/api/vpn/peers/${peer.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullTunnel: nextMode }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao alterar modo do dispositivo.");
+
+      setIsFullTunnel(nextMode);
+      if (data.clientConfig) {
+        setConfig(data.clientConfig);
+      }
+      setModeNotice(
+        nextMode
+          ? "Acesso Total à Internet ativado! Leia o novo QR Code ou baixe o novo arquivo .conf no seu dispositivo."
+          : "Modo alterado para Apenas Rede Interna (Winbox). Leia o novo QR Code ou baixe o .conf."
+      );
+      onPeerUpdated?.({ ...peer, fullTunnel: nextMode });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Falha ao alternar modo.";
+      alert(message);
+    } finally {
+      setTogglingMode(false);
+    }
+  };
 
   const downloadConf = () => {
     if (!config) return;
@@ -1015,7 +1113,7 @@ function ViewPeerQrModal({ peer, onClose }: ViewPeerQrModalProps) {
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto space-y-5 flex-1 custom-scrollbar">
+        <div className="p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
           {loading ? (
             <div className="p-12 text-center text-slate-500 font-bold text-xs animate-pulse">
               Carregando chaves e QR Code...
@@ -1026,6 +1124,65 @@ function ViewPeerQrModal({ peer, onClose }: ViewPeerQrModalProps) {
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Card de Controle de Modo com Botão de 1 Clique */}
+              <div className={`p-4 rounded-2xl border flex flex-col gap-2.5 transition-colors ${
+                isFullTunnel
+                  ? "bg-emerald-50/90 border-emerald-300 text-emerald-950"
+                  : "bg-slate-50 border-slate-200 text-slate-800"
+              }`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                      isFullTunnel ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-200 text-slate-600"
+                    }`}>
+                      {isFullTunnel ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                    </div>
+                    <div>
+                      <span className="font-black text-xs block">
+                        {isFullTunnel ? "Internet Protegida (Full Tunnel)" : "Apenas Rede Interna (Split Tunnel)"}
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        AllowedIPs = {isFullTunnel ? "0.0.0.0/0, ::/0" : "10.8.0.0/24"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleToggleMode}
+                    disabled={togglingMode}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs border ${
+                      isFullTunnel
+                        ? "bg-white hover:bg-emerald-100 text-emerald-800 border-emerald-300"
+                        : "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
+                    }`}
+                  >
+                    {togglingMode ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : isFullTunnel ? (
+                      <Lock className="w-3.5 h-3.5" />
+                    ) : (
+                      <Globe className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isFullTunnel ? "Desativar Acesso Total" : "Ativar Acesso Total"}</span>
+                  </button>
+                </div>
+
+                <p className="text-[11px] leading-relaxed text-slate-600">
+                  {isFullTunnel
+                    ? "Toda a navegação de internet deste dispositivo passa mascarada e criptografada pelo IP da sua VPS."
+                    : "Apenas conexões destinadas aos MikroTiks (Winbox) e à VPS passam pelo túnel. Seus sites locais navegam direto."}
+                </p>
+
+                {modeNotice && (
+                  <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-semibold flex items-center gap-2 animate-fade-in">
+                    <Info className="w-4 h-4 shrink-0 text-amber-600" />
+                    <span>{modeNotice}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Tabs Switcher */}
               <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl text-xs font-bold">
                 <button
                   type="button"
@@ -1191,6 +1348,35 @@ export default function VpnPage() {
       await loadStatus();
     } finally {
       setRevokingPeer(null);
+    }
+  };
+
+  const [togglingPeerId, setTogglingPeerId] = useState<string | null>(null);
+
+  const togglePeerFullTunnel = async (peer: VpnPeerClient) => {
+    const nextState = !peer.fullTunnel;
+    setTogglingPeerId(peer.id);
+    try {
+      const res = await fetch(`/api/vpn/peers/${peer.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullTunnel: nextState }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao alternar modo do dispositivo.");
+        return;
+      }
+      setPeers((prev) =>
+        prev.map((p) => (p.id === peer.id ? { ...p, fullTunnel: nextState } : p))
+      );
+      if (selectedPeerForQr && selectedPeerForQr.id === peer.id) {
+        setSelectedPeerForQr({ ...selectedPeerForQr, fullTunnel: nextState });
+      }
+    } catch (e: unknown) {
+      alert("Falha na comunicação ao alternar modo do dispositivo.");
+    } finally {
+      setTogglingPeerId(null);
     }
   };
 
@@ -1501,9 +1687,20 @@ export default function VpnPage() {
                       <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
                         {p.deviceType}
                       </span>
+                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 border ${
+                        p.fullTunnel
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                          : "bg-blue-50 text-blue-700 border-blue-200"
+                      }`}>
+                        {p.fullTunnel ? <Globe className="w-3 h-3 text-emerald-600" /> : <Lock className="w-3 h-3 text-blue-600" />}
+                        <span>{p.fullTunnel ? "Internet Protegida" : "Apenas Winbox"}</span>
+                      </span>
                     </div>
                     <p className="text-xs text-slate-500 font-mono mt-0.5">
                       IP VPN: <strong className="text-slate-800">{p.vpnIp}</strong>
+                      <span className="text-slate-400 font-sans ml-1.5">
+                        · {p.fullTunnel ? "Full Tunnel (Mascaramento VPS Ativo)" : "Split Tunnel (10.8.0.0/24)"}
+                      </span>
                       {p.endpoint && <span className="text-slate-400 ml-1.5">· {p.endpoint}</span>}
                     </p>
                   </div>
@@ -1520,10 +1717,40 @@ export default function VpnPage() {
                   <StatusBadge status={p.status} />
 
                   <div className="flex items-center gap-1.5">
+                    {/* Botão de 1 Clique: Ativar/Desativar Acesso Total à Internet */}
+                    <button
+                      onClick={() => togglePeerFullTunnel(p)}
+                      disabled={togglingPeerId === p.id}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                        p.fullTunnel
+                          ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-xs"
+                          : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
+                      }`}
+                      title={
+                        p.fullTunnel
+                          ? "Acesso Total à Internet ativo (0.0.0.0/0). Clique para alternar para Split Tunnel."
+                          : "Apenas Winbox ativo (10.8.0.0/24). Clique para habilitar Acesso Total à Internet (Mascaramento VPS)."
+                      }
+                    >
+                      {togglingPeerId === p.id ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-500" />
+                      ) : p.fullTunnel ? (
+                        <Globe className="w-3.5 h-3.5 text-emerald-600" />
+                      ) : (
+                        <Lock className="w-3.5 h-3.5 text-slate-400" />
+                      )}
+                      <span className="hidden sm:inline">
+                        {p.fullTunnel ? "Internet Protegida: ON" : "Internet Protegida: OFF"}
+                      </span>
+                      <span className="sm:hidden">
+                        {p.fullTunnel ? "Protegida" : "Winbox"}
+                      </span>
+                    </button>
+
                     <button
                       onClick={() => setSelectedPeerForQr(p)}
                       className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-xl transition-colors cursor-pointer border border-teal-200 text-xs font-bold"
-                      title="Ver QR Code para celular"
+                      title="Ver QR Code para celular ou arquivo .conf"
                     >
                       <QrCode className="w-3.5 h-3.5" />
                       <span>QR Code</span>
@@ -1655,6 +1882,12 @@ export default function VpnPage() {
         <ViewPeerQrModal
           peer={selectedPeerForQr}
           onClose={() => setSelectedPeerForQr(null)}
+          onPeerUpdated={(updated) => {
+            setPeers((prev) =>
+              prev.map((p) => (p.id === updated.id ? { ...p, fullTunnel: updated.fullTunnel } : p))
+            );
+            setSelectedPeerForQr(updated);
+          }}
         />
       )}
     </main>

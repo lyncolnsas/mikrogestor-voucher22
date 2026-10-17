@@ -169,6 +169,15 @@ http:
         return self.send_json(404, {'error': 'Not found'})
 
 if __name__ == '__main__':
+    # Garante NAT Masquerade e forwarding para clientes WireGuard com Full Tunnel (navegação protegida pela VPS)
+    try:
+        run(f'iptables -t nat -C POSTROUTING -s 10.8.0.0/24 ! -o {WG_INTERFACE} -j MASQUERADE 2>/dev/null || iptables -t nat -A POSTROUTING -s 10.8.0.0/24 ! -o {WG_INTERFACE} -j MASQUERADE')
+        run(f'iptables -C FORWARD -i {WG_INTERFACE} -j ACCEPT 2>/dev/null || iptables -A FORWARD -i {WG_INTERFACE} -j ACCEPT')
+        run(f'iptables -C FORWARD -o {WG_INTERFACE} -j ACCEPT 2>/dev/null || iptables -A FORWARD -o {WG_INTERFACE} -j ACCEPT')
+        run('sysctl -w net.ipv4.ip_forward=1')
+    except Exception as e:
+        log.warning(f'Could not configure NAT masquerade for full tunnel: {e}')
+
     server = http.server.HTTPServer((BIND_HOST, BIND_PORT), WGHandler)
     log.info(f'WG Manager listening on {BIND_HOST}:{BIND_PORT}')
     server.serve_forever()

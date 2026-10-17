@@ -212,8 +212,8 @@ export class WireGuardService {
   }
 
   /**
-   * Gera o arquivo de configuração (.conf) padrão do WireGuard para clientes (Windows, Celular, etc.)
-   * Utiliza split-tunneling (AllowedIPs = 10.8.0.0/24) para isolamento seguro do tráfego de controle.
+   * Gera o arquivo de configuração (.conf) do WireGuard para clientes (Windows, Celular, etc.)
+   * Permite alternar entre Split-Tunneling (10.8.0.0/24) ou Full-Tunneling com mascaramento total (0.0.0.0/0, ::/0).
    */
   generateClientConfig(params: {
     name?: string;
@@ -223,6 +223,7 @@ export class WireGuardService {
     vpsIp: string;
     vpsPort?: number;
     dns?: string;
+    fullTunnel?: boolean;
   }): string {
     const {
       name = "MikroGestor VPN",
@@ -232,12 +233,19 @@ export class WireGuardService {
       vpsIp,
       vpsPort = 51820,
       dns = "1.1.1.1, 8.8.8.8",
+      fullTunnel = false,
     } = params;
+
+    const allowedIps = fullTunnel ? "0.0.0.0/0, ::/0" : "10.8.0.0/24";
+    const modeDesc = fullTunnel
+      ? "Full Tunnel — Internet Protegida & Mascaramento Total (0.0.0.0/0)"
+      : "Split Tunnel — Apenas Rede Interna & Winbox (10.8.0.0/24)";
 
     return `# ============================================================
 # MikroGestor VPN — Configuração de Acesso Remoto
 # Dispositivo : ${name}
 # IP Cliente  : ${vpnIp}
+# Modo        : ${modeDesc}
 # ============================================================
 
 [Interface]
@@ -248,7 +256,7 @@ DNS = ${dns}
 [Peer]
 PublicKey = ${vpsPublicKey}
 Endpoint = ${vpsIp}:${vpsPort}
-AllowedIPs = 10.8.0.0/24
+AllowedIPs = ${allowedIps}
 PersistentKeepalive = 25
 `;
   }

@@ -32,6 +32,7 @@ export async function GET(
       vpsPublicKey,
       vpsIp,
       vpsPort: 51820,
+      fullTunnel: (peer as any).fullTunnel,
     });
 
     const safeFilename = peer.name

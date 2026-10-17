@@ -28,6 +28,7 @@ export async function GET() {
         deviceType: p.deviceType,
         vpnIp: p.vpnIp,
         publicKey: p.publicKey,
+        fullTunnel: !!(p as any).fullTunnel,
         status: connected ? "connected" : "disconnected",
         lastSeen,
         createdAt: p.createdAt,
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
   try {
     await ensureVpnColumns();
     const body = await req.json();
-    const { name, deviceType = "windows" } = body;
+    const { name, deviceType = "windows", fullTunnel = false } = body;
 
     if (!name || !name.trim()) {
       return NextResponse.json(
@@ -89,6 +90,7 @@ export async function POST(req: NextRequest) {
         vpnIp,
         publicKey: keyPair.publicKey,
         privateKey: keyPair.privateKey,
+        fullTunnel: Boolean(fullTunnel),
         status: "pending",
       },
     });
@@ -104,6 +106,7 @@ export async function POST(req: NextRequest) {
       vpsPublicKey,
       vpsIp,
       vpsPort: 51820,
+      fullTunnel: (createdPeer as any).fullTunnel,
     });
 
     return NextResponse.json({
@@ -114,6 +117,7 @@ export async function POST(req: NextRequest) {
         deviceType: createdPeer.deviceType,
         vpnIp: createdPeer.vpnIp,
         publicKey: createdPeer.publicKey,
+        fullTunnel: (createdPeer as any).fullTunnel,
         status: createdPeer.status,
         createdAt: createdPeer.createdAt,
       },

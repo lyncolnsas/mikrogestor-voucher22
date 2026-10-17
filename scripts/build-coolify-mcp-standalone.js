@@ -605,7 +605,7 @@ COOLIFY_SSH_PORT=22
 COOLIFY_SSH_USER=root
 
 # Opção A: Autenticação SSH por Senha
-COOLIFY_SSH_PASSWORD=@Valentina1985
+COOLIFY_SSH_PASSWORD=Lyncoln1985@
 
 # Opção B: Autenticação SSH por Chave Privada (Recomendado para produção)
 # COOLIFY_SSH_KEY_PATH=~/.ssh/id_ed25519
@@ -874,7 +874,7 @@ let currentConfig = {
   COOLIFY_SERVER_IP: '2.25.168.82',
   COOLIFY_SSH_PORT: '22',
   COOLIFY_SSH_USER: 'root',
-  COOLIFY_SSH_PASSWORD: '@Valentina1985',
+  COOLIFY_SSH_PASSWORD: 'Lyncoln1985@',
   COOLIFY_SSH_KEY_PATH: '',
   COOLIFY_API_URL: 'http://2.25.168.82:8000/api/v1',
   COOLIFY_API_TOKEN: '1|plahDHthpFs9JStO2953AjsfsjZKGnd9B9gTgKfx3c95a991',

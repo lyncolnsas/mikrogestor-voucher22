@@ -189,6 +189,7 @@ model VpnPeer {
   presharedKey String?
   status       String    @default("disconnected") // connected | disconnected
   lastSeen     DateTime?
+  fullTunnel   Boolean   @default(false)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }

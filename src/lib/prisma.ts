@@ -64,10 +64,18 @@ export async function ensureVpnColumns(): Promise<void> {
           "presharedKey" TEXT,
           "status" TEXT NOT NULL DEFAULT 'disconnected',
           "lastSeen" DATETIME,
+          "fullTunnel" BOOLEAN NOT NULL DEFAULT 0,
           "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
           "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
       `).catch(() => {});
+
+      // Garante coluna fullTunnel se a tabela já existia antes
+      const peerCols: any = await prisma.$queryRawUnsafe(`PRAGMA table_info("VpnPeer");`).catch(() => []);
+      const peerColNames = Array.isArray(peerCols) ? peerCols.map((c: any) => c.name) : [];
+      if (peerColNames.length > 0 && !peerColNames.includes('fullTunnel')) {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "VpnPeer" ADD COLUMN "fullTunnel" BOOLEAN NOT NULL DEFAULT 0;`).catch(() => {});
+      }
 
       migrationDone = true;
     } catch (e) {

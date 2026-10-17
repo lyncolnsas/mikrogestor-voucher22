@@ -33,6 +33,7 @@ export async function GET(
       vpsPublicKey,
       vpsIp,
       vpsPort: 51820,
+      fullTunnel: (peer as any).fullTunnel,
     });
 
     return NextResponse.json({
@@ -43,6 +44,7 @@ export async function GET(
         deviceType: peer.deviceType,
         vpnIp: peer.vpnIp,
         publicKey: peer.publicKey,
+        fullTunnel: !!(peer as any).fullTunnel,
         status: peer.status,
         createdAt: peer.createdAt,
       },
@@ -53,6 +55,73 @@ export async function GET(
     console.error("[API /api/vpn/peers/[id] GET]", err);
     return NextResponse.json(
       { error: err?.message || "Erro ao obter detalhes do peer VPN" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await ensureVpnColumns();
+    const { id } = await params;
+    const body = await req.json();
+
+    const peer = await prisma.vpnPeer.findUnique({
+      where: { id },
+    });
+
+    if (!peer) {
+      return NextResponse.json({ error: "Dispositivo VPN não encontrado." }, { status: 404 });
+    }
+
+    const dataToUpdate: any = {};
+    if (typeof body.fullTunnel === "boolean") {
+      dataToUpdate.fullTunnel = body.fullTunnel;
+    }
+    if (typeof body.name === "string" && body.name.trim()) {
+      dataToUpdate.name = body.name.trim();
+    }
+
+    const updatedPeer = await prisma.vpnPeer.update({
+      where: { id },
+      data: dataToUpdate,
+    });
+
+    const vpsPublicKey = process.env.VPS_WG_PUBLIC_KEY ?? "CONFIGURE_VPS_WG_PUBLIC_KEY_NO_ENV";
+    const vpsIp = process.env.VPS_PUBLIC_IP ?? "2.25.168.82";
+
+    const clientConfig = wireguardService.generateClientConfig({
+      name: updatedPeer.name,
+      privateKey: updatedPeer.privateKey,
+      vpnIp: updatedPeer.vpnIp,
+      vpsPublicKey,
+      vpsIp,
+      vpsPort: 51820,
+      fullTunnel: (updatedPeer as any).fullTunnel,
+    });
+
+    return NextResponse.json({
+      success: true,
+      peer: {
+        id: updatedPeer.id,
+        name: updatedPeer.name,
+        deviceType: updatedPeer.deviceType,
+        vpnIp: updatedPeer.vpnIp,
+        publicKey: updatedPeer.publicKey,
+        fullTunnel: !!(updatedPeer as any).fullTunnel,
+        status: updatedPeer.status,
+        createdAt: updatedPeer.createdAt,
+      },
+      clientConfig,
+      vpsIp,
+    });
+  } catch (err: any) {
+    console.error("[API /api/vpn/peers/[id] PATCH]", err);
+    return NextResponse.json(
+      { error: err?.message || "Erro ao atualizar dispositivo VPN" },
       { status: 500 }
     );
   }
