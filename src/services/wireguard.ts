@@ -236,7 +236,7 @@ export class WireGuardService {
       fullTunnel = false,
     } = params;
 
-    const allowedIps = fullTunnel ? "0.0.0.0/0, ::/0" : "10.8.0.0/24";
+    const allowedIps = fullTunnel ? "0.0.0.0/0" : "10.8.0.0/24";
     const modeDesc = fullTunnel
       ? "Full Tunnel — Internet Protegida & Mascaramento Total (0.0.0.0/0)"
       : "Split Tunnel — Apenas Rede Interna & Winbox (10.8.0.0/24)";
@@ -252,6 +252,7 @@ export class WireGuardService {
 PrivateKey = ${privateKey}
 Address = ${vpnIp}/24
 DNS = ${dns}
+MTU = 1360
 
 [Peer]
 PublicKey = ${vpsPublicKey}

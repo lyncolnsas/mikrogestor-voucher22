@@ -171,9 +171,16 @@ if command -v ufw >/dev/null 2>&1; then
     
     # Porta TCP do daemon liberada estritamente para subnets Docker (RFC 1918)
     ufw allow from 172.16.0.0/12 to any port ${WG_MANAGER_PORT} proto tcp comment "MikroGestor Docker to WG-Manager" >/dev/null 2>&1 || true
-    ufw allow from 10.0.0.0/8 to any port ${WG_MANAGER_PORT} proto tcp comment "MikroGestor Local Subnet" >/dev/null 2>&1 || true
+    # Roteamento WireGuard (Inter-peer e Full Tunnel para internet via eth0)
+    ufw route allow in on ${WG_INTERFACE} out on ${WG_INTERFACE} comment "WireGuard Inter-Peer Routing" >/dev/null 2>&1 || true
+    ufw route allow in on ${WG_INTERFACE} out on eth0 comment "MikroGestor Full Tunnel Internet" >/dev/null 2>&1 || true
+    ufw route allow in on eth0 out on ${WG_INTERFACE} comment "MikroGestor Full Tunnel Internet Return" >/dev/null 2>&1 || true
+
+    # TCP MSS Clamping para evitar fragmentação e travamentos em conexões móveis 4G/5G
+    iptables -t mangle -C FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu 2>/dev/null || iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+
     ufw reload >/dev/null 2>&1 || true
-    success "Firewall UFW ajustado com segurança (portas 22, 80, 443, 8000, 51820/udp e 51821/tcp liberadas)."
+    success "Firewall UFW ajustado com segurança (portas liberadas e roteamento WireGuard ativo)."
 fi
 
 # ─── 8. Auto-Detecção de IP Público e Testes de Integridade ───────────────────
