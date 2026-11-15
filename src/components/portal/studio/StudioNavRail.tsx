@@ -2,6 +2,7 @@
 
 import React from 'react';
 import {
+  Layers,
   Palette,
   KeyRound,
   FileSpreadsheet,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 
 export type StudioTab = 
+  | 'blocks'
   | 'branding' 
   | 'auth_methods' 
   | 'leads_form' 
@@ -41,6 +43,15 @@ export default function StudioNavRail({
   onToggleCollapse,
 }: StudioNavRailProps) {
   const mainTabs = [
+    {
+      id: 'blocks' as StudioTab,
+      label: 'Estrutura & Blocos',
+      description: 'Reordene, ative, remova e dimensione seções',
+      icon: Layers,
+      badge: 'CMS',
+      badgeColor: 'blue',
+      advanced: false,
+    },
     {
       id: 'branding' as StudioTab,
       label: 'Identidade & Estilo',

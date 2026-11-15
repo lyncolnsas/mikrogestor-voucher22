@@ -716,11 +716,13 @@ class WhatsappSpecialist {
         // ── Opção A: Mercado Pago (PIX Automático Copia e Cola) — SOMENTE SE PREENCHIDO ──
         if (hasMpToken && mpConfig?.value) {
           const mpService = new MercadoPagoService(mpConfig.value.trim());
+          const { formatValidPayerEmail } = await import('./mercadopago');
+          const safeEmail = formatValidPayerEmail(null, state.name || 'cliente');
           const paymentRes = await mpService.createPixPayment({
             transaction_amount: selectedPlan.price,
             description: `Voucher Wi-Fi: ${selectedPlan.title}`,
             payer: {
-              email: `${state.name?.replace(/\s+/g, '').toLowerCase() || 'cliente'}@wifi.local`,
+              email: safeEmail,
               first_name: state.name || 'Cliente'
             }
           });

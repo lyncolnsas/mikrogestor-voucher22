@@ -34,12 +34,27 @@
         }
 
         .login-card {
-            background: var(--card-bg); 
+            background: var(--card-bg, #ffffff); 
             width: 100%; 
-            max-width: 420px; 
-            border-radius: 12px; 
+            max-width: var(--card-max-width, 420px); 
+            border-radius: var(--card-radius-tl, 12px); 
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); 
             overflow: hidden;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: var(--card-gap, 16px) !important;
+        }
+
+        .login-card > :not(.header-brand) {
+            padding-left: var(--card-padding-l, 24px) !important;
+            padding-right: var(--card-padding-r, 24px) !important;
+            box-sizing: border-box !important;
+        }
+
+        .login-card > .footer {
+            padding-bottom: var(--card-padding-b, 20px) !important;
+            padding-top: 14px !important;
+            margin-top: 0 !important;
         }
 
         .header-brand {
@@ -328,317 +343,6 @@
         }
     /* AdCarouselStyles */
 
-    /* ====== PRELOADER DISCRETO COM IDENTIDADE DA MARCA ====== */
-    .ad-preloader-overlay {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      background: #020617;
-      z-index: 10001 !important;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.4s ease-out, visibility 0.4s ease-out;
-      pointer-events: none;
-    }
-    .ad-preloader-overlay.fade-out {
-      opacity: 0;
-      visibility: hidden;
-    }
-    .ad-preloader-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 24px;
-    }
-    .ad-preloader-icon-wrap {
-      width: 54px;
-      height: 54px;
-      border-radius: 16px;
-      background: rgba(6, 182, 212, 0.12);
-      border: 1px solid rgba(6, 182, 212, 0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 14px;
-      box-shadow: 0 0 20px rgba(6, 182, 212, 0.25);
-      animation: adPulse 2s ease-in-out infinite alternate;
-    }
-    .ad-preloader-icon {
-      width: 26px;
-      height: 26px;
-      color: #06b6d4;
-    }
-    .ad-preloader-title {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      background: linear-gradient(135deg, #06b6d4, #3b82f6, #06b6d4, #06b6d4) !important;
-      background-size: 300% 300% !important;
-      -webkit-background-clip: text !important;
-      -webkit-text-fill-color: transparent !important;
-      animation: mgTitleGradient 4s ease infinite alternate !important;
-      margin-bottom: 12px;
-    }
-    .ad-preloader-dots {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      justify-content: center;
-    }
-    .ad-preloader-dots span {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #06b6d4;
-      opacity: 0.35;
-      animation: adDotPulse 1.2s infinite ease-in-out both;
-    }
-    .ad-preloader-dots span:nth-child(1) { animation-delay: -0.32s; }
-    .ad-preloader-dots span:nth-child(2) { animation-delay: -0.16s; }
-    @keyframes adPulse {
-      0% { transform: scale(0.96); box-shadow: 0 0 12px rgba(6, 182, 212, 0.15); }
-      100% { transform: scale(1.04); box-shadow: 0 0 25px rgba(6, 182, 212, 0.4); }
-    }
-    @keyframes adDotPulse {
-      0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
-      40% { transform: scale(1.1); opacity: 1; }
-    }
-    @keyframes mgTitleGradient {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 100% 50%; }
-    }
-
-    /* ====== POPUP DE VÍDEO / CARROSSEL TELA CHEIA ====== */
-    .ad-modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #000;
-      z-index: 100000 !important; /* Bloqueia tudo abaixo */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-    }
-
-    .ad-modal-content-wrapper {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      max-width: 600px;
-      max-height: 1000px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .ad-carousel-container {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      scroll-behavior: smooth;
-      -webkit-overflow-scrolling: touch;
-    }
-    .ad-carousel-container::-webkit-scrollbar {
-      display: none;
-    }
-
-    .ad-carousel-slide {
-      flex: 0 0 100%;
-      width: 100%;
-      height: 100%;
-      scroll-snap-align: start;
-      position: relative;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .ad-carousel-slide img, .ad-carousel-slide video {
-      width: 100%;
-      height: 100%;
-      object-fit: contain; /* Mantém a proporção exata da imagem/vídeo sem cortes */
-    }
-
-    .ad-carousel-slide video {
-      pointer-events: none; /* Impede que o clique/toque no vídeo acione a pausa nativa do navegador */
-    }
-
-    /* Esconder ícones nativos de play em espera do navegador */
-    .ad-carousel-slide video::-webkit-media-controls,
-    .ad-carousel-slide video::-webkit-media-controls-start-playback-button,
-    .ad-carousel-slide video::-webkit-media-controls-overlay-play-button,
-    .ad-carousel-slide video::-webkit-media-controls-play-button {
-      display: none !important;
-      -webkit-appearance: none !important;
-      opacity: 0 !important;
-      visibility: hidden !important;
-    }
-
-    .ad-click-catcher {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 50;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .ad-patrocinado {
-      position: absolute;
-      top: max(20px, env(safe-area-inset-top)); /* Respeita o notch do iPhone */
-      left: 20px;
-      background: rgba(0, 0, 0, 0.5);
-      color: #fff;
-      padding: 6px 12px;
-      font-size: 12px;
-      border-radius: 6px;
-      z-index: 99999 !important;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      pointer-events: none;
-    }
-
-    .ad-modal-close {
-      position: absolute;
-      top: max(20px, env(safe-area-inset-top));
-      right: 20px;
-      background: #eb24a2;
-      color: #fff;
-      border: none;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      font-size: 20px;
-      cursor: pointer;
-      z-index: 99999 !important;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      transition: background 0.2s, transform 0.2s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .ad-modal-close:hover {
-      filter: brightness(0.9);
-    }
-    .ad-modal-close:active {
-      transform: scale(0.95);
-    }
-
-    .ad-modal-timer {
-      position: absolute;
-      bottom: max(30px, env(safe-area-inset-bottom));
-      right: 20px;
-      background: rgba(0, 0, 0, 0.75);
-      color: #fff;
-      padding: 8px 18px;
-      font-size: 14px;
-      border-radius: 30px;
-      z-index: 99999 !important;
-      font-weight: bold;
-      border: 1px solid rgba(255,255,255,0.2);
-      backdrop-filter: blur(5px);
-    }
-
-    /* Instagram Stories Style Top Progress Bar */
-    .ad-stories-progress-container {
-      position: absolute;
-      top: max(20px, env(safe-area-inset-top));
-      left: 20px;
-      right: 20px;
-      display: flex;
-      gap: 6px;
-      z-index: 99999 !important;
-      pointer-events: none;
-    }
-    /* Adjust top of other elements if progress container exists */
-    .ad-stories-progress-container ~ .ad-patrocinado {
-      top: calc(max(20px, env(safe-area-inset-top)) + 12px);
-    }
-    .ad-stories-progress-container ~ .ad-modal-close {
-      top: calc(max(20px, env(safe-area-inset-top)) + 12px);
-    }
-
-    .ad-progress-bar {
-      height: 3px;
-      flex: 1;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 9999px;
-      overflow: hidden;
-    }
-    .ad-progress-fill {
-      height: 100%;
-      background: #ffffff;
-      width: 0%;
-      transition: width 0.1s linear;
-    }
-
-    /* Botões de navegação sutil nas laterais para não interceptar o toque central de áudio */
-    .ad-nav-btn {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: rgba(0, 0, 0, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: bold;
-      z-index: 95;
-      cursor: pointer;
-      backdrop-filter: blur(4px);
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      opacity: 0.7;
-      transition: opacity 0.2s, background 0.2s;
-    }
-    .ad-nav-btn:hover {
-      opacity: 1;
-      background: rgba(0, 0, 0, 0.75);
-    }
-    .ad-nav-btn-prev { left: 8px; }
-    .ad-nav-btn-next { right: 8px; }
-
-    /* Invisible Audio Trigger: a tela toda desbloqueia o áudio no toque sem botões visíveis piscando */
-    .ad-audio-toggle {
-      display: none !important;
-    }
-
-    .ad-video-progress-bar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 3px;
-      background: rgba(255, 255, 255, 0.2);
-      z-index: 99999 !important;
-      pointer-events: none;
-    }
-    .ad-video-progress-fill {
-      height: 100%;
-      width: 0%;
-      background: #ffffff;
-      transition: width 0.05s linear;
-    }
-  
 /* EndAdCarouselStyles */
 </style>
 <!-- MIKROGESTOR_THEME_LINK -->
@@ -649,40 +353,41 @@
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Inter:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Outfit:wght@400;600;700&family=Poppins:wght@400;600;700&family=Roboto+Mono:wght@400;600;700&display=swap');
 
 :root {
-  --brand: #002B49;
-  --brand-dark: #001726;
-  --bg: #001726;
-  --ink: #002B49;
-  --muted: #4b5563;
-  --blue: #F39200;
-  --green: #002B49;
+  --brand: #059669;
+  --brand-dark: #047857;
+  --bg: #060d0a;
+  --ink: #f0fdf4;
+  --muted: #86efac;
+  --blue: #10b981;
+  --green: #34d399;
   
-  --trial-btn-bg: #10b981;
+  --trial-btn-bg: #059669;
   --trial-btn-text: #ffffff;
-  --card-border-color: #F39200;
-  --input-bg: #fafafa;
-  --input-text: #001726;
-  --input-border: #cbd5e1;
-  --input-placeholder: #64748b;
-  --login-btn-text: #001726;
-  --reg-btn-text: #ffffff;
+  --card-border-color: #059669;
+  --input-bg: #060d0a;
+  --input-text: #f0fdf4;
+  --input-border: #166534;
+  --input-placeholder: #4ade80;
+  --login-btn-text: #060d0a;
+  --reg-btn-text: #060d0a;
 
   --font-family: 'Inter', 'Outfit', 'Segoe UI', Roboto, Arial, sans-serif;
-  --glass-opacity: 1.00;
-  --glass-blur: 0px;
-  --card-bg-rgb: 255, 255, 255;
+  --glass-opacity: 0.90;
+  --glass-blur: 14px;
+  --card-bg-rgb: 12, 26, 20;
   
   /* Layout */
-  --card-radius-tl: 20px;
-  --card-radius-tr: 20px;
-  --card-radius-br: 20px;
-  --card-radius-bl: 20px;
+  --card-radius-tl: 4px;
+  --card-radius-tr: 4px;
+  --card-radius-br: 4px;
+  --card-radius-bl: 4px;
   --card-padding-t: 24px;
   --card-padding-r: 24px;
   --card-padding-b: 24px;
   --card-padding-l: 24px;
   --card-border-width: 1px;
   --card-gap: 16px;
+  --card-max-width: 420px;
   
   /* Buttons */
   --btn-height: 46px;
@@ -707,7 +412,7 @@
   --title-letter-spacing: 0px;
   --title-align: center;
 
-  --border-radius: 20px; /* Fallback for legacy */
+  --border-radius: 4px; /* Fallback for legacy */
   --glow-color: transparent;
 }
 
@@ -770,7 +475,7 @@ body {
   backdrop-filter: blur(var(--glass-blur)) !important; -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
   border-radius: var(--border-radius) !important; border: 1px solid rgba(255,255,255,0.25) !important;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06) !important;
-  padding: 20px; margin: 40px auto 24px; max-width: 420px; width: calc(100% - 32px); padding-bottom: 24px;
+  padding: 20px; margin: 40px auto 24px; max-width: var(--card-max-width, 420px) !important; width: calc(100% - 32px); padding-bottom: 24px;
 }
 .mg-wifi-icon { display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); }
 .mg-wifi-icon svg { width: 26px; height: 26px; fill: var(--blue); }
@@ -794,6 +499,7 @@ body {
   -webkit-appearance: none; appearance: none; border: 0; height: var(--btn-height, 44px); min-height: var(--btn-height, 44px); border-radius: var(--btn-radius-tl, 10px); cursor: pointer; font-weight: var(--btn-font-weight, 600);
   font-size: var(--btn-font-size, 13px); letter-spacing: 0.3px; font-family: var(--font-family); width: 100%; display: flex !important; align-items: center; justify-content: center; gap: 6px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08); transition: filter 0.15s ease, transform 0.1s, box-shadow 0.15s; touch-action: manipulation; text-decoration: none;
+  white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; padding: 0 8px !important;
 }
 .btn:hover { filter: brightness(0.94); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 .btn:active { transform: translateY(1px); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -808,62 +514,17 @@ body {
 }
 @media (max-width: 480px) {
   #box { padding: 16px; }
-  .actions { grid-template-columns: 1fr !important; gap: 8px !important; }
+  .actions { grid-template-columns: 1fr !important; gap: 12px !important; }
+  #btnLogin + #btnSignup, .btn-submit + .btn-cad, .btn-submit + .btn-signup { margin-top: 12px !important; }
 }
+
+
   </style>
   <!-- END_MIKROGESTOR_THEME_LINK -->
 </head>
 <body>
 <!-- AdCarouselBlock -->
 
-  <!-- Publicidade Overlay Modal -->
-  <div id="adModal" class="ad-modal-overlay">
-    <div class="ad-modal-content-wrapper">
-      <!-- Preloader Discreto com Identidade da Marca -->
-      <div id="adPreloader" class="ad-preloader-overlay">
-        <div class="ad-preloader-content">
-          <div class="ad-preloader-icon-wrap">
-            <svg class="ad-preloader-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
-              <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
-              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
-              <line x1="12" y1="20" x2="12.01" y2="20"></line>
-            </svg>
-          </div>
-          <div class="ad-preloader-title">FAP</div>
-          <div class="ad-preloader-dots">
-            <span></span><span></span><span></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="ad-carousel-container" id="adCarousel">
-        <div class="ad-carousel-slide"><img src="https://mikrogestor.com/uploads/ad_media_1.jpg" loading="eager" decoding="async" /><div class="ad-click-catcher" onclick="handleAdClick(event, 0, '')"></div></div>
-<div class="ad-carousel-slide"><video id="adVideo-1" class="ad-video-element" src="https://mikrogestor.com/uploads/ad_media_2.mp4" autoplay muted  playsinline webkit-playsinline x5-playsinline preload="auto" onloadeddata="if(typeof currentAdIndex !== 'undefined' && currentAdIndex === 1){ this.play().catch(function(){}); }"></video><div class="ad-click-catcher" onclick="handleAdClick(event, 1, '')"></div><div class="ad-video-progress-bar"><div class="ad-video-progress-fill"></div></div></div>
-
-      </div>
-
-      <div class="ad-stories-progress-container">
-  <div class="ad-progress-bar"><div class="ad-progress-fill" id="adProgressFill-0"></div></div>
-  <div class="ad-progress-bar"><div class="ad-progress-fill" id="adProgressFill-1"></div></div>
-</div>
-
-            <!-- Botoes de Navegacao Discretos (Nao cobrem a tela) -->
-      <button type="button" class="ad-nav-btn ad-nav-btn-prev" onclick="navigateAdCarousel(-1); event.stopPropagation();" aria-label="Anterior">‹</button>
-      <button type="button" class="ad-nav-btn ad-nav-btn-next" onclick="navigateAdCarousel(1); event.stopPropagation();" aria-label="Próximo">›</button>
-
-
-      <span class="ad-patrocinado">Patrocinado</span>
-      
-      <button id="adCloseBtn" type="button" class="ad-modal-close" style="display: flex" onclick="closeAdModal()">✕</button>
-
-      <!-- Floating Mute/Unmute Audio Button -->
-      <button id="adAudioBtn" type="button" class="ad-audio-toggle" style="display: none" onclick="toggleAdAudio()">🔇</button>
-      
-      <div id="adTimerBadge" class="ad-modal-timer" style="display: none">Aguarde...</div>
-    </div>
-  </div>
-  
 <!-- EndAdCarouselBlock -->
 
   <!-- MIKROGESTOR_BG_SCRIPT -->
@@ -874,7 +535,7 @@ body {
 
 
 <style>
-#box, .login-card, .card { border-radius: 20px !important; clip-path: none !important; }
+#box, .login-card, .card { border-radius: 4px !important; clip-path: none !important; }
 
 </style>
 <script>
@@ -883,9 +544,11 @@ body {
 <!-- END MIKROGESTOR EFFECTS -->
 
 
-    <div class="login-card">
+    <div id="mg-app-root" class="mg-portal-root" data-taxonomy-root="portal">
+    <main id="mg-card" class="mg-card login-card" data-taxonomy-container="card">
+        <div id="block-badges" class="mg-block mg-block--status badges-container" data-block="badges" data-taxonomy="status" style="display: none;"></div>
         <!-- Cabeçalho com o Logótipo Animado -->
-        <div class="header-brand">
+        <header id="block-branding" class="mg-block mg-block--identity header-brand" data-block="branding" data-taxonomy="identity">
             
             <svg class="edu-logo" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 8630.33 7900.02" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
                 <g id="Camada_x0020_1">
@@ -899,7 +562,7 @@ body {
                 </g>
             </svg>
 
-            <div class="logo-text">FAP</div>
+            <div class="logo-text">Lyncoln</div>
             
             <!-- Div modificada para receber a animação de texto + barra cursor -->
             <div class="brand-subtitle">
@@ -907,28 +570,23 @@ body {
             </div>
             
             <div class="campus-tag">Educação Adventista</div>
-        </div>
+        </header>
 
-        <div class="card-body">
-            <div class="welcome-text">
+        <!-- INICIO BLOCOS MODULARES -->
+            <section id="block-welcome" class="mg-block mg-block--communication welcome-text" data-block="welcome" data-taxonomy="communication">
                 <h2>Portal Wi-Fi</h2>
-                <p>Insira as suas credenciais de acesso</p>
-            </div>
+                <p>-</p>
+            </section>
+
+            <section id="block-ads" class="mg-block mg-block--marketing ad-section" data-block="ads" data-taxonomy="marketing" style="display: none;"></section>
 
             <!-- $(if error) -->
-            <div class="alert-box">
+            <aside id="block-props" class="mg-block mg-block--feedback alert-box" data-block="props" data-taxonomy="feedback" role="alert">
                 $(error)
-            </div>
+            </aside>
             <!-- $(endif) -->
 
-            <form name="sendin" action="$(link-login-only)" method="post" class="mikrotik-hidden">
-                <input type="hidden" name="username" />
-                <input type="hidden" name="password" />
-                <input type="hidden" name="dst" value="$(link-orig)" />
-                <input type="hidden" name="popup" value="true" />
-            </form>
-
-            <form name="login" action="$(link-login-only)" method="post" onSubmit="return doLogin()" autocomplete="off">
+            <form name="login" id="block-auth" class="mg-block mg-block--auth auth-section" data-block="auth" data-taxonomy="interaction" action="$(link-login-only)" method="post" onSubmit="return doLogin()" autocomplete="off">
                 <input type="hidden" name="dst" value="$(link-orig)" />
                 <input type="hidden" name="popup" value="true" />
 
@@ -947,32 +605,43 @@ body {
 
                     <!-- Botão de Cadastro -->
                     <!-- MIKROGESTOR_REGISTER_BTN -->
-<a id="btnSignup" class="btn btn-cad btn-signup" href="https://mikrogestor.com/portal/register?link-login-only=$(link-login-only-esc)&link-orig=$(link-orig-esc)" style="margin: 0; display: flex !important;">Cadastre-se aqui</a>
+<a id="btnSignup" class="btn btn-cad" href="https://mikrogestor.com/portal/register?link-login-only=$(link-login-only-esc)&link-orig=$(link-orig-esc)" style="display: flex !important;">Cadastre-se aqui</a>
 <!-- END_MIKROGESTOR_REGISTER_BTN -->
                 </div>
 
                 <!-- Botão de Uso Free -->
-                <!-- MIKROGESTOR_TRIAL_BLOCK -->
-<div id="trial-container" style="display: block; text-align: center; font-size: 11px; margin-top: 14px; color: var(--muted);">
+                
+            </form>
+
+            
+            <section id="block-trial" class="mg-block mg-block--incentive trial-section" data-block="trial" data-taxonomy="incentive">
+            <!-- MIKROGESTOR_TRIAL_BLOCK -->
+<div id="trial-container" style="display: block; text-align: center; font-size: 11px; margin-top: 12px; color: var(--muted);">
 $(if trial == 'yes')
-Acesso de teste disponível, <a href="javascript:void(0)" onclick="if(confirm('Tem certeza de que deseja liberar o acesso grátis por 30 minutos?')) confirmTrialLogin()" style="color: var(--blue); text-decoration: underline; font-weight: 600;">clique aqui</a>.
+<span class="trial-label">Acesso de teste disponível, </span><a href="javascript:void(0)" onclick="if(confirm('Tem certeza de que deseja liberar o acesso grátis por 30 minutos?')) confirmTrialLogin()" style="color: var(--blue); text-decoration: underline; font-weight: 600;">clique aqui</a>.
 $(endif)
 </div>
 <!-- END_MIKROGESTOR_TRIAL_BLOCK -->
-            </form>
-
-            <div class="help-info">
+            </section>
+            <section id="block-whatsapp" class="mg-block mg-block--support help-info" data-block="whatsapp" data-taxonomy="support">
                 <strong>Utilizem o mesmo login do cadastro</strong> 
-            </div>
-        </div>
+            </section>
 
-        <div class="footer">
-            &copy; Faculdade Adventista do Paraná | Tecnologia da Informação
-        </div>
+        <footer id="block-footer" class="mg-block mg-block--footer footer" data-block="footer" data-taxonomy="metadata">
+            Ao se cadastrar, você concorda com nossos Termos de Uso e Política de Privacidade da FAP.
+        </footer>
+    </main>
     </div>
 
     <!-- Scripts do MikroTik ocultados visualmente -->
     <div class="mikrotik-hidden">
+        <form name="sendin" action="$(link-login-only)" method="post">
+            <input type="hidden" name="username" />
+            <input type="hidden" name="password" />
+            <input type="hidden" name="dst" value="$(link-orig)" />
+            <input type="hidden" name="popup" value="true" />
+        </form>
+
         <!-- $(if chap-id) -->
         <script type="text/javascript" src="md5.js"></script>
         <script type="text/javascript">
@@ -1033,428 +702,6 @@ $(endif)
 <script>
 /* AdCarouselScript */
 
-    window.closeAdModal = function() {
-      const modal = document.getElementById('adModal');
-      if (modal) {
-        modal.style.setProperty('display', 'none', 'important');
-        modal.style.display = 'none';
-        document.body.style.overflow = ''; // Unlock scroll
-        document.body.style.removeProperty('overflow');
-      }
-      const videos = document.querySelectorAll('#adModal video');
-      videos.forEach(v => {
-        try { v.pause(); } catch(e) {}
-      });
-    };
-
-    window._mgAudioPermanentlyUnlocked = false;
-
-    window.handleAdClick = function(e, slideIdx, targetUrl) {
-      if (e) e.stopPropagation();
-      window._mgAudioPermanentlyUnlocked = true;
-      
-      // Apenas aciona o vídeo se o slide clicado for o slide visível no momento E tiver um elemento de vídeo nele
-      var carouselEl = document.getElementById('adCarousel');
-      var isCurrentSlide = true;
-      if (carouselEl && carouselEl.children.length > 1 && typeof currentAdIndex !== 'undefined') {
-        isCurrentSlide = (currentAdIndex === slideIdx);
-      }
-      
-      if (isCurrentSlide) {
-        var vid = document.getElementById('adVideo-' + slideIdx);
-        if (vid) {
-          vid.muted = false;
-          vid.defaultMuted = false;
-          vid.removeAttribute('muted');
-          var p = vid.play();
-          if (p && typeof p.then === 'function') {
-            p.catch(function() {
-              vid.muted = true;
-              vid.play().catch(function() {});
-            });
-          }
-        }
-      }
-      
-      if (targetUrl && targetUrl.trim() !== '') {
-        window.open(targetUrl, '_blank');
-      }
-    };
-
-    window.toggleAdAudio = function() {
-      if (window._mgAudioPermanentlyUnlocked) return;
-      window._mgAudioPermanentlyUnlocked = true;
-      const videos = document.querySelectorAll('#adModal video');
-      videos.forEach(v => {
-        try {
-          v.muted = false;
-          v.defaultMuted = false;
-          v.removeAttribute('muted');
-          var p = v.play();
-          if (p && typeof p.then === 'function') p.catch(function() {});
-        } catch(e) {}
-      });
-    };
-
-    // Disparar no primeiro clique/toque na tela: libera o áudio do vídeo ATIVO sem mudar de slide ou disparar vídeos ocultos
-    (function setupGlobalAudioUnlock() {
-      function unlockAllAudio() {
-        window._mgAudioPermanentlyUnlocked = true;
-
-        // Desmuta e dá play APENAS no vídeo do slide atualmente visível
-        var activeVid = null;
-        var carouselEl = document.getElementById('adCarousel');
-        if (carouselEl && carouselEl.children.length > 1 && typeof currentAdIndex !== 'undefined') {
-          var curSlide = carouselEl.children[currentAdIndex];
-          if (curSlide) activeVid = curSlide.querySelector('video');
-        } else if (!carouselEl || carouselEl.children.length <= 1) {
-          activeVid = document.querySelector('#adModal video');
-        }
-
-        if (activeVid) {
-          try {
-            activeVid.muted = false;
-            activeVid.defaultMuted = false;
-            activeVid.removeAttribute('muted');
-            var p = activeVid.play();
-            if (p && typeof p.then === 'function') p.catch(function() {});
-          } catch(e) {}
-        }
-
-        // Remover os ouvintes após o primeiro gesto
-        window.removeEventListener('click', unlockAllAudio, true);
-        window.removeEventListener('touchstart', unlockAllAudio, true);
-        window.removeEventListener('pointerdown', unlockAllAudio, true);
-        window.removeEventListener('keydown', unlockAllAudio, true);
-        window.removeEventListener('focusin', unlockAllAudio, true);
-      }
-
-      window.addEventListener('click', unlockAllAudio, true);
-      window.addEventListener('touchstart', unlockAllAudio, true);
-      window.addEventListener('pointerdown', unlockAllAudio, true);
-      window.addEventListener('keydown', unlockAllAudio, true);
-      window.addEventListener('focusin', unlockAllAudio, true);
-    })();
-    
-    function initAdModalSetup() {
-      const adModal = document.getElementById('adModal');
-      if (adModal) {
-        document.body.appendChild(adModal);
-        document.body.style.overflow = 'hidden'; // Lock scroll
-      }
-
-      // Se houver vídeo no modal, exibe o botão de controle de áudio (apenas se for vídeo único, carrossel gerencia dinamicamente)
-      const videos = document.querySelectorAll('#adModal video');
-      const audioBtn = document.getElementById('adAudioBtn');
-      if (videos.length > 0 && audioBtn) {
-        const carousel = document.getElementById('adCarousel');
-        if (!carousel || carousel.children.length <= 1) {
-          audioBtn.style.display = 'flex';
-        }
-      }
-
-      // Inicia imediatamente o vídeo ativo de forma ultrarrápida e silenciosa para autoplay 100% garantido sem tela de espera
-      var activeVideo = document.querySelector('#adModal video');
-      if (activeVideo) {
-        activeVideo.muted = true;
-        activeVideo.defaultMuted = true;
-        activeVideo.playsInline = true;
-        activeVideo.setAttribute('muted', '');
-        activeVideo.setAttribute('playsinline', '');
-        activeVideo.setAttribute('webkit-playsinline', '');
-        activeVideo.setAttribute('x5-playsinline', '');
-        var p = activeVideo.play();
-        if (p && typeof p.then === 'function') {
-          p.catch(function() {
-            activeVideo.muted = true;
-            activeVideo.play().catch(function() {});
-          });
-        }
-      }
-
-      var preloaderDismissed = false;
-      function dismissAdPreloader() {
-        if (preloaderDismissed) return;
-        preloaderDismissed = true;
-        var pre = document.getElementById('adPreloader');
-        if (pre) {
-          pre.classList.add('fade-out');
-          setTimeout(function() { pre.style.display = 'none'; }, 300);
-        }
-      }
-
-      // 1. Escuta eventos do primeiro vídeo ou imagens
-      videos.forEach(function(video) {
-        video.addEventListener('playing', dismissAdPreloader, { once: true });
-        video.addEventListener('loadeddata', dismissAdPreloader, { once: true });
-        video.addEventListener('canplay', dismissAdPreloader, { once: true });
-        video.addEventListener('timeupdate', function() {
-          if (video.currentTime > 0.02) dismissAdPreloader();
-        });
-      });
-
-      const images = document.querySelectorAll('#adModal img');
-      images.forEach(function(img) {
-        if (img.complete && img.naturalHeight !== 0) {
-          dismissAdPreloader();
-        } else {
-          img.addEventListener('load', dismissAdPreloader, { once: true });
-          img.addEventListener('error', dismissAdPreloader, { once: true });
-        }
-      });
-
-      // 2. Timeout de segurança ultra-rápido para nunca travar tela preta ou cinza
-      setTimeout(dismissAdPreloader, 600);
-
-      // Vincular barra de progresso estilo Facebook
-      videos.forEach(function(video) {
-        video.addEventListener('timeupdate', function() {
-          const percent = (video.currentTime / (video.duration || 1)) * 100;
-          const fill = video.parentNode.querySelector('.ad-video-progress-fill');
-          if (fill) fill.style.width = percent + '%';
-        });
-      });
-
-      // No banner único (vídeo único), assegura que o vídeo continue reproduzindo sem travar ao tocar na tela
-      if (2 <= 1) {
-        var singleVid = document.querySelector('#adModal video');
-        if (singleVid) {
-          singleVid.onpause = function() {
-            var modal = document.getElementById('adModal');
-            if (modal && modal.style.display !== 'none') {
-              setTimeout(function() {
-                singleVid.play().catch(function() {});
-              }, 50);
-            }
-          };
-        }
-      }
-    }
-
-    if (document.readyState === 'loading') {
-      window.addEventListener('DOMContentLoaded', initAdModalSetup);
-    } else {
-      initAdModalSetup();
-    }
-  
-      let currentAdIndex = 0;
-      const adCount = 2;
-      let adAutoplayTimer = null;
-      let progressInterval = null;
-      let progressMs = 0;
-      const slideDuration = 4000;
-      
-      function updateAdAudioButton() {
-        const carouselEl = document.getElementById('adCarousel');
-        const audioBtn = document.getElementById('adAudioBtn');
-        if (carouselEl && audioBtn) {
-          const currentSlide = carouselEl.children[currentAdIndex];
-          if (currentSlide && currentSlide.querySelector('video')) {
-            audioBtn.style.display = 'flex';
-          } else {
-            audioBtn.style.display = 'none';
-          }
-        }
-      }
-
-      function getCurrentSlideVideo() {
-        const carouselEl = document.getElementById('adCarousel');
-        if (!carouselEl) return null;
-        const currentSlide = carouselEl.children[currentAdIndex];
-        return currentSlide ? currentSlide.querySelector('video') : null;
-      }
-
-      function updateAdVideos() {
-        const carouselEl = document.getElementById('adCarousel');
-        if (!carouselEl) return;
-        const slides = carouselEl.children;
-        for (let i = 0; i < slides.length; i++) {
-          const video = slides[i].querySelector('video');
-          if (video) {
-            if (i === currentAdIndex) {
-              try {
-                if (window._mgAudioPermanentlyUnlocked) {
-                  video.muted = false;
-                  video.defaultMuted = false;
-                  video.removeAttribute('muted');
-                } else {
-                  video.muted = true;
-                  video.defaultMuted = true;
-                  video.setAttribute('muted', '');
-                }
-                video.playsInline = true;
-                video.setAttribute('playsinline', '');
-                video.setAttribute('webkit-playsinline', '');
-                video.setAttribute('x5-playsinline', '');
-                
-                // Reinicia suavemente apenas se já tiver buffer
-                if (video.readyState >= 1 && video.currentTime > 0.1) {
-                  video.currentTime = 0;
-                }
-                
-                const playPromise = video.play();
-                if (playPromise && typeof playPromise.then === 'function') {
-                  playPromise.catch(function() {
-                    video.muted = true;
-                    video.setAttribute('muted', '');
-                    video.play().catch(function() {});
-                  });
-                }
-                // Garante reprodução apenas se continuar sendo o slide ativo
-                video.oncanplay = function() {
-                  if (typeof currentAdIndex !== 'undefined' && currentAdIndex === i) {
-                    video.play().catch(function() {});
-                  }
-                };
-              } catch(e) {}
-            } else {
-              try {
-                video.oncanplay = null;
-                video.pause();
-                video.muted = true;
-                video.setAttribute('muted', '');
-                if (video.readyState >= 1) {
-                  video.currentTime = 0;
-                }
-              } catch(e) {}
-            }
-          }
-        }
-      }
-
-      function updateAdProgress() {
-        const fills = [];
-        for (let i = 0; i < adCount; i++) {
-          fills.push(document.getElementById('adProgressFill-' + i));
-        }
-        
-        for (let i = 0; i < adCount; i++) {
-          if (fills[i]) {
-            if (i < currentAdIndex) fills[i].style.width = '100%';
-            else if (i > currentAdIndex) fills[i].style.width = '0%';
-          }
-        }
-        
-        clearInterval(progressInterval);
-        progressMs = 0;
-        const activeFill = fills[currentAdIndex];
-        const currentVideo = getCurrentSlideVideo();
-
-        if (currentVideo) {
-          // Barra de progresso do slide atual acompanha o tempo do vídeo
-          currentVideo.ontimeupdate = function() {
-            if (activeFill && currentVideo.duration) {
-              const pct = (currentVideo.currentTime / currentVideo.duration) * 100;
-              activeFill.style.width = pct + '%';
-            }
-          };
-        } else if (activeFill) {
-          // Barra de progresso de imagem avança suavemente durante 4s
-          progressInterval = setInterval(() => {
-            progressMs += 100;
-            const pct = Math.min(100, (progressMs / slideDuration) * 100);
-            activeFill.style.width = pct + '%';
-            if (progressMs >= slideDuration) {
-              clearInterval(progressInterval);
-            }
-          }, 100);
-        }
-      }
-      
-      function showAdSlide(idx) {
-        currentAdIndex = (idx + adCount) % adCount;
-        const carousel = document.getElementById('adCarousel');
-        if (carousel) {
-          const width = carousel.offsetWidth;
-          carousel.scrollTo({ left: currentAdIndex * width, behavior: 'smooth' });
-        }
-        updateAdVideos();
-        updateAdAudioButton();
-        updateAdProgress();
-        setupAdAutoplay();
-      }
-      
-      function navigateAdCarousel(direction) {
-        showAdSlide(currentAdIndex + direction);
-      }
-      
-      function setupAdAutoplay() {
-        if (adAutoplayTimer) {
-          clearTimeout(adAutoplayTimer);
-          adAutoplayTimer = null;
-        }
-
-        const video = getCurrentSlideVideo();
-        if (video) {
-          // Regra principal: avança assim que o vídeo terminar
-          video.onended = function() {
-            showAdSlide(currentAdIndex + 1);
-          };
-          // Se o vídeo falhar ao carregar, avança para o próximo slide
-          video.onerror = function() {
-            setTimeout(function() {
-              showAdSlide(currentAdIndex + 1);
-            }, 1000);
-          };
-
-          // Salvaguarda dinâmica: nunca deixar o carrossel estático caso onended não dispare
-          var videoDur = (video.duration && !isNaN(video.duration) && video.duration > 0) ? video.duration : 10;
-          var safeTimeoutMs = Math.min(30000, Math.max(6000, Math.ceil(videoDur * 1000) + 800));
-          adAutoplayTimer = setTimeout(function() {
-            showAdSlide(currentAdIndex + 1);
-          }, safeTimeoutMs);
-        } else {
-          // Slide com imagem: avança após 4 segundos
-          adAutoplayTimer = setTimeout(function() {
-            showAdSlide(currentAdIndex + 1);
-          }, slideDuration);
-        }
-      }
-
-      function initAdCarouselFeatures() {
-        const carousel = document.getElementById('adCarousel');
-        if (carousel && adCount > 1) {
-          showAdSlide(0);
-          
-          carousel.addEventListener('scroll', () => {
-            const scrollPos = carousel.scrollLeft;
-            const width = carousel.offsetWidth || 1;
-            const newIdx = Math.round(scrollPos / width);
-            if (newIdx !== currentAdIndex && newIdx < adCount) {
-              currentAdIndex = newIdx;
-              updateAdVideos();
-              updateAdAudioButton();
-              updateAdProgress();
-              setupAdAutoplay();
-            }
-          });
-
-          window.addEventListener('resize', () => {
-            const width = carousel.offsetWidth;
-            carousel.scrollTo({ left: currentAdIndex * width, behavior: 'auto' });
-          });
-        }
-      }
-
-      if (document.readyState === 'loading') {
-        window.addEventListener('DOMContentLoaded', initAdCarouselFeatures);
-      } else {
-        initAdCarouselFeatures();
-      }
-    
-      function initNoTimerSetup() {
-        const closeBtn = document.getElementById('adCloseBtn');
-        const timerBadge = document.getElementById('adTimerBadge');
-        if (closeBtn) closeBtn.style.display = 'flex';
-        if (timerBadge) timerBadge.style.display = 'none';
-      }
-
-      if (document.readyState === 'loading') {
-        window.addEventListener('DOMContentLoaded', initNoTimerSetup);
-      } else {
-        initNoTimerSetup();
-      }
-    
 /* EndAdCarouselScript */
 </script>
 </body>

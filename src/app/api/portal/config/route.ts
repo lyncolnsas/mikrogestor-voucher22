@@ -1584,13 +1584,50 @@ export async function POST(request: Request) {
       html = html.replace(/<!-- MG_LIVE_PREVIEW_SCRIPT -->[\s\S]*?<!-- END_MG_LIVE_PREVIEW_SCRIPT -->/gi, '');
 
       // ═══════════════════════════════════════════════════════════════
-      // TEXT & CONTENT REPLACEMENT
+      // TEXT & CONTENT REPLACEMENT IN LOGIN.HTML (TEMPO REAL)
       // ═══════════════════════════════════════════════════════════════
-      const loginBtnLabel = newConfig.loginButtonLabel || 'Entrar';
-      html = html.replace(/(<button[^>]*id=["']btnLogin["'][^>]*>)(.*?)(<\/button>)/i, `$1${loginBtnLabel}$3`);
+      if (newConfig.loginButtonLabel !== undefined && newConfig.loginButtonLabel !== '') {
+        if (/(<button[^>]*id=["']btnLogin["'][^>]*>)([\s\S]*?)(<\/button>)/i.test(html)) {
+          html = html.replace(/(<button[^>]*id=["']btnLogin["'][^>]*>)([\s\S]*?)(<\/button>)/i, `$1${newConfig.loginButtonLabel}$3`);
+        } else if (/(<input[^>]*id=["']btnLogin["'][^>]*\s+value=["'])([^"']*)(["'][^>]*>)/i.test(html)) {
+          html = html.replace(/(<input[^>]*id=["']btnLogin["'][^>]*\s+value=["'])([^"']*)(["'][^>]*>)/i, `$1${newConfig.loginButtonLabel}$3`);
+        } else if (/(<button[^>]*class=["'][^"']*btn-login[^"']*["'][^>]*>)([\s\S]*?)(<\/button>)/i.test(html)) {
+          html = html.replace(/(<button[^>]*class=["'][^"']*btn-login[^"']*["'][^>]*>)([\s\S]*?)(<\/button>)/i, `$1${newConfig.loginButtonLabel}$3`);
+        }
+      }
       
-      const msgText = newConfig.message || 'Bem-vindo à nossa rede gratuita. Insira o seu voucher para navegar.';
-      html = html.replace(/(<div[^>]*class=["'][^"']*mg-message[^"']*["'][^>]*>)(.*?)(<\/div>)/i, `$1${msgText}$3`);
+      if (newConfig.message !== undefined && newConfig.message !== '') {
+        if (/<section[^>]*id=["']block-welcome["'][^>]*>[\s\S]*?<p[^>]*>/i.test(html)) {
+          html = html.replace(/(<section[^>]*id=["']block-welcome["'][^>]*>[\s\S]*?<p[^>]*>)([\s\S]*?)(<\/p>)/i, `$1${newConfig.message}$3`);
+        } else if (/<section[^>]*id=["']block-welcome["'][^>]*>/i.test(html)) {
+          html = html.replace(/(<section[^>]*id=["']block-welcome["'][^>]*>)([\s\S]*?)(<\/section>)/i, `$1\n        ${newConfig.message}\n      $3`);
+        } else if (/<div[^>]*class=["'][^"']*mg-message[^"']*["'][^>]*>/i.test(html)) {
+          html = html.replace(/(<div[^>]*class=["'][^"']*mg-message[^"']*["'][^>]*>)([\s\S]*?)(<\/div>)/i, `$1${newConfig.message}$3`);
+        }
+      }
+
+      if (newConfig.businessName !== undefined && newConfig.businessName !== '') {
+        if (/<div[^>]*class=["']logo-text["'][^>]*>/i.test(html)) {
+          html = html.replace(/(<div[^>]*class=["']logo-text["'][^>]*>)([\s\S]*?)(<\/div>)/i, `$1${newConfig.businessName}$3`);
+        }
+        if (/<h2[^>]*id="business-name"[^>]*>/i.test(html)) {
+          html = html.replace(/(<h2[^>]*id="business-name"[^>]*>)[^<]*(<\/h2>)/i, `$1${newConfig.businessName}$2`);
+        }
+        html = html.replace(/(<title>)[^<]*(<\/title>)/i, `$1Hotspot - ${newConfig.businessName}$2`);
+      }
+
+      if (newConfig.brand && newConfig.brand.subtitle !== undefined && newConfig.brand.subtitle !== '') {
+        html = html.replace(/const textToType\s*=\s*["'][^"']*["']/i, `const textToType = "${newConfig.brand.subtitle.replace(/"/g, '\\"')}"`);
+        if (/<div[^>]*class=["']campus-tag["'][^>]*>/i.test(html)) {
+          html = html.replace(/(<div[^>]*class=["']campus-tag["'][^>]*>)([\s\S]*?)(<\/div>)/i, `$1${newConfig.brand.subtitle}$3`);
+        }
+      }
+
+      if (newConfig.termsText !== undefined && newConfig.termsText !== '') {
+        if (/<footer[^>]*id=["']block-footer["'][^>]*>/i.test(html)) {
+          html = html.replace(/(<footer[^>]*id=["']block-footer["'][^>]*>)([\s\S]*?)(<\/footer>)/i, `$1\n            ${newConfig.termsText}\n        $3`);
+        }
+      }
 
       // ═══════════════════════════════════════════════════════════════
       // THEME CSS COMPILATION (MIKROGESTOR_THEME_LINK)
@@ -1625,6 +1662,7 @@ export async function POST(request: Request) {
       const cardPaddingLeft = studio.cardPaddingLeft !== undefined ? `${studio.cardPaddingLeft}px` : '24px';
       const cardBorderWidth = studio.cardBorderWidth !== undefined ? `${studio.cardBorderWidth}px` : '1px';
       const cardGap = studio.cardGap !== undefined ? `${studio.cardGap}px` : '16px';
+      const cardMaxWidth = studio.cardMaxWidth !== undefined ? `${studio.cardMaxWidth}px` : '420px';
       
       // Button Setup
       const btnHeight = studio.btnHeight !== undefined ? `${studio.btnHeight}px` : '46px';
@@ -1670,6 +1708,37 @@ export async function POST(request: Request) {
       }
       const cardBgRgb = hexToRgb(c.cardBg || '#ffffff');
 
+      let blocksCss = '';
+      if (Array.isArray(newConfig.blocks) && newConfig.blocks.length > 0) {
+        const selectorMap: Record<string, string> = {
+          'branding': '.header-brand, #brand-header, #logoArea, .mg-wifi-icon, #block-branding, [data-block="branding"], .mg-block--identity, [data-taxonomy="identity"]',
+          'welcome': '.welcome-text, #welcomeMessage, .mg-message, .instructions, #block-welcome, [data-block="welcome"], .mg-block--communication, [data-taxonomy="communication"]',
+          'ads': '#adModal, #adCarousel, .ad-carousel-container, #adArea, #block-ads, [data-block="ads"], .mg-block--campaign, [data-taxonomy="marketing"]',
+          'auth': 'form[name="login"], #loginForm, form#login, .auth-section, #block-auth, [data-block="auth"], .mg-block--auth, [data-taxonomy="interaction"]',
+          'trial': '#trial-container, .btn-trial, a.btn-trial, .trial-section, #block-trial, [data-block="trial"], .mg-block--incentive, [data-taxonomy="incentive"]',
+          'badges': '#badges, .badges-container, .mg-badges-wrap, #block-badges, [data-block="badges"], .mg-block--status, [data-taxonomy="status"]',
+          'props': '#props, .props-container, .alert-box, #block-props, [data-block="props"], .mg-block--feedback, [data-taxonomy="feedback"]',
+          'whatsapp': '#whatsapp, .whatsapp-container, .help-info, #block-whatsapp, [data-block="whatsapp"], .mg-block--support, [data-taxonomy="support"]',
+          'footer': '.footer, #footer, footer, #block-footer, [data-block="footer"], .mg-block--footer, [data-taxonomy="metadata"]'
+        };
+        const rules: string[] = [
+          '#box, .card, .login-card, #mg-card, .mg-card, [data-taxonomy-container="card"] { display: flex !important; flex-direction: column !important; }',
+          '#mg-card > :not(.header-brand):not(.mg-block--identity), .login-card > :not(.header-brand):not(.mg-block--identity) { padding-left: var(--card-padding-l, 24px) !important; padding-right: var(--card-padding-r, 24px) !important; box-sizing: border-box !important; }',
+          '#mg-card > .footer, #mg-card > .mg-block--footer, .login-card > .footer, .login-card > .mg-block--footer { padding-bottom: var(--card-padding-b, 20px) !important; padding-top: 14px !important; margin-top: 0 !important; }'
+        ];
+        newConfig.blocks.forEach((blk: any, idx: number) => {
+          const sel = selectorMap[blk.id] || selectorMap[blk.type];
+          if (sel) {
+            if (blk.enabled === false) {
+              rules.push(`${sel} { display: none !important; }`);
+            } else {
+              rules.push(`${sel} { order: ${idx + 1} !important; }`);
+            }
+          }
+        });
+        blocksCss = `\n/* Modular Blocks CMS */\n${rules.join('\n')}\n`;
+      }
+
       const themeCss = `
 /* ==============================================
    MIKROGESTOR PORTAL CSS — GERADO DINAMICAMENTE
@@ -1711,6 +1780,7 @@ export async function POST(request: Request) {
   --card-padding-l: ${cardPaddingLeft};
   --card-border-width: ${cardBorderWidth};
   --card-gap: ${cardGap};
+  --card-max-width: ${cardMaxWidth};
   
   /* Buttons */
   --btn-height: ${btnHeight};
@@ -1798,7 +1868,7 @@ body {
   backdrop-filter: blur(var(--glass-blur)) !important; -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
   border-radius: var(--border-radius) !important; border: 1px solid rgba(255,255,255,0.25) !important;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06) !important;
-  padding: 20px; margin: 40px auto 24px; max-width: 420px; width: calc(100% - 32px); padding-bottom: 24px;
+  padding: 20px; margin: 40px auto 24px; max-width: var(--card-max-width, 420px) !important; width: calc(100% - 32px); padding-bottom: 24px;
 }
 .mg-wifi-icon { display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); }
 .mg-wifi-icon svg { width: 26px; height: 26px; fill: var(--blue); }
@@ -1863,6 +1933,7 @@ ${newConfig.brand?.displayMode === 'none' ? `
   padding: 0 !important;
 }
 ` : ''}
+${blocksCss}
 `;
 
       const colorsRegex = /(<!--\s*MIKROGESTOR_THEME_LINK\s*-->|<!--\s*MIKROGESTOR COLORS\s*-->)[\s\S]*?(<!--\s*END_MIKROGESTOR_THEME_LINK\s*-->|<!--\s*END MIKROGESTOR COLORS\s*-->)/i;
@@ -2053,7 +2124,7 @@ ${newConfig.brand?.displayMode === 'none' ? `
       const displayStyle = isRegEnabled
         ? 'display: flex !important;'
         : 'display: none !important; visibility: hidden !important; height: 0 !important; margin: 0 !important; padding: 0 !important; pointer-events: none !important;';
-      const btnText = newConfig.registerButtonText || 'ACESSAR REDE VIP';
+      const btnText = newConfig.registerButtonText || 'Cadastre-se aqui';
       const registerButtonHTML = `<!-- MIKROGESTOR_REGISTER_BTN -->\n<a id="btnSignup" class="btn btn-cad" href="${MG_SERVER_BASE}/portal/register?link-login-only=$$(link-login-only-esc)&link-orig=$$(link-orig-esc)" style="${displayStyle}">${btnText}</a>\n<!-- END_MIKROGESTOR_REGISTER_BTN -->`;
 
       if (btnRegex.test(html)) {

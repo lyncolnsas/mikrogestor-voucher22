@@ -179,7 +179,7 @@ export async function GET(request: Request) {
         document.head.appendChild(liveStyle);
       }
       var rules = [];
-      var cardSelector = 'html body #box, html body .login-card, html body .login-box, html body .card';
+      var cardSelector = 'html body #mg-card, html body #box, html body .login-card, html body .login-box, html body .card, html body .mg-card, html body [data-taxonomy-container="card"]';
       rules.push('#mg-app-root, form, .container, main, .main, .content { position: relative !important; z-index: 2 !important; }');
       rules.push(cardSelector + ' { position: relative !important; z-index: 10 !important; }');
       rules.push('html body .container { margin-top: 15px !important; padding-top: 0 !important; }');
@@ -193,6 +193,13 @@ export async function GET(request: Request) {
       var brand = (cfg.colors && (cfg.colors.blue || cfg.colors.brand)) || '#2563eb';
       var green = (cfg.colors && (cfg.colors.green || cfg.colors.btnSecondary)) || '#10b981';
       var blue = (cfg.colors && (cfg.colors.blue || cfg.colors.brand)) || '#2563eb';
+
+      if (st.cardMaxWidth) {
+        rules.push(cardSelector + ' { max-width: ' + st.cardMaxWidth + 'px !important; }');
+      }
+      if (st.cardGap !== undefined) {
+        rules.push(cardSelector + ' { gap: ' + st.cardGap + 'px !important; }');
+      }
 
       // Only apply explicit user overrides from Studio or Effects
       if (st.fontFamily && st.fontFamily !== 'Inter') {
@@ -823,8 +830,10 @@ export async function GET(request: Request) {
         btnLogin.style.setProperty('justify-content', 'center', 'important');
         if (config.loginButtonLabel !== undefined && config.loginButtonLabel !== '') {
           btnLogin.innerText = config.loginButtonLabel;
+          if (btnLogin.tagName === 'INPUT') btnLogin.value = config.loginButtonLabel;
         } else if (!btnLogin.innerText || btnLogin.innerText.trim() === '') {
           btnLogin.innerText = 'Conectar';
+          if (btnLogin.tagName === 'INPUT') btnLogin.value = 'Conectar';
         }
       }
 
@@ -878,11 +887,21 @@ export async function GET(request: Request) {
         }
       }
 
-      var businessName = document.getElementById('businessName') || document.querySelector('.brand-title') || document.querySelector('h1');
-      if (businessName && config.businessName) businessName.innerText = config.businessName;
+      var businessName = document.querySelector('.logo-text') || document.getElementById('businessName') || document.querySelector('.brand-title') || document.querySelector('h1');
+      if (businessName && config.businessName !== undefined && config.businessName !== '') businessName.innerText = config.businessName;
 
-      var welcomeMessage = document.getElementById('welcomeMessage') || document.querySelector('.welcome-msg') || document.querySelector('p.message');
-      if (welcomeMessage && config.message) welcomeMessage.innerText = config.message;
+      var campusTag = document.querySelector('.campus-tag') || document.querySelector('.brand-subtitle') || document.querySelector('.subtitle');
+      if (campusTag && config.brand && config.brand.subtitle !== undefined && config.brand.subtitle !== '') {
+        campusTag.innerText = config.brand.subtitle;
+      }
+
+      var welcomeMessage = document.querySelector('#block-welcome p') || document.querySelector('.welcome-text p') || document.querySelector('.mg-message') || document.getElementById('welcomeMessage') || document.querySelector('.welcome-msg') || document.querySelector('p.message');
+      if (welcomeMessage && config.message !== undefined && config.message !== '') welcomeMessage.innerText = config.message;
+
+      var footerEl = document.querySelector('#block-footer') || document.querySelector('.footer');
+      if (footerEl && config.termsText !== undefined && config.termsText !== '') {
+        footerEl.innerText = config.termsText;
+      }
       
       var trialContainer = document.getElementById('trial-container');
       if (!trialContainer && config.trialEnabled !== false) {
@@ -976,6 +995,7 @@ export async function GET(request: Request) {
         var btnRadiusCss = (st.btnRadiusTL !== undefined) ? 'border-radius: ' + st.btnRadiusTL + 'px ' + st.btnRadiusTR + 'px ' + st.btnRadiusBR + 'px ' + st.btnRadiusBL + 'px !important;' : '';
         var cardRadiusCss = (st.cardRadiusTL !== undefined) ? 'border-radius: ' + st.cardRadiusTL + 'px ' + st.cardRadiusTR + 'px ' + st.cardRadiusBR + 'px ' + st.cardRadiusBL + 'px !important;' : '';
         var cardPaddingCss = (st.cardPaddingTop !== undefined) ? 'padding: ' + st.cardPaddingTop + 'px ' + st.cardPaddingRight + 'px ' + st.cardPaddingBottom + 'px ' + st.cardPaddingLeft + 'px !important;' : '';
+        var cardMaxWidthCss = st.cardMaxWidth ? 'max-width: ' + st.cardMaxWidth + 'px !important;' : '';
         var cardGapValStudio = Math.max(12, (st.cardGap || 14));
         var cardGapCss = 'gap: ' + cardGapValStudio + 'px !important;';
         var inputRadiusCss = (st.inputRadius !== undefined) ? 'border-radius: ' + st.inputRadius + 'px !important;' : '';
@@ -988,7 +1008,7 @@ export async function GET(request: Request) {
         var cardGlowCss = ef.cardGlowBorder ? 'box-shadow: 0 0 25px rgba(6, 182, 212, 0.4), inset 0 0 15px rgba(6, 182, 212, 0.2) !important; border-color: rgba(6, 182, 212, 0.8) !important;' : '';
         var btnPulseCss = ef.btnPulse ? 'animation: mgBtnPulse 1.8s infinite ease-in-out !important;' : '';
 
-        var cardSelector = 'html body #box, html body .card, html body .login-card, html body .login-box';
+        var cardSelector = 'html body #mg-card, html body #box, html body .card, html body .login-card, html body .login-box, html body .mg-card, html body [data-taxonomy-container="card"]';
         var btnSelector = 'html body .btn-login, html body #btnLogin, html body #btnConnect, html body #btnSubmit, html body button[type="submit"]' + (config.enabled !== false ? ', html body .btn-cad, html body #btnSignup, html body .btn-register' : '') + ', html body .btn-trial';
         var inpSelector = 'html body input[type="text"], html body input[type="password"], html body select, html body textarea, html body .form-input';
         var titleSelector = 'html body h1, html body h2, html body .brand-title, html body #businessName, html body .title, html body legend, html body .logo-text';
@@ -998,7 +1018,7 @@ export async function GET(request: Request) {
         styleStudio.innerHTML = 
           'html body, html body button, html body input, html body select, html body textarea, ' + cardSelector + ' { ' + fontCss + ' } ' +
           titleSelector + ' { ' + titleSizeCss + ' ' + titleAlignCss + ' ' + titleWeightCss + ' } ' +
-          cardSelector + ' { ' + cardRadiusCss + ' ' + cardPaddingCss + ' ' + cardShapeClip + ' ' + cardGlowCss + ' } ' +
+          cardSelector + ' { ' + cardRadiusCss + ' ' + cardPaddingCss + ' ' + cardShapeClip + ' ' + cardGlowCss + ' ' + cardMaxWidthCss + ' } ' +
           'html body #box .actions, html body form .actions, html body .actions { ' + cardGapCss + ' margin-top: ' + Math.max(16, (st.cardGap || 14)) + 'px !important; } ' +
           'html body #btnLogin + #btnSignup, html body .btn-submit + .btn-cad, html body .btn-submit + .btn-signup { margin-top: ' + cardGapValStudio + 'px !important; } ' +
           'html body #trial-container { margin-top: 14px !important; margin-bottom: 8px !important; } ' +
@@ -1033,6 +1053,47 @@ export async function GET(request: Request) {
           '@keyframes mgContinuousRainbowCycle { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } } ' +
           '@keyframes mgContinuousJitterGlitch { 0%, 92%, 100% { transform: none; } 93% { transform: skew(4deg) translate(-2px, 1px); } 95% { transform: skew(-4deg) translate(2px, -1px); } 97% { transform: skew(2deg); } } ' +
           '@keyframes mgContinuousWobble3D { 0% { transform: perspective(500px) rotateX(0deg) rotateY(0deg); } 25% { transform: perspective(500px) rotateX(6deg) rotateY(-8deg); } 75% { transform: perspective(500px) rotateX(-6deg) rotateY(8deg); } 100% { transform: perspective(500px) rotateX(0deg) rotateY(0deg); } }';
+      }
+
+      // 10. MODULAR BLOCKS CMS ENGINE (Flexbox Order & Visibility Live Sync)
+      if (Array.isArray(config.blocks) && config.blocks.length > 0) {
+        var styleBlocks = document.getElementById('mg-live-blocks-css');
+        if (!styleBlocks) {
+          styleBlocks = document.createElement('style');
+          styleBlocks.id = 'mg-live-blocks-css';
+          document.head.appendChild(styleBlocks);
+        }
+
+        var blockRules = [
+          'html body #box, html body .card, html body .login-card, html body #mg-card, html body .mg-card, html body [data-taxonomy-container="card"] { display: flex !important; flex-direction: column !important; }',
+          'html body #mg-card > :not(.header-brand):not(.mg-block--identity), html body .login-card > :not(.header-brand):not(.mg-block--identity) { padding-left: var(--card-padding-l, 24px) !important; padding-right: var(--card-padding-r, 24px) !important; box-sizing: border-box !important; }',
+          'html body #mg-card > .footer, html body #mg-card > .mg-block--footer, html body .login-card > .footer, html body .login-card > .mg-block--footer { padding-bottom: var(--card-padding-b, 20px) !important; padding-top: 14px !important; margin-top: 0 !important; }'
+        ];
+
+        var selectorMap = {
+          'branding': 'html body .header-brand, html body #brand-header, html body #logoArea, html body .mg-wifi-icon, html body #block-branding, html body [data-block="branding"], html body .mg-block--identity, html body [data-taxonomy="identity"]',
+          'welcome': 'html body .welcome-text, html body #welcomeMessage, html body .mg-message, html body .instructions, html body #block-welcome, html body [data-block="welcome"], html body .mg-block--communication, html body [data-taxonomy="communication"]',
+          'ads': 'html body #adModal, html body #adCarousel, html body .ad-carousel-container, html body #adArea, html body #block-ads, html body [data-block="ads"], html body .mg-block--campaign, html body [data-taxonomy="marketing"]',
+          'auth': 'html body form[name="login"], html body #loginForm, html body form#login, html body .auth-section, html body #block-auth, html body [data-block="auth"], html body .mg-block--auth, html body [data-taxonomy="interaction"]',
+          'trial': 'html body #trial-container, html body .btn-trial, html body a.btn-trial, html body .trial-section, html body #block-trial, html body [data-block="trial"], html body .mg-block--incentive, html body [data-taxonomy="incentive"]',
+          'badges': 'html body #badges, html body .badges-container, html body .mg-badges-wrap, html body #block-badges, html body [data-block="badges"], html body .mg-block--status, html body [data-taxonomy="status"]',
+          'props': 'html body #props, html body .props-container, html body .alert-box, html body #block-props, html body [data-block="props"], html body .mg-block--feedback, html body [data-taxonomy="feedback"]',
+          'whatsapp': 'html body #whatsapp, html body .whatsapp-container, html body .help-info, html body #block-whatsapp, html body [data-block="whatsapp"], html body .mg-block--support, html body [data-taxonomy="support"]',
+          'footer': 'html body .footer, html body #footer, html body footer, html body #block-footer, html body [data-block="footer"], html body .mg-block--footer, html body [data-taxonomy="metadata"]'
+        };
+
+        config.blocks.forEach(function(blk, idx) {
+          var sel = selectorMap[blk.id] || selectorMap[blk.type];
+          if (sel) {
+            if (blk.enabled === false) {
+              blockRules.push(sel + ' { display: none !important; }');
+            } else {
+              blockRules.push(sel + ' { order: ' + (idx + 1) + ' !important; }');
+            }
+          }
+        });
+
+        styleBlocks.innerHTML = blockRules.join(' ');
       }
 
       // Pooling em tempo real para obter a quantidade real de conexões ativas do MikroTik a cada 10 segundos

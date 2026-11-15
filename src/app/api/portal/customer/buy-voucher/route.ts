@@ -90,36 +90,48 @@ export async function POST(request: Request) {
        // Free mode bypasses PIX creation
        pixId = `FREE_${Date.now()}`;
        pixPayload = 'FREE_WIFI';
-    } else if (!isTestMode && mpToken && mpToken.trim()) {
-      const mpService = await MercadoPagoService.init(mpToken.trim());
-      const payerEmail = lead.email || `${lead.hotspotUser}@wifi.local`;
-
-      const mpResult = await mpService.createPixPayment({
-        transaction_amount: plan.price * voucherQty,
-        description: `${voucherQty}x Voucher ${plan.title}${forFriend && friendName ? ` para ${friendName}` : ''}`,
-        payer: {
-          email: payerEmail,
-          first_name: lead.name || lead.hotspotUser,
-        },
-      });
-
-      pixId = String(mpResult.id ?? '');
-      pixPayload = mpResult.point_of_interaction?.transaction_data?.qr_code ?? null;
-      pixQrCodeBase64 = mpResult.point_of_interaction?.transaction_data?.qr_code_base64 ?? null;
     } else {
-      // Check for Manual PIX Key fallback — only if key is actually configured
-      const { getEffectivePixKey, generatePixPayload } = await import('@/lib/pix');
-      const manualPixKey = await getEffectivePixKey();
-      if (manualPixKey && manualPixKey.trim()) {
-        pixId = `MANUAL_${Date.now()}`;
-        pixPayload = generatePixPayload(manualPixKey.trim(), plan.price * voucherQty, 'MIKROGESTOR', 'SAO PAULO');
-        pixQrCodeBase64 = null;
-        isManualPix = true;
-      } else {
-        return NextResponse.json({ 
-          success: false, 
-          message: 'Nenhum meio de pagamento PIX (Mercado Pago ou Chave Manual) configurado no momento. Contate o administrador.' 
-        }, { status: 400 });
+      let mpSuccess = false;
+
+      if (!isTestMode && mpToken && mpToken.trim()) {
+        try {
+          const mpService = await MercadoPagoService.init(mpToken.trim());
+          const { formatValidPayerEmail } = await import('@/services/mercadopago');
+          const payerEmail = formatValidPayerEmail(lead.email, lead.name || lead.hotspotUser);
+
+          const mpResult = await mpService.createPixPayment({
+            transaction_amount: plan.price * voucherQty,
+            description: `${voucherQty}x Voucher ${plan.title}${forFriend && friendName ? ` para ${friendName}` : ''}`,
+            payer: {
+              email: payerEmail,
+              first_name: lead.name || lead.hotspotUser,
+            },
+          });
+
+          pixId = String(mpResult.id ?? '');
+          pixPayload = mpResult.point_of_interaction?.transaction_data?.qr_code ?? null;
+          pixQrCodeBase64 = mpResult.point_of_interaction?.transaction_data?.qr_code_base64 ?? null;
+          mpSuccess = !!pixPayload;
+        } catch (mpErr: any) {
+          console.warn('[buy-voucher] Falha na API Mercado Pago, avaliando fallback manual:', mpErr?.message || mpErr);
+        }
+      }
+
+      // Se Mercado Pago não foi executado ou falhou, tenta o PIX Manual
+      if (!mpSuccess) {
+        const { getEffectivePixKey, generatePixPayload } = await import('@/lib/pix');
+        const manualPixKey = await getEffectivePixKey();
+        if (manualPixKey && manualPixKey.trim()) {
+          pixId = `MANUAL_${Date.now()}`;
+          pixPayload = generatePixPayload(manualPixKey.trim(), plan.price * voucherQty, 'MIKROGESTOR', 'SAO PAULO');
+          pixQrCodeBase64 = null;
+          isManualPix = true;
+        } else {
+          return NextResponse.json({ 
+            success: false, 
+            message: 'Nenhum meio de pagamento PIX (Mercado Pago ou Chave Manual) configurado no momento. Contate o administrador.' 
+          }, { status: 400 });
+        }
       }
     }
 

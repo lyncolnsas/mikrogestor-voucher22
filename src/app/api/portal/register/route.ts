@@ -631,7 +631,8 @@ export async function POST(request: Request) {
           const mpConfig = await prisma.systemConfig.findUnique({ where: { key: 'MERCADOPAGO_TOKEN' } });
           if (mpConfig?.value && mpConfig.value.trim()) {
             const mpService = new MercadoPagoService(mpConfig.value.trim());
-            const payerEmail = email || `${hotspotUser}@wifi.local`;
+            const { formatValidPayerEmail } = await import('@/services/mercadopago');
+            const payerEmail = formatValidPayerEmail(email, finalName || hotspotUser);
             const payerName = finalName;
             const payerCpf = rawCpf ? rawCpf.replace(/\D/g, '') : undefined;
             

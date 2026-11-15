@@ -48,7 +48,7 @@
     "btnFontSize": 14,
     "btnFontWeight": "600",
     "btnLetterSpacing": 0.5,
-    "btnHeight": 46,
+    "btnHeight": 38,
     "btnPaddingTop": 12,
     "btnPaddingRight": 20,
     "btnPaddingBottom": 12,
@@ -74,6 +74,80 @@
     "activeComponent": "submit_button",
     "cardGap": 16
   },
+  "blocks": [
+    {
+      "id": "badges",
+      "type": "badges",
+      "label": "Badges de Conexão Wi-Fi",
+      "description": "Indicador 5G Ultra Rápido e WPA3",
+      "enabled": true,
+      "canDelete": true
+    },
+    {
+      "id": "branding",
+      "type": "branding",
+      "label": "Identidade & Logotipo",
+      "description": "Logo da empresa e nome da rede",
+      "enabled": true,
+      "canDelete": false
+    },
+    {
+      "id": "welcome",
+      "type": "welcome",
+      "label": "Mensagem de Boas-Vindas",
+      "description": "Instruções de login por voucher",
+      "enabled": true,
+      "canDelete": false
+    },
+    {
+      "id": "auth",
+      "type": "auth",
+      "label": "Formulário Voucher",
+      "description": "Campos de acesso e botão conectar",
+      "enabled": true,
+      "canDelete": false
+    },
+    {
+      "id": "trial",
+      "type": "trial",
+      "label": "Acesso de Teste (Trial)",
+      "description": "Liberação temporária de 15 minutos",
+      "enabled": true,
+      "canDelete": true
+    },
+    {
+      "id": "ads",
+      "type": "ads",
+      "label": "Banner Patrocinador",
+      "description": "Campanhas de patrocinadores locais",
+      "enabled": true,
+      "canDelete": true
+    },
+    {
+      "id": "props",
+      "type": "props",
+      "label": "Regras & Anti-Tethering",
+      "description": "Avisos anti-fraude e bloqueio TTL=1",
+      "enabled": true,
+      "canDelete": true
+    },
+    {
+      "id": "whatsapp",
+      "type": "whatsapp",
+      "label": "Suporte WhatsApp",
+      "description": "Atendimento e suporte ao cliente",
+      "enabled": true,
+      "canDelete": true
+    },
+    {
+      "id": "footer",
+      "type": "footer",
+      "label": "Rodapé MikroGestor",
+      "description": "Identificação oficial da plataforma",
+      "enabled": true,
+      "canDelete": false
+    }
+  ],
   "brand": {
     "headerStyle": "transparent",
     "displayMode": "image",
@@ -104,7 +178,9 @@
     "taglineFontSize": 12,
     "taglineColor": "#94a3b8",
     "taglineLetterSpacing": 0,
-    "badgeStyle": "none"
+    "badgeStyle": "none",
+    "taglineText": "Educação Adventista",
+    "logoUrl": ""
   },
   "social": {
     "whatsappEnabled": false,
@@ -177,7 +253,8 @@
     "usernameRequired": true
   },
   "enabled": true,
-  "saleMode": false,
+  "saleMode": true,
+  "systemFreeWifiMode": false,
   "redirectUrl": "",
   "loginButtonLabel": "Conectar",
   "registerButtonText": "Cadastre-se aqui",
@@ -190,5 +267,6 @@
   "trialLinkText": "clique aqui",
   "trialModalTitle": "Acesso de Teste",
   "trialModalMessage": "Tem certeza de que deseja liberar o acesso grátis por 30 minutos?",
-  "trialModalConfirmText": "Sim, Conectar"
+  "trialModalConfirmText": "Sim, Conectar",
+  "trialModalCancelText": "Não, Voltar"
 }

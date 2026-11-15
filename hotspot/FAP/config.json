@@ -1,32 +1,32 @@
 {
-  "businessName": "Faculdade Adventista do Paraná",
-  "message": "Portal Wi-Fi • Insira as suas credenciais de acesso",
+  "businessName": "Lyncoln",
+  "message": "-",
   "systemUrl": "https://mikrogestor.com",
   "colors": {
-    "brand": "#002B49",
-    "brandDark": "#001726",
-    "bg": "#001726",
-    "ink": "#002B49",
-    "muted": "#4b5563",
-    "blue": "#F39200",
-    "green": "#002B49",
-    "trialButtonBg": "#10b981",
+    "brand": "#059669",
+    "brandDark": "#047857",
+    "bg": "#060d0a",
+    "ink": "#f0fdf4",
+    "muted": "#86efac",
+    "blue": "#10b981",
+    "green": "#34d399",
+    "trialButtonBg": "#059669",
     "trialButtonText": "#ffffff",
-    "cardBg": "#ffffff",
-    "cardBorder": "#F39200",
-    "inputBg": "#fafafa",
-    "inputText": "#001726",
-    "inputBorder": "#cbd5e1",
-    "inputPlaceholder": "#64748b",
-    "loginButtonText": "#001726",
-    "registerButtonText": "#ffffff",
-    "glassOpacity": 100,
-    "glassBlur": 0
+    "cardBg": "#0c1a14",
+    "cardBorder": "#059669",
+    "inputBg": "#060d0a",
+    "inputText": "#f0fdf4",
+    "inputBorder": "#166534",
+    "inputPlaceholder": "#4ade80",
+    "loginButtonText": "#060d0a",
+    "registerButtonText": "#060d0a",
+    "glassOpacity": 90,
+    "glassBlur": 14
   },
   "effects": {
     "bgEffect": "none",
     "bgEffectSpeed": "normal",
-    "cardShape": "rounded",
+    "cardShape": "square",
     "cardNoiseTexture": false,
     "cardGlowBorder": false,
     "cardTilt3d": false,
@@ -37,6 +37,7 @@
     "headerIcon": "wifi"
   },
   "studio": {
+    "activeComponent": "submit_button",
     "fontFamily": "Inter",
     "titleFontSize": 22,
     "titleFontWeight": "700",
@@ -58,25 +59,24 @@
     "btnRadiusBR": 12,
     "btnRadiusBL": 12,
     "btnBorderWidth": 0,
-    "cardRadiusTL": 20,
-    "cardRadiusTR": 20,
-    "cardRadiusBR": 20,
-    "cardRadiusBL": 20,
+    "cardRadiusTL": 4,
+    "cardRadiusTR": 4,
+    "cardRadiusBR": 4,
+    "cardRadiusBL": 4,
     "cardPaddingTop": 24,
     "cardPaddingRight": 24,
     "cardPaddingBottom": 24,
     "cardPaddingLeft": 24,
     "cardBorderWidth": 1,
     "cardBorderStyle": "solid",
+    "cardGap": 16,
     "inputHeight": 44,
     "inputRadius": 10,
-    "inputBorderWidth": 1,
-    "activeComponent": "submit_button",
-    "cardGap": 16
+    "inputBorderWidth": 1
   },
   "brand": {
     "headerStyle": "solid",
-    "displayMode": "both",
+    "displayMode": "image",
     "logoBg": "none",
     "logoBgCustomColor": "#ffffff",
     "logoShape": "rounded",
@@ -104,7 +104,9 @@
     "taglineFontSize": 11,
     "taglineColor": "#001726",
     "taglineLetterSpacing": 0.5,
-    "badgeStyle": "none"
+    "badgeStyle": "none",
+    "taglineText": "Educação Adventista",
+    "logoUrl": ""
   },
   "social": {
     "whatsappEnabled": false,
@@ -130,7 +132,7 @@
     "url": ""
   },
   "ad": {
-    "type": "carousel",
+    "type": "none",
     "mediaUrl": "/uploads/ad_1789793716670.mp4",
     "targetUrl": "",
     "items": [
@@ -155,21 +157,23 @@
         "targetUrl": ""
       }
     ],
-    "timerEnabled": false,
+    "timerEnabled": true,
     "timerDuration": 15
   },
   "fields": {
+    "usernameEnabled": true,
+    "usernameRequired": true,
     "nameEnabled": true,
     "nameRequired": true,
     "phoneEnabled": true,
     "phoneRequired": true,
-    "birthDateEnabled": true,
+    "birthDateEnabled": false,
     "birthDateRequired": true,
-    "emailEnabled": true,
+    "emailEnabled": false,
     "emailRequired": true,
-    "cpfEnabled": true,
+    "cpfEnabled": false,
     "cpfRequired": true,
-    "genderEnabled": true,
+    "genderEnabled": false,
     "genderRequired": true,
     "passwordEnabled": false,
     "passwordRequired": false,
@@ -177,12 +181,11 @@
     "customFieldLabel": "",
     "customFieldRequired": false,
     "optInCoursesEnabled": true,
-    "optInCoursesLabel": "Aceito receber novidades e informações institucionais",
-    "usernameEnabled": true,
-    "usernameRequired": true
+    "optInCoursesLabel": "Aceito receber novidades e informações institucionais"
   },
   "enabled": true,
-  "saleMode": false,
+  "saleMode": true,
+  "systemFreeWifiMode": false,
   "redirectUrl": "",
   "loginButtonLabel": "Conectar à Rede",
   "registerButtonText": "Cadastre-se aqui",
@@ -195,5 +198,6 @@
   "trialLinkText": "clique aqui",
   "trialModalTitle": "Acesso Grátis (Uso Free)",
   "trialModalMessage": "Tem certeza de que deseja liberar o acesso grátis por 30 minutos?",
-  "trialModalConfirmText": "Sim, Conectar"
+  "trialModalConfirmText": "Sim, Conectar",
+  "trialModalCancelText": "Não, Voltar"
 }

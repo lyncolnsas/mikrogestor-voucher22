@@ -5,6 +5,7 @@ import { useHistory } from '@/hooks/useHistory';
 import StudioTopBar from '@/components/portal/studio/StudioTopBar';
 import StudioNavRail, { StudioTab } from '@/components/portal/studio/StudioNavRail';
 import StudioCanvas from '@/components/portal/studio/StudioCanvas';
+import BlocksStudioPanel, { ModularBlockItem, DEFAULT_FAP_BLOCKS, DEFAULT_CYBER_BLOCKS } from '@/components/portal/studio/panels/BlocksStudioPanel';
 import BrandingStudioPanel from '@/components/portal/studio/panels/BrandingStudioPanel';
 import HotspotAuthStudioPanel from '@/components/portal/studio/panels/HotspotAuthStudioPanel';
 import LeadsFieldsStudioPanel from '@/components/portal/studio/panels/LeadsFieldsStudioPanel';
@@ -26,6 +27,7 @@ import {
   Globe, 
   Code2, 
   Cpu,
+  Layers,
   CheckCircle2,
   AlertTriangle,
   X
@@ -264,7 +266,8 @@ const NICHE_EFFECTS = [
 export default function PortalEditor() {
   const [template, setTemplate] = useState('default');
   const [availableTemplates, setAvailableTemplates] = useState<string[]>(['default', 'FAP']);
-  const [activeTab, setActiveTab] = useState<StudioTab>('branding');
+  const [activeTab, setActiveTab] = useState<StudioTab>('blocks');
+  const [blocks, setBlocks] = useState<ModularBlockItem[]>(DEFAULT_CYBER_BLOCKS);
   const [previewScreen, setPreviewScreen] = useState<'login' | 'register'>('login');
   const [viewportMode, setViewportMode] = useState<'mobile' | 'tablet' | 'desktop'>('mobile');
   const [previewZoom, setPreviewZoom] = useState(100);
@@ -521,7 +524,7 @@ export default function PortalEditor() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          businessName, message, systemUrl, colors, effects, studio, brand, social,
+          businessName, message, systemUrl, colors, effects, studio, blocks, brand, social,
           badges, customCode, bg, ad, fields, enabled, saleMode, systemFreeWifiMode,
           redirectUrl, loginButtonLabel, registerButtonText, registerTitle,
           registerSubtitle, registerSubmitText, termsText, trialEnabled, trialText,
@@ -544,25 +547,25 @@ export default function PortalEditor() {
       setAutoSaveStatus('error');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [template, businessName, message, systemUrl, colors, effects, studio, brand, social,
+  }, [template, businessName, message, systemUrl, colors, effects, studio, blocks, brand, social,
     badges, customCode, bg, ad, fields, enabled, saleMode, systemFreeWifiMode,
     redirectUrl, loginButtonLabel, registerButtonText, registerTitle, registerSubtitle,
     registerSubmitText, termsText, trialEnabled, trialText, trialLinkText,
     trialModalTitle, trialModalMessage, trialModalConfirmText, trialModalCancelText]);
 
-  // Trigger auto-save 3s after any config change (skips first mount)
+  // Trigger auto-save 400ms after any config change (tempo real no login.html)
   useEffect(() => {
     if (!configLoadedRef.current) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     setAutoSaveStatus('idle');
     autoSaveTimerRef.current = setTimeout(() => {
       handleAutoSave();
-    }, 3000);
+    }, 400);
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [businessName, message, systemUrl, colors, effects, studio, brand, social,
+  }, [businessName, message, systemUrl, colors, effects, studio, blocks, brand, social,
     badges, customCode, bg, ad, fields, enabled, saleMode, systemFreeWifiMode,
     redirectUrl, loginButtonLabel, registerButtonText, registerTitle, registerSubtitle,
     registerSubmitText, termsText, trialEnabled, trialText, trialLinkText,
@@ -772,6 +775,11 @@ export default function PortalEditor() {
           if (c.trialModalMessage !== undefined) setTrialModalMessage(c.trialModalMessage);
           if (c.trialModalConfirmText !== undefined) setTrialModalConfirmText(c.trialModalConfirmText);
           if (c.trialModalCancelText !== undefined) setTrialModalCancelText(c.trialModalCancelText);
+          if (c.blocks && Array.isArray(c.blocks) && c.blocks.length > 0) {
+            setBlocks(c.blocks);
+          } else {
+            setBlocks(template.toLowerCase() === 'fap' ? DEFAULT_FAP_BLOCKS : DEFAULT_CYBER_BLOCKS);
+          }
         }
       } catch (err) {
         console.warn('Erro ao carregar configurações do portal:', err);
@@ -872,6 +880,7 @@ export default function PortalEditor() {
         bg,
         effects,
         studio,
+        blocks,
         brand,
         social,
         badges,
@@ -895,7 +904,7 @@ export default function PortalEditor() {
         termsText
       }, '*');
     }
-  }, [template, colors, bg, effects, studio, brand, social, badges, customCode, enabled, loginButtonLabel, registerButtonText, businessName, message, trialEnabled, trialText, trialLinkText, trialModalTitle, trialModalMessage, fields, ad, saleMode, systemFreeWifiMode, registerTitle, registerSubtitle, registerSubmitText, termsText]);
+  }, [template, colors, bg, effects, studio, blocks, brand, social, badges, customCode, enabled, loginButtonLabel, registerButtonText, businessName, message, trialEnabled, trialText, trialLinkText, trialModalTitle, trialModalMessage, fields, ad, saleMode, systemFreeWifiMode, registerTitle, registerSubtitle, registerSubmitText, termsText]);
 
   useEffect(() => {
     broadcastLivePreview();
@@ -926,7 +935,10 @@ export default function PortalEditor() {
 
   // Seleção e persistência do template ativo
   const handleSelectTemplate = (newTpl: string) => {
+    configLoadedRef.current = false;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     setTemplate(newTpl);
+    setBlocks(newTpl.toLowerCase() === 'fap' ? DEFAULT_FAP_BLOCKS : DEFAULT_CYBER_BLOCKS);
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('mikrogestor_active_template', newTpl);
@@ -948,6 +960,7 @@ export default function PortalEditor() {
           colors,
           effects,
           studio,
+          blocks,
           brand,
           social,
           badges,
@@ -1352,6 +1365,7 @@ export default function PortalEditor() {
           {/* Seletor Horizontal de Ferramentas no Mobile (< md) */}
           <div className="md:hidden flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 overflow-x-auto scrollbar-none shrink-0">
             {[
+              { id: 'blocks' as StudioTab, label: 'Blocos', icon: Layers },
               { id: 'branding' as StudioTab, label: 'Estilo', icon: Palette },
               { id: 'auth_methods' as StudioTab, label: 'Login', icon: KeyRound },
               { id: 'leads_form' as StudioTab, label: 'Leads', icon: FileSpreadsheet },
@@ -1386,6 +1400,64 @@ export default function PortalEditor() {
               <span>Provisionar</span>
             </a>
           </div>
+          {activeTab === 'blocks' && (
+            <BlocksStudioPanel
+              blocks={blocks}
+              setBlocks={setBlocks}
+              studio={studio}
+              setStudio={setStudio}
+              template={template}
+              setTemplate={handleSelectTemplate}
+              availableTemplates={availableTemplates}
+              businessName={businessName}
+              setBusinessName={setBusinessName}
+              message={message}
+              setMessage={setMessage}
+              brand={brand}
+              setBrand={setBrand}
+              social={social}
+              setSocial={setSocial}
+              badges={badges}
+              setBadges={setBadges}
+              loginButtonLabel={loginButtonLabel}
+              setLoginButtonLabel={setLoginButtonLabel}
+              registerButtonText={registerButtonText}
+              setRegisterButtonText={setRegisterButtonText}
+              enabled={enabled}
+              setEnabled={setEnabled}
+              trialText={trialText}
+              setTrialText={setTrialText}
+              trialLinkText={trialLinkText}
+              setTrialLinkText={setTrialLinkText}
+              termsText={termsText}
+              setTermsText={setTermsText}
+              colors={colors}
+              setColors={setColors}
+              bg={bg}
+              setBg={setBg}
+              effects={effects}
+              setEffects={setEffects}
+              ad={ad}
+              setAd={setAd}
+              customCode={customCode}
+              setCustomCode={setCustomCode}
+              colorPresets={COLOR_PRESETS}
+              nicheEffects={NICHE_EFFECTS}
+              onOpenMediaPicker={handleOpenMediaPicker}
+              onSelectBlockForEdit={(blockType) => {
+                if (blockType === 'branding' || blockType === 'welcome' || blockType === 'badges' || blockType === 'footer') {
+                  setActiveTab('branding');
+                } else if (blockType === 'ads') {
+                  setActiveTab('ads');
+                } else if (blockType === 'auth' || blockType === 'trial' || blockType === 'props') {
+                  setActiveTab('auth_methods');
+                } else if (blockType === 'whatsapp') {
+                  setActiveTab('walled_garden');
+                }
+              }}
+            />
+          )}
+
           {activeTab === 'branding' && (
             <BrandingStudioPanel
               colors={colors}

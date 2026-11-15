@@ -40,8 +40,6 @@ canvas#mg-fx-niche, canvas#mg-fx-canvas-matrix, canvas#mg-live-canvas, .mg-fx-ca
   100% { box-shadow: 0 0 20px #F3920090; transform: scale(1.02); }
 }
 
-/* ====== USER CUSTOM CSS ====== */
-
 </style>
 <script>
 (function() {
@@ -170,9 +168,10 @@ canvas#mg-fx-niche, canvas#mg-fx-canvas-matrix, canvas#mg-live-canvas, .mg-fx-ca
   --card-padding-l: 24px;
   --card-border-width: 1px;
   --card-gap: 16px;
+  --card-max-width: 420px;
   
   /* Buttons */
-  --btn-height: 46px;
+  --btn-height: 38px;
   --btn-radius-tl: 12px;
   --btn-radius-tr: 12px;
   --btn-radius-br: 12px;
@@ -257,7 +256,7 @@ body {
   backdrop-filter: blur(var(--glass-blur)) !important; -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
   border-radius: var(--border-radius) !important; border: 1px solid rgba(255,255,255,0.25) !important;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06) !important;
-  padding: 20px; margin: 40px auto 24px; max-width: 420px; width: calc(100% - 32px); padding-bottom: 24px;
+  padding: 20px; margin: 40px auto 24px; max-width: var(--card-max-width, 420px) !important; width: calc(100% - 32px); padding-bottom: 24px;
 }
 .mg-wifi-icon { display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); }
 .mg-wifi-icon svg { width: 26px; height: 26px; fill: var(--blue); }
@@ -299,6 +298,22 @@ body {
   .actions { grid-template-columns: 1fr !important; gap: 12px !important; }
   #btnLogin + #btnSignup, .btn-submit + .btn-cad, .btn-submit + .btn-signup { margin-top: 12px !important; }
 }
+
+
+/* Modular Blocks CMS */
+#box, .card, .login-card, #mg-card, .mg-card, [data-taxonomy-container="card"] { display: flex !important; flex-direction: column !important; }
+#mg-card > :not(.header-brand):not(.mg-block--identity), .login-card > :not(.header-brand):not(.mg-block--identity) { padding-left: var(--card-padding-l, 24px) !important; padding-right: var(--card-padding-r, 24px) !important; box-sizing: border-box !important; }
+#mg-card > .footer, #mg-card > .mg-block--footer, .login-card > .footer, .login-card > .mg-block--footer { padding-bottom: var(--card-padding-b, 20px) !important; padding-top: 14px !important; margin-top: 0 !important; }
+#badges, .badges-container, .mg-badges-wrap, #block-badges, [data-block="badges"], .mg-block--status, [data-taxonomy="status"] { order: 1 !important; }
+.header-brand, #brand-header, #logoArea, .mg-wifi-icon, #block-branding, [data-block="branding"], .mg-block--identity, [data-taxonomy="identity"] { order: 2 !important; }
+.welcome-text, #welcomeMessage, .mg-message, .instructions, #block-welcome, [data-block="welcome"], .mg-block--communication, [data-taxonomy="communication"] { order: 3 !important; }
+form[name="login"], #loginForm, form#login, .auth-section, #block-auth, [data-block="auth"], .mg-block--auth, [data-taxonomy="interaction"] { order: 4 !important; }
+#trial-container, .btn-trial, a.btn-trial, .trial-section, #block-trial, [data-block="trial"], .mg-block--incentive, [data-taxonomy="incentive"] { order: 5 !important; }
+#adModal, #adCarousel, .ad-carousel-container, #adArea, #block-ads, [data-block="ads"], .mg-block--campaign, [data-taxonomy="marketing"] { order: 6 !important; }
+#props, .props-container, .alert-box, #block-props, [data-block="props"], .mg-block--feedback, [data-taxonomy="feedback"] { order: 7 !important; }
+#whatsapp, .whatsapp-container, .help-info, #block-whatsapp, [data-block="whatsapp"], .mg-block--support, [data-taxonomy="support"] { order: 8 !important; }
+.footer, #footer, footer, #block-footer, [data-block="footer"], .mg-block--footer, [data-taxonomy="metadata"] { order: 9 !important; }
+
   </style>
   <!-- END_MIKROGESTOR_THEME_LINK -->
 </head>
@@ -325,16 +340,36 @@ $(if chap-id)
   $(endif)
 
   <!-- TODO O DESIGN (CAIXA, ALINHAMENTO) É APLICADO PELO CSS EXTERNO -->
-  <div id="mg-app-root">
-    
-    $(if error)<div class="err">$(error)</div>$(endif)
-<form name="login" action="$(link-login-only)" method="post" $(if chap-id) onSubmit="return doLogin()" $(endif)>
-      <input type="hidden" name="dst" value="$(link-orig)">
-      <input type="hidden" name="popup" value="true">
+  <div id="mg-app-root" class="mg-portal-root" data-taxonomy-root="portal">
+    <main id="box" class="mg-card card" data-taxonomy-container="card">
+      <div id="block-badges" class="mg-block mg-block--status badges-container" data-block="badges" data-taxonomy="status" style="display: none;"></div>
+      
+      <!-- 1. IDENTIDADE (IDENTITY) -->
+      <header id="block-branding" class="mg-block mg-block--identity" data-block="branding" data-taxonomy="identity">
+        <!-- MIKROGESTOR_BRAND_LOGO -->
+<!-- END_MIKROGESTOR_BRAND_LOGO -->
+      </header>
 
-      <div id="box">
-        <div class="mg-message">Seja bem-vindo ao Wi-Fi MikroGestor! Digite seu voucher.</div>
-        <!-- Campos Base do MikroTik -->
+      <!-- 2. COMUNICAÇÃO (COMMUNICATION) -->
+      <section id="block-welcome" class="mg-block mg-block--communication mg-message" data-block="welcome" data-taxonomy="communication">
+        Seja bem-vindo ao Wi-Fi MikroGestor! Digite seu voucher.
+      </section>
+
+      <!-- MÍDIA & ADS (MARKETING) -->
+      <section id="block-ads" class="mg-block mg-block--marketing ad-section" data-block="ads" data-taxonomy="marketing" style="display: none;"></section>
+
+      <!-- 3. STATUS & FEEDBACK (FEEDBACK) -->
+      $(if error)
+      <aside id="block-props" class="mg-block mg-block--feedback err alert-box" data-block="props" data-taxonomy="feedback" role="alert">
+        $(error)
+      </aside>
+      $(endif)
+
+      <!-- 4. AUTENTICAÇÃO (INTERACTION) -->
+      <form name="login" id="block-auth" class="mg-block mg-block--auth auth-section" data-block="auth" data-taxonomy="interaction" action="$(link-login-only)" method="post" $(if chap-id) onSubmit="return doLogin()" $(endif) autocomplete="off">
+        <input type="hidden" name="dst" value="$(link-orig)">
+        <input type="hidden" name="popup" value="true">
+
         <input id="user" name="username" type="text" value="$(username)" placeholder="Usuário" autocomplete="username" autocapitalize="none" autofocus="">
         <input id="pass" name="password" type="password" placeholder="Senha" autocomplete="current-password">
 
@@ -346,8 +381,10 @@ $(if chap-id)
 <a id="btnSignup" class="btn btn-cad" href="https://mikrogestor.com/portal/register?link-login-only=$(link-login-only-esc)&link-orig=$(link-orig-esc)" style="display: flex !important;">Cadastre-se aqui</a>
 <!-- END_MIKROGESTOR_REGISTER_BTN -->
         </div>
+      </form>
 
-        <!-- Botao de Trial Controlado pelo MikroGestor -->
+      <!-- 5. INCENTIVO / BENEFÍCIO (INCENTIVE) -->
+      <section id="block-trial" class="mg-block mg-block--incentive trial-section" data-block="trial" data-taxonomy="incentive">
         <!-- MIKROGESTOR_TRIAL_BLOCK -->
 <div id="trial-container" style="display: block; text-align: center; font-size: 11px; margin-top: 12px; color: var(--muted);">
 $(if trial == 'yes')
@@ -355,12 +392,17 @@ $(if trial == 'yes')
 $(endif)
 </div>
 <!-- END_MIKROGESTOR_TRIAL_BLOCK -->
+      </section>
 
-        <div class="footer">
-          <span>IP: $(ip) • MAC: $(mac)</span>
-        </div>
-      </div>
-    </form>
+      <!-- ATENDIMENTO & SUPORTE (SUPPORT) -->
+      <section id="block-whatsapp" class="mg-block mg-block--support help-info" data-block="whatsapp" data-taxonomy="support" style="display: none;"></section>
+
+      <!-- 6. METADADOS & LEGAL (METADATA) -->
+      <footer id="block-footer" class="mg-block mg-block--footer footer" data-block="footer" data-taxonomy="metadata">
+            Ao se cadastrar, você concorda com nossos Termos de Uso e Política de Privacidade.
+        </footer>
+
+    </main>
   </div>
 
   <script>
