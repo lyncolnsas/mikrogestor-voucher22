@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Hotspot - Bubblegum Hardcore</title>
+  <meta http-equiv="pragma" content="no-cache">
+  <meta http-equiv="expires" content="-1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#f472b6">
+
+  <!-- Fontes Google com fallbacks para execução offline no MikroTik -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="fonts/fonts.css" rel="stylesheet">
+
+  <!-- MIKROGESTOR_BG_SCRIPT -->
+  <!-- END_MIKROGESTOR_BG_SCRIPT -->
+
+  <!-- MIKROGESTOR EFFECTS -->
+  <canvas id="mg-fx-bubblegum" class="mg-fx-canvas" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:1; pointer-events:none; background:#f472b6;"></canvas>
+
+  <style>
+    .mg-fx-canvas {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      z-index: 1 !important;
+      pointer-events: none !important;
+    }
+  </style>
+
+  <script>
+  (function() {
+    var c = document.getElementById('mg-fx-bubblegum');
+    if (!c) return;
+    var ctx = c.getContext('2d');
+    if (!ctx) return;
+
+    function resize() {
+      var w = c.clientWidth || window.innerWidth || document.documentElement.clientWidth || 360;
+      var h = c.clientHeight || window.innerHeight || document.documentElement.clientHeight || 640;
+      if (w > 0 && h > 0 && (c.width !== w || c.height !== h)) {
+        c.width = w;
+        c.height = h;
+      }
+    }
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', function() { setTimeout(resize, 60); setTimeout(resize, 300); });
+    document.addEventListener('DOMContentLoaded', resize);
+    window.addEventListener('load', resize);
+    resize();
+
+    // Floating Bubblegum Balls & Memphis geometric shapes
+    var items = [];
+    var colors = ['#ffffff', '#38bdf8', '#4ade80', '#fef08a', '#c084fc', '#fb7185'];
+    var shapes = ['circle', 'bubble', 'cross', 'donut', 'square'];
+
+    for (var i = 0; i < 32; i++) {
+      items.push({
+        x: Math.random() * (window.innerWidth || 400),
+        y: Math.random() * (window.innerHeight || 800),
+        vx: (Math.random() - 0.5) * 0.9,
+        vy: -Math.random() * 0.8 - 0.3,
+        size: Math.random() * 22 + 8,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        shape: shapes[Math.floor(Math.random() * shapes.length)],
+        rot: Math.random() * Math.PI * 2,
+        vrot: (Math.random() - 0.5) * 0.03
+      });
+    }
+
+    function draw() {
+      ctx.fillStyle = '#f472b6';
+      ctx.fillRect(0, 0, c.width, c.height);
+
+      // Subtle Memphis polka dots in background
+      var dotGap = 36;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
+      for (var px = 18; px < c.width; px += dotGap) {
+        for (var py = 18; py < c.height; py += dotGap) {
+          ctx.beginPath();
+          ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        it.x += it.vx;
+        it.y += it.vy;
+        it.rot += it.vrot;
+
+        if (it.y < -40) {
+          it.y = c.height + 30;
+          it.x = Math.random() * c.width;
+        }
+        if (it.x < -40) it.x = c.width + 30;
+        if (it.x > c.width + 40) it.x = -30;
+
+        ctx.save();
+        ctx.translate(it.x, it.y);
+        ctx.rotate(it.rot);
+
+        ctx.fillStyle = it.color;
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2.5;
+
+        if (it.shape === 'circle') {
+          ctx.beginPath();
+          ctx.arc(0, 0, it.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          // Cute bubble reflection shine
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(-it.size * 0.35, -it.size * 0.35, it.size * 0.28, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (it.shape === 'bubble') {
+          ctx.beginPath();
+          ctx.arc(0, 0, it.size * 1.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        } else if (it.shape === 'donut') {
+          ctx.beginPath();
+          ctx.arc(0, 0, it.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#f472b6';
+          ctx.beginPath();
+          ctx.arc(0, 0, it.size * 0.45, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        } else if (it.shape === 'cross') {
+          var s = it.size * 0.8;
+          var t = s * 0.35;
+          ctx.beginPath();
+          ctx.rect(-t, -s, t * 2, s * 2);
+          ctx.rect(-s, -t, s * 2, t * 2);
+          ctx.fill();
+          ctx.stroke();
+        } else if (it.shape === 'square') {
+          var half = it.size * 0.7;
+          ctx.beginPath();
+          ctx.rect(-half, -half, half * 2, half * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  })();
+  </script>
+  <!-- END MIKROGESTOR EFFECTS -->
+
+  <!-- MIKROGESTOR_THEME_LINK -->
+  <style id="mg-theme-css-inline">
+/* ========================================================
+   MIKROGESTOR PORTAL — MODELO 40: BUBBLEGUM HARDCORE
+   Design Neo-Brutalist Pop com rosa chiclete e ciano
+   ======================================================== */
+:root {
+  --brand: #f472b6;
+  --brand-dark: #db2777;
+  --bg: #f472b6;
+  --ink: #000000;
+  --muted: #475569;
+  --blue: #38bdf8;
+  --green: #4ade80;
+
+  --trial-btn-bg: #fef08a;
+  --trial-btn-text: #000000;
+  --card-border-color: #000000;
+  --input-bg: #fdf2f8;
+  --input-text: #000000;
+  --input-border: #000000;
+  --input-placeholder: #94a3b8;
+  --login-btn-text: #000000;
+  --reg-btn-text: #000000;
+
+  --font-family: 'Comfortaa', 'Fredoka', cursive, 'Inter', -apple-system, sans-serif;
+  --glass-opacity: 1.0;
+  --glass-blur: 0px;
+  --card-bg-rgb: 255, 255, 255;
+
+  /* Card Neo-Brutalist */
+  --card-radius-tl: 18px;
+  --card-radius-tr: 18px;
+  --card-radius-br: 18px;
+  --card-radius-bl: 18px;
+  --card-padding-t: 26px;
+  --card-padding-r: 22px;
+  --card-padding-b: 24px;
+  --card-padding-l: 22px;
+  --card-border-width: 4px;
+  --card-gap: 16px;
+  --card-max-width: 420px;
+
+  /* Botões Neo-Brutalist */
+  --btn-height: 46px;
+  --btn-radius-tl: 14px;
+  --btn-radius-tr: 14px;
+  --btn-radius-br: 14px;
+  --btn-radius-bl: 14px;
+  --btn-font-size: 14px;
+  --btn-font-weight: 700;
+  --btn-letter-spacing: 0.5px;
+  --btn-border-width: 3px;
+
+  /* Inputs Neo-Brutalist */
+  --input-height: 46px;
+  --input-radius: 14px;
+  --input-border-width: 3px;
+
+  /* Tipografia */
+  --title-font-size: 22px;
+  --title-font-weight: 700;
+  --title-line-height: 1.25;
+  --title-letter-spacing: -0.5px;
+  --title-align: center;
+
+  --border-radius: 18px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-width: 300px;
+  font-family: var(--font-family);
+  background-color: var(--bg);
+  min-height: 100vh;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+#mg-app-root, form, .container, main, .main, .content {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Card Neo-Brutalist Oficial Modelo #40 */
+#box, .login-box, .card, .mg-card {
+  position: relative;
+  z-index: 10 !important;
+  background: #ffffff !important;
+  border: var(--card-border-width, 4px) solid #000000 !important;
+  border-radius: var(--card-radius-tl, 18px) !important;
+  box-shadow: 8px 8px 0px #38bdf8 !important;
+  color: #000000 !important;
+  padding: var(--card-padding-t, 26px) var(--card-padding-r, 22px) var(--card-padding-b, 24px) var(--card-padding-l, 22px);
+  margin: 40px auto 24px;
+  max-width: var(--card-max-width, 420px) !important;
+  width: calc(100% - 32px);
+  display: flex !important;
+  flex-direction: column !important;
+  gap: var(--card-gap, 16px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#box:hover, .login-box:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 10px 10px 0px #38bdf8 !important;
+}
+
+/* Logotipo / Ícone Bubblegum Pop */
+.mg-brand-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 8px;
+  background: #fdf2f8;
+  border: 3px solid #000000;
+  border-radius: 18px;
+  box-shadow: 4px 4px 0px #38bdf8;
+  font-size: 30px;
+  animation: candyWiggle 3s infinite ease-in-out;
+}
+
+@keyframes candyWiggle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-8deg) scale(1.05); }
+  75% { transform: rotate(8deg) scale(1.05); }
+}
+
+.mg-title {
+  text-align: var(--title-align, center);
+  font-size: var(--title-font-size, 22px);
+  font-weight: var(--title-font-weight, 700);
+  line-height: var(--title-line-height, 1.25);
+  color: #000000;
+  margin: 0 0 4px 0;
+  letter-spacing: var(--title-letter-spacing, -0.5px);
+}
+
+.mg-message {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 4px;
+  line-height: 1.45;
+}
+
+/* Badges Neo-Brutalist */
+.badges-container {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.badge-item {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 2px solid #000000;
+  background: #fef08a;
+  color: #000000;
+  box-shadow: 2px 2px 0px #000000;
+  text-transform: uppercase;
+}
+.badge-item.badge-blue {
+  background: #38bdf8;
+}
+
+/* Campos de Formulário */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: calc(var(--card-gap, 14px) * 0.75);
+}
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #000000;
+}
+
+#user, #pass {
+  background: #fdf2f8 !important;
+  border: 3px solid #000000 !important;
+  color: #000000 !important;
+  border-radius: var(--input-radius, 14px) !important;
+  height: var(--input-height, 46px);
+  min-height: var(--input-height, 46px);
+  font-size: 14px;
+  font-family: var(--font-family);
+  font-weight: 600;
+  width: 100%;
+  padding: 0 16px;
+  margin: 0;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+}
+
+#user:focus, #pass:focus {
+  background: #ffffff !important;
+  box-shadow: 4px 4px 0px #38bdf8 !important;
+}
+
+#user::placeholder, #pass::placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Botões de Ação Neo-Brutalist */
+.actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+  margin-top: 6px !important;
+  width: 100% !important;
+}
+
+.btn {
+  appearance: none;
+  -webkit-appearance: none;
+  height: var(--btn-height, 46px);
+  min-height: var(--btn-height, 46px);
+  border-radius: var(--btn-radius-tl, 14px);
+  border: 3px solid #000000 !important;
+  box-shadow: 4px 4px 0px #000000 !important;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: var(--btn-font-size, 14px);
+  font-family: var(--font-family);
+  width: 100%;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  padding: 0 12px !important;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+}
+
+.btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #000000 !important;
+  filter: brightness(1.05);
+}
+
+.btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #000000 !important;
+}
+
+.btn-login {
+  background: #4ade80 !important;
+  color: #000000 !important;
+}
+
+.btn-cad {
+  background: #38bdf8 !important;
+  color: #000000 !important;
+}
+
+/* Trial / Cortesia */
+#trial-container {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #000000;
+  background: #fef08a;
+  border: 2px solid #000000;
+  border-radius: 12px;
+  box-shadow: 3px 3px 0px #000000;
+  padding: 8px 12px;
+}
+
+#trial-container a {
+  color: #000000;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+/* Alerta de Erro */
+.err {
+  background: #fecdd3 !important;
+  border: 3px solid #000000 !important;
+  box-shadow: 4px 4px 0px #000000 !important;
+  color: #9f1239 !important;
+  padding: 10px 14px;
+  border-radius: 14px;
+  margin: 4px auto 0;
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Rodapé */
+.footer {
+  text-align: center;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #475569;
+}
+
+@media (max-width: 480px) {
+  #box {
+    padding: 20px 16px;
+    margin: 20px auto 16px;
+  }
+  .actions {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
+
+/* Modular Blocks Order */
+#badges, .badges-container, #block-badges, [data-block="badges"] { order: 1 !important; }
+.header-brand, #block-branding, [data-block="branding"] { order: 2 !important; }
+.welcome-text, #block-welcome, [data-block="welcome"] { order: 3 !important; }
+form[name="login"], #block-auth, [data-block="auth"] { order: 4 !important; }
+#trial-container, #block-trial, [data-block="trial"] { order: 5 !important; }
+#block-ads, [data-block="ads"] { order: 6 !important; }
+#block-props, [data-block="props"] { order: 7 !important; }
+#block-whatsapp, [data-block="whatsapp"] { order: 8 !important; }
+#block-footer, [data-block="footer"] { order: 9 !important; }
+  </style>
+  <!-- END_MIKROGESTOR_THEME_LINK -->
+</head>
+<body>
+
+  <!-- RouterOS CHAP Challenge Logic -->
+  $(if chap-id)
+  <form name="sendin" action="$(link-login-only)" method="post" style="display:none">
+    <input type="hidden" name="username">
+    <input type="hidden" name="password">
+    <input type="hidden" name="dst" value="$(link-orig)">
+    <input type="hidden" name="popup" value="true">
+  </form>
+  <script src="md5.js"></script>
+  <script>
+    function doLogin() {
+      document.sendin.username.value = document.login.username.value;
+      document.sendin.password.value = hexMD5('$(chap-id)' + document.login.password.value + '$(chap-challenge)');
+      document.sendin.submit();
+      return false;
+    }
+  </script>
+  $(endif)
+
+  <div id="mg-app-root" class="mg-portal-root" data-taxonomy-root="portal">
+    <main id="box" class="mg-card card login-box card-brutal-bubblegum" data-taxonomy-container="card">
+
+      <!-- BADGES -->
+      <div id="block-badges" class="badges-container" data-block="badges">
+        <span class="badge-item">⚡ 5G Turbo</span>
+        <span class="badge-item badge-blue">🔒 WPA3</span>
+      </div>
+
+      <!-- 1. IDENTIDADE (IDENTITY) -->
+      <header id="block-branding" class="header-brand" data-block="branding">
+        <!-- MIKROGESTOR_BRAND_LOGO -->
+        <div class="mg-brand-badge">🍬</div>
+        <h2 id="business-name" class="mg-title">Bubblegum Hardcore</h2>
+        <!-- END_MIKROGESTOR_BRAND_LOGO -->
+      </header>
+
+      <!-- 2. COMUNICAÇÃO (COMMUNICATION) -->
+      <section id="block-welcome" class="mg-message" data-block="welcome">
+        Conecte-se ao Wi-Fi Pop mais doce da cidade! Digite seu voucher abaixo:
+      </section>
+
+      <!-- MÍDIA & ADS -->
+      <section id="block-ads" class="ad-section" data-block="ads" style="display: none;"></section>
+
+      <!-- 3. STATUS & FEEDBACK -->
+      $(if error)
+      <aside id="block-props" class="err" data-block="props" role="alert">
+        $(error)
+      </aside>
+      $(endif)
+
+      <!-- 4. AUTENTICAÇÃO -->
+      <form name="login" id="block-auth" class="auth-section" data-block="auth" action="$(link-login-only)" method="post" $(if chap-id) onSubmit="return doLogin()" $(endif) autocomplete="off">
+        <input type="hidden" name="dst" value="$(link-orig)">
+        <input type="hidden" name="popup" value="true">
+
+        <div class="form-group">
+          <label for="user">Voucher ou Usuário</label>
+          <input id="user" name="username" type="text" value="$(username)" placeholder="exemplo: VOUCHER-1234" autocomplete="username" autocapitalize="none" autofocus="">
+        </div>
+
+        <div class="form-group">
+          <label for="pass">Senha de Acesso</label>
+          <input id="pass" name="password" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+
+        <div class="actions">
+          <button id="btnLogin" class="btn btn-login action-btn" type="submit">Conectar</button>
+
+          <!-- MIKROGESTOR_REGISTER_BTN -->
+          <a id="btnSignup" class="btn btn-cad" href="https://mikrogestor.com/portal/register?link-login-only=$(link-login-only-esc)&link-orig=$(link-orig-esc)">Cadastre-se</a>
+          <!-- END_MIKROGESTOR_REGISTER_BTN -->
+        </div>
+      </form>
+
+      <!-- 5. INCENTIVO / TRIAL -->
+      <section id="block-trial" class="trial-section" data-block="trial">
+        <!-- MIKROGESTOR_TRIAL_BLOCK -->
+        <div id="trial-container">
+          $(if trial == 'yes')
+          <span>Acesso de teste disponível, </span><a href="javascript:void(0)" onclick="if(confirm('Tem certeza de que deseja liberar o acesso grátis por 30 minutos?')) confirmTrialLogin()">clique aqui</a>.
+          $(endif)
+        </div>
+        <!-- END_MIKROGESTOR_TRIAL_BLOCK -->
+      </section>
+
+      <!-- ATENDIMENTO & SUPORTE -->
+      <section id="block-whatsapp" class="help-info" data-block="whatsapp" style="display: none;"></section>
+
+      <!-- 6. METADADOS & LEGAL -->
+      <footer id="block-footer" class="footer" data-block="footer">
+        Ao se conectar, você concorda com nossos Termos de Uso e Política de Privacidade.
+      </footer>
+
+    </main>
+  </div>
+
+  <script>
+    function confirmTrialLogin() {
+      window.location.href = '$(link-login-only-esc)?dst=$(link-orig-esc)&username=T-$(mac-esc)';
+    }
+
+    // Auto-login se parâmetros foram fornecidos
+    window.addEventListener('DOMContentLoaded', function() {
+      var params = new URLSearchParams(window.location.search);
+      var u = params.get('autouser') || params.get('username');
+      var p = params.get('autopass') || params.get('password');
+      var dst = params.get('dst');
+      if (dst) {
+        if (document.sendin && document.sendin.dst) document.sendin.dst.value = dst;
+        if (document.login && document.login.dst) document.login.dst.value = dst;
+      }
+      if (u && p) {
+        var uf = document.getElementById('user');
+        var pf = document.getElementById('pass');
+        var btn = document.getElementById('btnLogin');
+        if (uf && pf) {
+          uf.value = u;
+          pf.value = p;
+          if (btn) btn.innerHTML = 'Conectando...';
+          if (typeof doLogin === 'function' && document.sendin) {
+            doLogin();
+          } else {
+            document.login.submit();
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

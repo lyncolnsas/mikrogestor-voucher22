@@ -244,11 +244,39 @@ const COLOR_PRESETS = [
       glassOpacity: 95,
       glassBlur: 12
     }
+  },
+  {
+    id: 'bubblegum-hardcore',
+    name: '🍬 Bubblegum Hardcore',
+    icon: '🍬',
+    desc: 'Neo-Brutalism pop com rosa chiclete, contornos pretos e ciano (Modelo #40)',
+    colors: {
+      brand: '#f472b6',
+      brandDark: '#db2777',
+      bg: '#f472b6',
+      ink: '#000000',
+      muted: '#475569',
+      blue: '#38bdf8',
+      loginButtonText: '#000000',
+      green: '#4ade80',
+      registerButtonText: '#000000',
+      trialButtonBg: '#fef08a',
+      trialButtonText: '#000000',
+      cardBg: '#ffffff',
+      cardBorder: '#000000',
+      inputBg: '#fdf2f8',
+      inputText: '#000000',
+      inputBorder: '#000000',
+      inputPlaceholder: '#94a3b8',
+      glassOpacity: 100,
+      glassBlur: 0
+    }
   }
 ];
 
 const NICHE_EFFECTS = [
   { id: 'none', icon: '🚫', name: 'Nenhum', niche: 'Fundo Padrão' },
+  { id: 'bubblegum-pop', icon: '🍬', name: 'Bubblegum Neo-Pop', niche: 'Pop & Memphis 3D' },
   { id: 'fap-adventista', icon: '🎓', name: 'Faculdade Adventista (Logo A)', niche: 'Educação & Campus' },
   { id: 'aurora', icon: '🌌', name: 'Aurora Borealis', niche: 'Geral Fluido' },
   { id: 'particles', icon: '⚡', name: 'Constelação Cyber', niche: 'Tech Geral' },

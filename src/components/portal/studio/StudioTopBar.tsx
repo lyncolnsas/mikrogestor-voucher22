@@ -154,7 +154,7 @@ export default function StudioTopBar({
             >
               {availableTemplates.map(t => (
                 <option key={t} value={t} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold">
-                  {t === 'default' ? '⚡ Padrão' : t === 'FAP' ? '🎓 FAP' : t}
+                  {t === 'default' ? '⚡ Padrão Cyber' : t === 'FAP' ? '🎓 FAP Campus' : t.toLowerCase().includes('bubblegum') ? '🍬 Bubblegum Hardcore' : t.toLowerCase().includes('olimpori') ? '🏕️ OLIMPORI' : t}
                 </option>
               ))}
             </select>

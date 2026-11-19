@@ -1235,6 +1235,102 @@ export function getNicheEffectMarkup(
 `;
       break;
 
+    case 'bubblegum-pop':
+    case 'bubblegum':
+    case 'bubblegum-hardcore':
+      bgHtml = `<canvas id="mg-fx-bubblegum" class="mg-fx-canvas" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:1; pointer-events:none; background:#f472b6;"></canvas>`;
+      jsEffects = canvasBootstrap('mg-fx-bubblegum', `
+  var spdM = ${spdMult};
+  var items = [];
+  var colors = ['#ffffff', '#38bdf8', '#4ade80', '#fef08a', '#c084fc', '#fb7185'];
+  var shapes = ['circle', 'bubble', 'cross', 'donut', 'square'];
+  var count = Math.min(32, Math.max(16, Math.floor((c.width || 360) / 18)));
+  for (var i = 0; i < count; i++) {
+    items.push({
+      x: Math.random() * (c.width || 360),
+      y: Math.random() * (c.height || 640),
+      vx: (Math.random() - 0.5) * 0.9 * spdM,
+      vy: (-Math.random() * 0.8 - 0.3) * spdM,
+      size: Math.random() * 22 + 8,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      shape: shapes[Math.floor(Math.random() * shapes.length)],
+      rot: Math.random() * Math.PI * 2,
+      vrot: (Math.random() - 0.5) * 0.03 * spdM
+    });
+  }
+  function draw() {
+    ctx.fillStyle = '#f472b6';
+    ctx.fillRect(0, 0, c.width, c.height);
+    var dotGap = 36;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
+    for (var px = 18; px < c.width; px += dotGap) {
+      for (var py = 18; py < c.height; py += dotGap) {
+        ctx.beginPath();
+        ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      it.x += it.vx;
+      it.y += it.vy;
+      it.rot += it.vrot;
+      if (it.y < -40) { it.y = c.height + 30; it.x = Math.random() * c.width; }
+      if (it.x < -40) it.x = c.width + 30;
+      if (it.x > c.width + 40) it.x = -30;
+      ctx.save();
+      ctx.translate(it.x, it.y);
+      ctx.rotate(it.rot);
+      ctx.fillStyle = it.color;
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2.5;
+      if (it.shape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(0, 0, it.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-it.size * 0.35, -it.size * 0.35, it.size * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (it.shape === 'bubble') {
+        ctx.beginPath();
+        ctx.arc(0, 0, it.size * 1.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else if (it.shape === 'donut') {
+        ctx.beginPath();
+        ctx.arc(0, 0, it.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#f472b6';
+        ctx.beginPath();
+        ctx.arc(0, 0, it.size * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else if (it.shape === 'cross') {
+        var s = it.size * 0.8;
+        var t = s * 0.35;
+        ctx.beginPath();
+        ctx.rect(-t, -s, t * 2, s * 2);
+        ctx.rect(-s, -t, s * 2, t * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else if (it.shape === 'square') {
+        var half = it.size * 0.7;
+        ctx.beginPath();
+        ctx.rect(-half, -half, half * 2, half * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+      `);
+      break;
+
     case 'particles':
     default:
       if (bgEffect === 'none') {

@@ -363,6 +363,13 @@ export default function BlocksStudioPanel({
           {availableTemplates.map(t => {
             const isCur = (template || 'default').toLowerCase() === t.toLowerCase();
             const isFap = t.toLowerCase() === 'fap';
+            const isBubblegum = t.toLowerCase().includes('bubblegum');
+            const isOlimpori = t.toLowerCase().includes('olimpori');
+            
+            const icon = isBubblegum ? '🍬' : isOlimpori ? '🏕️' : isFap ? '🎓' : '⚡';
+            const title = isBubblegum ? 'Bubblegum' : isOlimpori ? 'OLIMPORI' : isFap ? 'FAP Campus' : 'Padrão Cyber';
+            const subtitle = isBubblegum ? 'Neo-Brutalism Pop' : isOlimpori ? 'Exploradores ANP' : isFap ? 'Faculdade Adventista' : 'Tema Dark Voucher';
+
             return (
               <button
                 key={t}
@@ -375,7 +382,7 @@ export default function BlocksStudioPanel({
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-base">{isFap ? '🎓' : '⚡'}</span>
+                  <span className="text-base">{icon}</span>
                   {isCur && (
                     <span className="text-[8.5px] font-black uppercase tracking-wider bg-blue-600 text-white px-1.5 py-0.5 rounded">
                       Ativo
@@ -383,10 +390,10 @@ export default function BlocksStudioPanel({
                   )}
                 </div>
                 <div className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
-                  {isFap ? 'FAP Campus' : 'Padrão Cyber'}
+                  {title}
                 </div>
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
-                  {isFap ? 'Faculdade Adventista' : 'Tema Dark Voucher'}
+                  {subtitle}
                 </div>
               </button>
             );
