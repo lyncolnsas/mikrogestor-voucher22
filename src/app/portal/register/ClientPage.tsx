@@ -43,7 +43,63 @@ interface FieldsConfig {
   optInCoursesLabel: string;
 }
 
-const performAutoLogin = (username: string, passwordStr: string, loginUrl: string, dstUrl: string) => {
+const performAutoLogin = (username: string, passwordStr: string, loginUrl: string, dstUrl: string, background: boolean = false) => {
+  if (background) {
+    try {
+      let iframe = document.getElementById('mg_hidden_login_frame') as HTMLIFrameElement;
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'mg_hidden_login_frame';
+        iframe.name = 'mg_hidden_login_frame';
+        iframe.style.position = 'fixed';
+        iframe.style.top = '-9999px';
+        iframe.style.left = '-9999px';
+        iframe.style.width = '1px';
+        iframe.style.height = '1px';
+        iframe.style.opacity = '0';
+        iframe.style.pointerEvents = 'none';
+        iframe.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(iframe);
+      }
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = loginUrl;
+      form.target = 'mg_hidden_login_frame';
+      
+      const userInput = document.createElement('input');
+      userInput.type = 'hidden';
+      userInput.name = 'username';
+      userInput.value = username;
+      
+      const passInput = document.createElement('input');
+      passInput.type = 'hidden';
+      passInput.name = 'password';
+      passInput.value = passwordStr;
+      
+      form.appendChild(userInput);
+      form.appendChild(passInput);
+      
+      if (dstUrl) {
+        const dstInput = document.createElement('input');
+        dstInput.type = 'hidden';
+        dstInput.name = 'dst';
+        dstInput.value = dstUrl;
+        form.appendChild(dstInput);
+      }
+      
+      document.body.appendChild(form);
+      form.submit();
+      setTimeout(() => {
+        try { form.remove(); } catch {}
+      }, 3000);
+      return;
+    } catch (err) {
+      console.warn('[AutoLogin] Falha ao enviar login em background:', err);
+      return;
+    }
+  }
+
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = loginUrl;
@@ -2107,13 +2163,22 @@ export default function AutoCadastro({ initialConfig }: { initialConfig: any }) 
         .then(res => res.json())
         .then(data => {
           if (data.success) {
-            setSuccess('Cadastro concluído! Redirecionando...');
-            const { username, password: createdPassword } = data.data;
+            const { username, password: createdPassword, pix } = data.data;
             const finalDst = data.data?.redirectUrl || data.config?.redirectUrl || redirectUrl || orig;
             const targetLoginUrl = gateway || 'http://192.168.88.1/login';
-            setTimeout(() => {
-              performAutoLogin(username, createdPassword, targetLoginUrl, finalDst);
-            }, 500);
+            if (pix) {
+              setActivePix(pix);
+              setPixTimeRemaining(15 * 60);
+              setSuccess('Conectado com 15 minutos de cortesia! Efetue o pagamento do seu Pix.');
+              setTimeout(() => {
+                performAutoLogin(username, createdPassword, targetLoginUrl, finalDst, true);
+              }, 500);
+            } else {
+              setSuccess('Cadastro concluído! Redirecionando...');
+              setTimeout(() => {
+                performAutoLogin(username, createdPassword, targetLoginUrl, finalDst, false);
+              }, 500);
+            }
           } else {
             setError(data.message || 'Erro ao cadastrar.');
           }
@@ -2477,19 +2542,28 @@ export default function AutoCadastro({ initialConfig }: { initialConfig: any }) 
           setActivePix(pix);
           setPixTimeRemaining(15 * 60);
           setSuccess('Conectado com 15 minutos de cortesia! Efetue o pagamento do seu Pix.');
+
+          // Autenticação em BACKGROUND via iframe oculto:
+          // Conecta o usuário no MikroTik liberando os 15 min de cortesia,
+          // mas NUNCA faz redirect da página, mantendo o QR Code e o botão de copiar na tela!
+          if (!isSimulator) {
+            setTimeout(() => {
+              performAutoLogin(username, createdPassword, targetLoginUrl, finalDst, true);
+            }, 600);
+          }
         } else {
           setSuccess(isSimulator ? `🎉 [Modo Preview] Cadastro simulado com sucesso! Usuário: ${username}` : 'Cadastro concluído! Conectando ao Wi-Fi...');
-        }
-        
-        if (!isSimulator) {
-          setTimeout(() => {
-            performAutoLogin(username, createdPassword, targetLoginUrl, finalDst);
-          }, 600);
-        } else {
-          // No preview, mantém a mensagem visível por alguns segundos para validação do usuário
-          setTimeout(() => {
-            setSuccess('');
-          }, 5000);
+          
+          if (!isSimulator) {
+            setTimeout(() => {
+              performAutoLogin(username, createdPassword, targetLoginUrl, finalDst, false);
+            }, 600);
+          } else {
+            // No preview, mantém a mensagem visível por alguns segundos para validação do usuário
+            setTimeout(() => {
+              setSuccess('');
+            }, 5000);
+          }
         }
 
       } else {
@@ -3750,6 +3824,8 @@ export default function AutoCadastro({ initialConfig }: { initialConfig: any }) 
                     <input 
                       readOnly 
                       value={activePix.pixPayload} 
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                      title="Clique para selecionar o código PIX" 
                       style={{
                         width: '100%',
                         background: '#1e293b',
@@ -3765,10 +3841,50 @@ export default function AutoCadastro({ initialConfig }: { initialConfig: any }) 
                     <button
                       type="button"
                       onClick={() => {
-                        if (navigator.clipboard) {
-                          navigator.clipboard.writeText(activePix.pixPayload);
+                        const payload = activePix.pixPayload || '';
+                        if (!payload) return;
+                        
+                        const handleSuccess = () => {
                           setPixCopied(true);
                           setTimeout(() => setPixCopied(false), 2500);
+                        };
+
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                          navigator.clipboard.writeText(payload)
+                            .then(handleSuccess)
+                            .catch(() => {
+                              try {
+                                const ta = document.createElement('textarea');
+                                ta.value = payload;
+                                ta.style.position = 'fixed';
+                                ta.style.left = '-9999px';
+                                ta.style.top = '-9999px';
+                                document.body.appendChild(ta);
+                                ta.focus();
+                                ta.select();
+                                document.execCommand('copy');
+                                document.body.removeChild(ta);
+                                handleSuccess();
+                              } catch (e) {
+                                console.warn('Clipboard fallback failed:', e);
+                              }
+                            });
+                        } else {
+                          try {
+                            const ta = document.createElement('textarea');
+                            ta.value = payload;
+                            ta.style.position = 'fixed';
+                            ta.style.left = '-9999px';
+                            ta.style.top = '-9999px';
+                            document.body.appendChild(ta);
+                            ta.focus();
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+                            handleSuccess();
+                          } catch (e) {
+                            console.warn('Clipboard fallback failed:', e);
+                          }
                         }
                       }}
                       style={{
