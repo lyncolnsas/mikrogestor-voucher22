@@ -180,7 +180,7 @@ export default function LeadsFieldsStudioPanel({
             type="text"
             value={registerTitle}
             onChange={(e) => setRegisterTitle(e.target.value)}
-            placeholder="Wi-Fi Grátis"
+            placeholder="Planos de Acesso Wi-Fi"
             className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
           />
         </div>

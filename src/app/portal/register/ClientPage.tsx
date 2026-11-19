@@ -3038,8 +3038,12 @@ export default function AutoCadastro({ initialConfig }: { initialConfig: any }) 
           
           {/* Header */}
           <div className="mg-reg-header">
-            <h1 className="mg-reg-title">{registerTitle}</h1>
-            <p className="mg-reg-subtitle">{registerSubtitle}</p>
+            <h1 className="mg-reg-title">
+              {saleMode && (registerTitle === 'Wi-Fi Grátis' || !registerTitle) ? 'Planos de Acesso Wi-Fi' : registerTitle}
+            </h1>
+            <p className="mg-reg-subtitle">
+              {saleMode && (registerSubtitle.includes('liberar o acesso à internet') || registerSubtitle.includes('liberar seu acesso') || !registerSubtitle) ? 'Escolha seu plano abaixo para liberar o acesso' : registerSubtitle}
+            </p>
           </div>
 
           {/* Feedback Alerts */}
