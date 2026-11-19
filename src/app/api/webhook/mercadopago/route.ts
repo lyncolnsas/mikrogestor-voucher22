@@ -151,6 +151,7 @@ export async function POST(request: Request) {
                                comment: `PIX Aprovado: ${payment.pixId} | ${planTitle}`
                              });
                              console.log(`[Hot-Upgrade] Usuário ${finalUsername} atualizado para profile ${profileName} e uptime ${targetUptime} sem interrupções.`);
+                              try { await mk.removeHotspotActiveByUser(finalUsername); } catch {}
                            } else {
                              await mk.addHotspotUser({
                                name: finalUsername,

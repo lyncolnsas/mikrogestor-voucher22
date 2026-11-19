@@ -45,10 +45,16 @@ export class MercadoPagoService {
       first_name?: string;
       identification?: { type: string; number: string };
     };
+    notification_url?: string;
   }) {
     const payment = new Payment(this.client);
     const safeEmail = formatValidPayerEmail(data.payer.email, data.payer.first_name);
     
+    // Determina a URL de notificação webhook (Mercado Pago envia POST automático ao aprovar)
+    const { getPublicDomain } = await import('@/lib/domain');
+    const defaultDomain = getPublicDomain() || 'mikrogestor.com';
+    const notificationUrl = data.notification_url || `https://${defaultDomain}/api/webhook/mercadopago`;
+
     try {
       const result = await payment.create({
         body: {
@@ -60,6 +66,7 @@ export class MercadoPagoService {
             first_name: data.payer.first_name || 'Cliente',
             identification: data.payer.identification,
           },
+          notification_url: notificationUrl,
         }
       });
       return result;
