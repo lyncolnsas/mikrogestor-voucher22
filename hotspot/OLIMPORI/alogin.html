@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conectado!</title>
+  <meta http-equiv="refresh" content="0; url=$(link-redirect)">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-left-color: #25D366;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    .btn {
+      margin-top: 20px;
+      background: #25D366;
+      color: white;
+      padding: 15px 30px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      display: none;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="spinner"></div>
+  <h2>Acesso Liberado!</h2>
+  <p>Abrindo o WhatsApp...</p>
+  <a id="btn-fallback" class="btn" href="$(link-redirect)">ABRIR WHATSAPP</a>
+  
+  <script>
+    var redirectUrl = '$(link-redirect)';
+    
+    // Tenta redirecionar imediatamente para ser mais rápido que o CNA (Captive Portal)
+    setTimeout(function() {
+      if (redirectUrl && redirectUrl !== '') {
+         window.location.replace(redirectUrl);
+      }
+    }, 100);
+    
+    // Se falhar e a tela continuar aberta, mostra o botão após 2 segundos
+    setTimeout(function() {
+      document.getElementById('btn-fallback').style.display = 'inline-block';
+    }, 2000);
+  </script>
+</body>
+</html>

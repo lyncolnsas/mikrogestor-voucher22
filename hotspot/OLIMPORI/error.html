@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Erro de autenticação</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <style>
+    :root{
+      --bg:#37474F;
+      --card:#2B3840;
+      --text:#ffffff;
+      --muted:#cfd8dc;
+      --accent:#00E5FF;
+      --danger:#ff5252;
+      --success:#69f0ae;
+      --border: #455A64;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family: Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin:0; padding:0;
+      min-height:100vh;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .wrap{width:100%; max-width:720px; padding:24px}
+    .card{
+      background: var(--card);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    h1,h2{margin:0 0 8px}
+    p{margin:8px 0; color: var(--muted)}
+    .grid{display:grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap:10px}
+    .row{display:flex; gap:12px; flex-wrap:wrap}
+    .k{
+      padding:8px 10px; border-radius:10px; border:1px dashed var(--border);
+      color:#eceff1; background:rgba(255,255,255,.03);
+    }
+    a.btn, button.btn{
+      display:inline-block; appearance:none; border:none; cursor:pointer;
+      background: var(--accent); color:#00313A; font-weight:700;
+      padding:12px 16px; border-radius:10px; text-decoration:none;
+      transition: transform .1s ease;
+    }
+    button.btn:active, a.btn:active{ transform: scale(.98) }
+    .btn.secondary{ background:#90caf9; color:#0b1114 }
+    .btn.danger{ background: var(--danger); color:#fff }
+    .muted{color:var(--muted)}
+    .center{text-align:center}
+    .small{font-size:12px; opacity:.9}
+  </style>
+
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Não foi possível autenticar</h1>
+      <p class="k" style="border-color:#b71c1c;background:rgba(183,28,28,.15); color:#ffcdd2">$(error)</p>
+      <p class="muted">Verifique usuário e senha e tente novamente.</p>
+      <div class="row" style="margin-top:8px">
+        <a class="btn" href="$(link-login)">Voltar ao login</a>
+        <a class="btn secondary" href="$(link-redirect)">Ir ao site</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
