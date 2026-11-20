@@ -1331,6 +1331,12 @@ export function getNicheEffectMarkup(
       `);
       break;
 
+    case 'custom-olimpori-3d':
+    case 'olimpori':
+    case 'olimpori-nature':
+      // Template OLIMPORI possui motor nativo 3D com animais articulados e paisagem animada
+      return { html: '', css: '', js: '' };
+
     case 'particles':
     default:
       if (bgEffect === 'none') {

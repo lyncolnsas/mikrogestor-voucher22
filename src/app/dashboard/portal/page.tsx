@@ -276,6 +276,7 @@ const COLOR_PRESETS = [
 
 const NICHE_EFFECTS = [
   { id: 'none', icon: '🚫', name: 'Nenhum', niche: 'Fundo Padrão' },
+  { id: 'custom-olimpori-3d', icon: '🏕️', name: 'OLIMPORI 3D Natureza & Animais', niche: 'Exploradores & Aventura' },
   { id: 'bubblegum-pop', icon: '🍬', name: 'Bubblegum Neo-Pop', niche: 'Pop & Memphis 3D' },
   { id: 'fap-adventista', icon: '🎓', name: 'Faculdade Adventista (Logo A)', niche: 'Educação & Campus' },
   { id: 'aurora', icon: '🌌', name: 'Aurora Borealis', niche: 'Geral Fluido' },

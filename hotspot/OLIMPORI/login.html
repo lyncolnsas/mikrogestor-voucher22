@@ -58,7 +58,7 @@
       width: 100%;
       height: 100%;
       display: block;
-      z-index: 0;
+      z-index: 1;
       cursor: pointer;
       touch-action: manipulation;
     }
@@ -155,19 +155,19 @@
       max-width: 400px;
       background: linear-gradient(
         165deg,
-        rgba(11, 37, 69, 0.84) 0%,
-        rgba(9, 31, 58, 0.88) 65%,
-        rgba(15, 48, 42, 0.86) 100%
+        rgba(11, 37, 69, 0.72) 0%,
+        rgba(9, 31, 58, 0.76) 65%,
+        rgba(15, 48, 42, 0.74) 100%
       );
       border: 1.5px solid rgba(247, 201, 72, 0.78);
       border-radius: var(--card-radius);
-      padding: 20px 20px 18px;
+      padding: 18px 20px 16px;
       box-shadow:
         0 20px 50px rgba(7, 25, 48, 0.48),
         0 0 0 1px rgba(46, 139, 87, 0.35) inset,
         0 1px 0 rgba(255, 245, 200, 0.35) inset;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
@@ -1077,13 +1077,24 @@
        * Projeta uma coordenada 3D do mundo (x, y, z) para 2D na tela (sx, sy, scale)
        * utilizando projeção perspectiva real com profundidade relativa à câmera.
        */
+      /**
+       * Linha de horizonte responsiva para perfeita harmonia entre mobile e desktop.
+       */
+      function getHorizonY() {
+        return H * (W < 600 ? 0.36 : 0.41);
+      }
+
+      /**
+       * Projeta uma coordenada 3D do mundo (x, y, z) para 2D na tela (sx, sy, scale)
+       * utilizando projeção perspectiva real com profundidade relativa à câmera.
+       */
       function project(x, y, z) {
         var relX = x - cam.x;
         var relY = y - cam.y;
         var relZ = z - cam.z;
         if (relZ < 0.8) relZ = 0.8;
         var scale = cam.fov / relZ;
-        var horizonY = H * 0.41;
+        var horizonY = getHorizonY();
         return {
           x: W * 0.5 + relX * scale,
           y: horizonY - relY * scale,
@@ -1133,9 +1144,11 @@
       }
 
       /**
-       * Inicializa todos os objetos 3D do mundo OLIMPORI.
+       * Inicializa todos os objetos 3D do mundo OLIMPORI com posicionamento visível no background.
        */
       function populateWorld() {
+        var isMobile = W < 600;
+
         clouds = [
           { x: -18, y: 12.5, z: 32, size: 3.1, speed: 0.32 },
           { x: -4,  y: 14.2, z: 38, size: 3.8, speed: 0.24 },
@@ -1145,11 +1158,11 @@
 
         staticProps = [
           // Barraca Laranja de Acampamento (esquerda)
-          { type: 'tent', x: -7.6, y: 0, z: 14.5, scale: 1.15 },
+          { type: 'tent', x: isMobile ? -6.5 : -9.5, y: 0, z: 14.5, scale: 1.15 },
           // Casinha na Árvore (direita, estilo poster OLIMPORI)
-          { type: 'treehouse', x: 8.6, y: 0, z: 16.5, scale: 1.15 },
+          { type: 'treehouse', x: isMobile ? 6.8 : 10.5, y: 0, z: 16.5, scale: 1.15 },
           // Palmeira tropical à esquerda
-          { type: 'palm', x: -11.4, y: 0, z: 11.5, scale: 1.18, phase: 0.2 },
+          { type: 'palm', x: isMobile ? -8.5 : -13.5, y: 0, z: 11.5, scale: 1.18, phase: 0.2 },
 
           // Pinheiros e Árvores da Floresta em várias profundidades Z
           { type: 'pine', x: -13.5, y: 0, z: 24, scale: 1.35, phase: 0.4 },
@@ -1173,84 +1186,158 @@
           { type: 'rock', x: 4.5,  y: 0, z: 8.4, scale: 1.05 }
         ];
 
-        // Animais terrestres com movimento articulado em tempo real
+        // Animais terrestres articulados posicionados estrategicamente nos flancos visíveis e primeiro plano
         animals = [
           {
             id: 'fox',
             name: 'Raposinha',
-            x: -5.2, y: 0, z: 1.8,
-            minX: -7.5, maxX: 7.5,
-            dir: 1, speed: 1.55,
-            baseZ: 1.8, zAmp: 1.15, zFreq: 0.32,
-            phase: 0, jumpY: 0, jumpVel: 0, happyTimer: 0,
-            scale: 1.05, screenX: 0, screenY: 0, screenR: 36
-          },
-          {
-            id: 'puppy',
-            name: 'Cachorrinho Explorador',
-            x: 3.4, y: 0, z: -0.6,
-            minX: -6.8, maxX: 6.8,
-            dir: -1, speed: 1.85,
-            baseZ: -0.6, zAmp: 0.85, zFreq: 0.42,
-            phase: 1.4, jumpY: 0, jumpVel: 0, happyTimer: 0,
-            scale: 1.02, screenX: 0, screenY: 0, screenR: 38
-          },
-          {
-            id: 'jaguar',
-            name: 'Onça-Pintada',
-            x: -2.0, y: 0, z: 5.4,
-            minX: -8.2, maxX: 8.2,
-            dir: 1, speed: 1.38,
-            baseZ: 5.4, zAmp: 0.9, zFreq: 0.28,
-            phase: 2.6, jumpY: 0, jumpVel: 0, happyTimer: 0,
-            scale: 1.12, screenX: 0, screenY: 0, screenR: 40
-          },
-          {
-            id: 'capybara',
-            name: 'Capivara',
-            x: 4.6, y: 0, z: 8.3,
-            minX: -7.0, maxX: 7.5,
-            dir: -1, speed: 0.92,
-            baseZ: 8.3, zAmp: 0.55, zFreq: 0.22,
-            phase: 0.8, jumpY: 0, jumpVel: 0, happyTimer: 0,
-            scale: 1.10, screenX: 0, screenY: 0, screenR: 40
+            x: isMobile ? -4.5 : -11.5,
+            y: 0,
+            z: isMobile ? 0.8 : 2.2,
+            minX: isMobile ? -7.5 : -16.5,
+            maxX: isMobile ? -2.0 : -6.5,
+            dir: 1,
+            speed: 1.55,
+            baseZ: isMobile ? 0.8 : 2.2,
+            zAmp: 0.9,
+            zFreq: 0.32,
+            phase: 0,
+            jumpY: 0,
+            jumpVel: 0,
+            happyTimer: 0,
+            scale: 1.25,
+            screenX: 0,
+            screenY: 0,
+            screenR: 44
           },
           {
             id: 'squirrel',
             name: 'Esquilo',
-            x: -3.2, y: 0, z: 3.5,
-            minX: -6.5, maxX: 6.5,
-            dir: 1, speed: 2.25,
-            baseZ: 3.5, zAmp: 1.0, zFreq: 0.55,
-            phase: 3.2, jumpY: 0, jumpVel: 0, happyTimer: 0,
-            scale: 0.88, screenX: 0, screenY: 0, screenR: 30
+            x: isMobile ? -3.8 : -9.2,
+            y: 0,
+            z: isMobile ? -1.2 : 0.5,
+            minX: isMobile ? -6.2 : -13.5,
+            maxX: isMobile ? -1.0 : -5.2,
+            dir: 1,
+            speed: 2.15,
+            baseZ: isMobile ? -1.2 : 0.5,
+            zAmp: 0.8,
+            zFreq: 0.45,
+            phase: 3.2,
+            jumpY: 0,
+            jumpVel: 0,
+            happyTimer: 0,
+            scale: 1.18,
+            screenX: 0,
+            screenY: 0,
+            screenR: 38
+          },
+          {
+            id: 'puppy',
+            name: 'Cachorrinho Explorador',
+            x: 0,
+            y: 0,
+            z: isMobile ? -6.6 : -6.0,
+            minX: isMobile ? -5.2 : -15.5,
+            maxX: isMobile ? 5.2 : 15.5,
+            dir: 1,
+            speed: 1.65,
+            baseZ: isMobile ? -6.6 : -6.0,
+            zAmp: 0.4,
+            zFreq: 0.35,
+            phase: 1.4,
+            jumpY: 0,
+            jumpVel: 0,
+            happyTimer: 0,
+            scale: 1.35,
+            screenX: 0,
+            screenY: 0,
+            screenR: 54
+          },
+          {
+            id: 'jaguar',
+            name: 'Onça-Pintada',
+            x: isMobile ? 4.5 : 11.5,
+            y: 0,
+            z: isMobile ? 1.0 : 2.8,
+            minX: isMobile ? 2.0 : 6.8,
+            maxX: isMobile ? 7.6 : 16.8,
+            dir: 1,
+            speed: 1.40,
+            baseZ: isMobile ? 1.0 : 2.8,
+            zAmp: 0.8,
+            zFreq: 0.28,
+            phase: 2.6,
+            jumpY: 0,
+            jumpVel: 0,
+            happyTimer: 0,
+            scale: 1.28,
+            screenX: 0,
+            screenY: 0,
+            screenR: 46
+          },
+          {
+            id: 'capybara',
+            name: 'Capivara',
+            x: isMobile ? 3.8 : 10.8,
+            y: 0,
+            z: isMobile ? 3.8 : 6.5,
+            minX: isMobile ? 1.6 : 7.2,
+            maxX: isMobile ? 6.8 : 16.0,
+            dir: -1,
+            speed: 0.95,
+            baseZ: isMobile ? 3.8 : 6.5,
+            zAmp: 0.5,
+            zFreq: 0.22,
+            phase: 0.8,
+            jumpY: 0,
+            jumpVel: 0,
+            happyTimer: 0,
+            scale: 1.24,
+            screenX: 0,
+            screenY: 0,
+            screenR: 46
           }
         ];
 
-        // Aves voando no céu (Tucano e Coruja)
+        // Aves voando alto no céu aberto acima do card (Tucano e Coruja)
         flyers = [
           {
             id: 'toucan',
-            x: -10, y: 8.8, z: 16,
-            dir: 1, speed: 2.15, baseY: 8.8,
-            wingPhase: 0, happyTimer: 0,
-            screenX: 0, screenY: 0, screenR: 34
+            x: isMobile ? -2.5 : -9,
+            y: isMobile ? 16.5 : 14.5,
+            z: 14,
+            dir: 1,
+            speed: 2.2,
+            baseY: isMobile ? 16.5 : 14.5,
+            wingPhase: 0,
+            happyTimer: 0,
+            screenX: 0,
+            screenY: 0,
+            screenR: 44
           },
           {
             id: 'owl',
-            x: 11, y: 7.4, z: 19,
-            dir: -1, speed: 1.65, baseY: 7.4,
-            wingPhase: 2.1, happyTimer: 0,
-            screenX: 0, screenY: 0, screenR: 34
+            x: isMobile ? 2.5 : 9,
+            y: isMobile ? 15.2 : 13.5,
+            z: 16,
+            dir: -1,
+            speed: 1.7,
+            baseY: isMobile ? 15.2 : 13.5,
+            wingPhase: 2.1,
+            happyTimer: 0,
+            screenX: 0,
+            screenY: 0,
+            screenR: 42
           }
         ];
 
-        // Borboletas coloridas flutuando
+        // Borboletas coloridas flutuando nos campos e flores
         butterflies = [
-          { x: -3.5, y: 3.2, z: 4.0, color: '#F472B6', accent: '#FFF2A6', phase: 0.0, speed: 1.1 },
-          { x: 3.8,  y: 2.6, z: 2.4, color: '#C084FC', accent: '#F7C948', phase: 2.1, speed: 1.3 },
-          { x: 0.4,  y: 4.2, z: 7.0, color: '#FACC15', accent: '#FFFFFF', phase: 4.0, speed: 0.95 },
-          { x: -5.4, y: 2.2, z: 1.2, color: '#38BDF8', accent: '#FFF2A6', phase: 1.2, speed: 1.2 }
+          { x: isMobile ? -2.5 : -9.5, y: 1.8, z: 2.0, color: '#F472B6', accent: '#FFF2A6', phase: 0.0, speed: 1.1 },
+          { x: isMobile ? 2.8 : 10.5, y: 2.2, z: 3.5, color: '#C084FC', accent: '#F7C948', phase: 2.1, speed: 1.3 },
+          { x: -1.5, y: 0.9, z: -5.0, color: '#FACC15', accent: '#FFFFFF', phase: 4.0, speed: 0.95 },
+          { x: 2.2,  y: 1.1, z: -5.2, color: '#38BDF8', accent: '#FFF2A6', phase: 1.2, speed: 1.2 }
         ];
       }
 
@@ -1258,7 +1345,7 @@
          DESENHO DO CÉU, SOL, NUVENS, MONTANHAS, RIO E TRILHA
          ------------------------------------------------------------------------ */
       function drawSkyAndSun() {
-        var horizonY = H * 0.43;
+        var horizonY = getHorizonY();
         var skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY + 40);
         skyGrad.addColorStop(0, '#3C9CE3');
         skyGrad.addColorStop(0.45, '#7DD3FC');
@@ -1328,7 +1415,7 @@
       }
 
       function drawMountainsAndCross() {
-        var horizonY = H * 0.42;
+        var horizonY = getHorizonY();
         var px = -cam.x * 16;
 
         // Camada 1: Montanhas distantes azul-esverdeadas
@@ -1564,9 +1651,10 @@
          DESENHO DOS ELEMENTOS 3D ESTÁTICOS (ÁRVORES, BARRACA, CASINHA NA ÁRVORE)
          ------------------------------------------------------------------------ */
       function drawShadow(x, y, rx, ry) {
+        if (rx <= 0 || ry <= 0) return;
         ctx.fillStyle = 'rgba(12, 42, 22, 0.26)';
         ctx.beginPath();
-        ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+        ctx.ellipse(x, y, Math.max(1, rx), Math.max(0.5, ry), 0, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -2097,7 +2185,21 @@
           ctx.rotate(headNod * 0.7);
           ctx.fillStyle = '#9A6542';
           ctx.beginPath();
-          ctx.roundRect(-u * 0.24, -u * 0.24, u * 0.56, u * 0.40, u * 0.16);
+          if (typeof ctx.roundRect === 'function') {
+            ctx.roundRect(-u * 0.24, -u * 0.24, u * 0.56, u * 0.40, u * 0.16);
+          } else {
+            var rx = -u * 0.24, ry = -u * 0.24, rw = u * 0.56, rh = u * 0.40, rr = u * 0.16;
+            ctx.moveTo(rx + rr, ry);
+            ctx.lineTo(rx + rw - rr, ry);
+            ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rr);
+            ctx.lineTo(rx + rw, ry + rh - rr);
+            ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - rr, ry + rh);
+            ctx.lineTo(rx + rr, ry + rh);
+            ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - rr);
+            ctx.lineTo(rx, ry + rr);
+            ctx.quadraticCurveTo(rx, ry, rx + rr, ry);
+            ctx.closePath();
+          }
           ctx.fill();
           // Orelhinha pequena
           ctx.fillStyle = '#6E452B';
@@ -2454,6 +2556,49 @@
         requestAnimationFrame(loop);
       }
 
+      function updateResponsiveBounds() {
+        var isMobile = W < 600;
+        cam.fov = isMobile ? Math.max(290, W * 0.82) : Math.min(540, W * 0.44);
+        cam.y = isMobile ? 3.4 : 3.1;
+        cam.targetY = cam.y;
+
+        for (var i = 0; i < animals.length; i++) {
+          var an = animals[i];
+          if (an.id === 'fox') {
+            an.minX = isMobile ? -7.5 : -16.5;
+            an.maxX = isMobile ? -2.0 : -6.5;
+            an.baseZ = isMobile ? 0.8 : 2.2;
+          } else if (an.id === 'squirrel') {
+            an.minX = isMobile ? -6.2 : -13.5;
+            an.maxX = isMobile ? -1.0 : -5.2;
+            an.baseZ = isMobile ? -1.2 : 0.5;
+          } else if (an.id === 'puppy') {
+            an.minX = isMobile ? -5.2 : -15.5;
+            an.maxX = isMobile ? 5.2 : 15.5;
+            an.baseZ = isMobile ? -6.6 : -6.0;
+          } else if (an.id === 'jaguar') {
+            an.minX = isMobile ? 2.0 : 6.8;
+            an.maxX = isMobile ? 7.6 : 16.8;
+            an.baseZ = isMobile ? 1.0 : 2.8;
+          } else if (an.id === 'capybara') {
+            an.minX = isMobile ? 1.6 : 7.2;
+            an.maxX = isMobile ? 6.8 : 16.0;
+            an.baseZ = isMobile ? 3.8 : 6.5;
+          }
+          if (an.x < an.minX) an.x = an.minX;
+          if (an.x > an.maxX) an.x = an.maxX;
+        }
+
+        for (var f = 0; f < flyers.length; f++) {
+          var fl = flyers[f];
+          if (fl.id === 'toucan') {
+            fl.baseY = isMobile ? 16.5 : 14.5;
+          } else if (fl.id === 'owl') {
+            fl.baseY = isMobile ? 15.2 : 13.5;
+          }
+        }
+      }
+
       function resize() {
         if (!canvas) return;
         W = window.innerWidth || document.documentElement.clientWidth || 360;
@@ -2462,15 +2607,14 @@
         canvas.width = Math.floor(W * dpr);
         canvas.height = Math.floor(H * dpr);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        // Ajusta campo de visão dinamicamente entre retrato mobile e desktop
-        cam.fov = W < 520 ? Math.max(270, W * 0.78) : Math.min(540, W * 0.44);
+        updateResponsiveBounds();
       }
 
       function handlePointerMove(clientX, clientY) {
         var nx = (clientX / Math.max(1, W) - 0.5) * 2;
         var ny = (clientY / Math.max(1, H) - 0.5) * 2;
         cam.targetX = nx * 1.45;
-        cam.targetY = 3.1 - ny * 0.42;
+        cam.targetY = (W < 600 ? 3.4 : 3.1) - ny * 0.42;
       }
 
       function handleTap(clientX, clientY) {
@@ -2512,11 +2656,14 @@
         }
       }
 
+      var initialized = false;
       function init() {
+        if (initialized) return;
         canvas = document.getElementById('olimpori-canvas');
         if (!canvas) return;
         ctx = canvas.getContext('2d');
         if (!ctx) return;
+        initialized = true;
 
         populateWorld();
         resize();
@@ -2782,11 +2929,21 @@
         }
       }
 
-      // Inicia o motor 3D e checagem de parâmetros após o carregamento da página
-      window.addEventListener('load', function () {
+      // Inicia o motor 3D e checagem de parâmetros de forma resiliente
+      var appStarted = false;
+      function startOlimporiApp() {
+        if (appStarted) return;
+        appStarted = true;
         OlimporiScene.init();
         checkAutoLoginParams();
-      });
+      }
+
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(startOlimporiApp, 10);
+      } else {
+        document.addEventListener('DOMContentLoaded', startOlimporiApp);
+        window.addEventListener('load', startOlimporiApp);
+      }
     })();
   </script>
 </body>
