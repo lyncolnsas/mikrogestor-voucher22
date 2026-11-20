@@ -95,6 +95,7 @@ export default function BrandingStudioPanel({
 }: BrandingStudioPanelProps) {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['presets']));
   const [logoImgError, setLogoImgError] = useState(false);
+  const [effectFilter, setEffectFilter] = useState('');
 
   React.useEffect(() => {
     setLogoImgError(false);
@@ -1007,11 +1008,29 @@ export default function BrandingStudioPanel({
           </div>
 
           <div className="space-y-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-              Efeitos de Fundo Dinâmicos (Nicho)
-            </h4>
-            <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
-              {nicheEffects.map(ef => {
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                Efeitos de Fundo Dinâmicos (32 Temas)
+              </h4>
+              <span className="text-[10px] text-slate-400 font-medium">
+                {nicheEffects.length} disponíveis
+              </span>
+            </div>
+            <input
+              type="text"
+              value={effectFilter}
+              onChange={(e) => setEffectFilter(e.target.value)}
+              placeholder="Buscar tema ou nicho (ex: pizza, cyber, hotel)..."
+              className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <div className="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
+              {nicheEffects
+                .filter(ef => {
+                  if (!effectFilter.trim()) return true;
+                  const q = effectFilter.toLowerCase();
+                  return ef.name.toLowerCase().includes(q) || ef.niche.toLowerCase().includes(q) || ef.id.toLowerCase().includes(q);
+                })
+                .map(ef => {
                 const isSelected = effects.bgEffect === ef.id;
                 return (
                   <button

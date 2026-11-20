@@ -78,8 +78,8 @@
     {
       "id": "badges",
       "type": "badges",
-      "label": "Badges de ConexÃ£o Wi-Fi",
-      "description": "Indicador 5G Ultra RÃ¡pido e WPA3",
+      "label": "Badges de Conexão Wi-Fi",
+      "description": "Indicador 5G Ultra Rápido e WPA3",
       "enabled": true,
       "canDelete": true
     },
@@ -95,15 +95,15 @@
       "id": "welcome",
       "type": "welcome",
       "label": "Mensagem de Boas-Vindas",
-      "description": "InstruÃ§Ãµes de login por voucher",
+      "description": "Instruções de login por voucher",
       "enabled": true,
       "canDelete": false
     },
     {
       "id": "auth",
       "type": "auth",
-      "label": "FormulÃ¡rio Voucher",
-      "description": "Campos de acesso e botÃ£o conectar",
+      "label": "Formulário Voucher",
+      "description": "Campos de acesso e botão conectar",
       "enabled": true,
       "canDelete": false
     },
@@ -111,7 +111,7 @@
       "id": "trial",
       "type": "trial",
       "label": "Acesso de Teste (Trial)",
-      "description": "LiberaÃ§Ã£o temporÃ¡ria de 15 minutos",
+      "description": "Liberação temporária de 15 minutos",
       "enabled": true,
       "canDelete": true
     },
@@ -142,8 +142,8 @@
     {
       "id": "footer",
       "type": "footer",
-      "label": "RodapÃ© MikroGestor",
-      "description": "IdentificaÃ§Ã£o oficial da plataforma",
+      "label": "Rodapé MikroGestor",
+      "description": "Identificação oficial da plataforma",
       "enabled": true,
       "canDelete": false
     }
@@ -185,16 +185,16 @@
   "social": {
     "whatsappEnabled": false,
     "whatsappNumber": "",
-    "whatsappMessage": "OlÃ¡! Preciso de ajuda para conectar ao Wi-Fi.",
+    "whatsappMessage": "Olá! Preciso de ajuda para conectar ao Wi-Fi.",
     "instagramUrl": "https://www.instagram.com/expressao.devida/",
     "facebookUrl": "",
     "googleMapsUrl": ""
   },
   "badges": {
     "showWifiSpeed": false,
-    "wifiSpeedText": "âš¡ Wi-Fi 5G Ultra RÃ¡pido",
+    "wifiSpeedText": "⚡ Wi-Fi 5G Ultra Rápido",
     "showSecurityBadge": false,
-    "securityText": "ðŸ”’ ConexÃ£o Criptografada (WPA3)",
+    "securityText": "🔒 Conexão Criptografada (WPA3)",
     "showConnectedCount": false,
     "connectedCountNumber": "42"
   },
@@ -248,7 +248,7 @@
     "customFieldLabel": "Qula curso deseja ?",
     "customFieldRequired": false,
     "optInCoursesEnabled": true,
-    "optInCoursesLabel": "Eu aceito receber informaÃ§Ãµes dos cursos",
+    "optInCoursesLabel": "Eu aceito receber informações dos cursos",
     "usernameEnabled": true,
     "usernameRequired": true
   },
@@ -261,9 +261,9 @@
   "registerTitle": "Planos de Acesso Wi-Fi",
   "registerSubtitle": "Escolha seu plano abaixo para liberar o acesso",
   "registerSubmitText": "Cadastrar e Conectar",
-  "termsText": "Ao se cadastrar, vocÃª concorda com nossos Termos de Uso e PolÃ­tica de Privacidade.",
+  "termsText": "Ao se cadastrar, você concorda com nossos Termos de Uso e Política de Privacidade.",
   "trialEnabled": true,
-  "trialText": "Acesso de teste disponÃ­vel, ",
+  "trialText": "Acesso de teste disponível, ",
   "trialLinkText": "clique aqui",
   "trialModalTitle": "Acesso de Teste Grátis",
   "trialModalMessage": "Tem certeza de que deseja liberar o acesso grátis por 15 minutos para teste?",

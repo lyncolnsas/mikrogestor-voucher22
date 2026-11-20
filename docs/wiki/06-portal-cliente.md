@@ -1,107 +1,98 @@
-# 📱 Portal do Cliente — O que o usuário vê
+# 📱 Portal do Cliente & Portal Studio
 
 > **← [Voltar ao Índice](./README.md)**
 
-O Portal do Cliente é a interface exibida no **navegador do celular do cliente** quando ele se conecta na rede Wi-Fi e tenta acessar um site. O MikroTik intercepta a navegação e redireciona para esta tela.
+O **Portal do Cliente** é a interface de autenticação exibida no navegador do smartphone ou computador do usuário quando ele se conecta à rede Wi-Fi. O MikroTik intercepta a navegação e exibe esta página para login, liberação de teste ou compra de planos.
+
+Toda a personalização visual deste portal é gerenciada no **Portal Studio** (`/dashboard/portal`).
 
 ---
 
-## Fluxo Completo do Cliente
+## 1. Fluxo de Experiência do Cliente
 
 ```
-Cliente liga o Wi-Fi → conecta na rede
+Cliente conecta no Wi-Fi
          │
          ▼
-Abre o Chrome → MikroTik redireciona para o portal
+MikroTik intercepta navegação → Abre o Portal
          │
          ▼
     ┌────────────┐
-    │ Tela de    │
-    │ Login      │ ← cliente já cadastrado? entra direto
-    │            │
+    │  Login /   │ ← Possui voucher? Digita e conecta imediatamente
+    │  Boas-Vinda│ ← Deseja testar? Clica no botão de cortesia (15 min)
     └─────┬──────┘
-          │ Não tem conta
+          │ Não possui voucher
           ▼
     ┌────────────┐
-    │ Tela de    │
-    │ Cadastro   │ ← preenche nome, CPF, telefone
-    │            │
+    │  Cadastro  │ ← Informa Nome e WhatsApp / CPF
+    │  de Leads  │
     └─────┬──────┘
           │
           ▼
     ┌────────────┐
-    │ Aceita os  │
-    │ Termos     │ ← OBRIGATÓRIO (botão travado sem aceitar)
+    │ Aceite dos │ ← OBRIGATÓRIO: Botão bloqueado até marcar o aceite
+    │   Termos   │
     └─────┬──────┘
           │
-          ├─ Gratuito → acesso liberado imediatamente
+          ├─ Modo 100% Gratuito ────► Acesso liberado imediatamente
           │
-          └─ Pago → escolhe plano → gera PIX → paga no banco → acesso liberado
+          └─ Modo Venda via PIX ────► Escolhe plano → Paga via PIX no banco → Desbloqueio automático
 ```
 
 ---
 
-## Configuração Visual do Portal
+## 2. O Editor Visual: Portal Studio (`/dashboard/portal`)
 
-O administrador pode customizar completamente o portal em **Configurações → Portal Visual**:
+O administrador customiza o portal em tempo real acessando **Menu Lateral → Portal Studio**:
 
-![Configurador de Portal](../../docs/wiki/screenshots/06-portal-config.png)
+### Painéis de Configuração Disponíveis:
 
-### Elementos customizáveis:
-
-| Elemento | Descrição |
-|----------|-----------|
-| **Logo** | Imagem do estabelecimento (PNG/SVG) |
-| **Cor principal** | Cor dos botões e destaques |
-| **Background** | Cor de fundo ou imagem |
-| **Texto de boas-vindas** | Mensagem exibida no topo do portal |
-| **Campos do formulário** | Quais dados pedir (nome, CPF, e-mail, etc.) |
-| **Botão de submit** | Texto do botão (ex: "Conectar Grátis", "Pagar e Conectar") |
-| **Termos de uso** | Exibidos no rodapé e como checkbox obrigatório |
-
----
-
-## Termos de Uso — Aceite Obrigatório
-
-A partir da versão 2.0, o cliente **não pode concluir o cadastro** sem marcar o checkbox de aceite dos termos.
-
-**Comportamento do botão:**
-- ☐ Termos não aceitos → botão cinza, texto "🔒 Aceite os Termos para Continuar", desabilitado
-- ☑ Termos aceitos → botão colorido com gradiente, texto normal, habilitado
-
-Os termos abrem em nova aba com a versão adequada:
-- **Acesso Gratuito** → [Termos de Acesso Gratuito](../termos-gratis.md)
-- **Acesso Pago** → [Contrato de Prestação de Serviço](../termos-pagos.md)
+| Aba | Descrição |
+| :--- | :--- |
+| **Blocos** | Reorganiza e ativa/desativa seções (Voucher, Boas-Vindas, Banner, Rodapé, etc.). |
+| **Identidade** | Personalização de logotipo, tipografia, efeitos de fundo (58 temas) e cores. |
+| **Autenticação** | Configuração dos métodos de login, tempo do botão de cortesia (trial) e rótulos. |
+| **Leads** | Escolha dos campos obrigatórios e opcionais no formulário de cadastro. |
+| **Anúncios** | Configuração de vídeos e banners com contagem regressiva obrigatória (skip timer). |
+| **Walled Garden** | Liberações de domínios pré-login e botão flutuante de atendimento WhatsApp. |
+| **CSS Pro** | Injeção de folhas de estilo customizadas para personalização avançada. |
+| **Provisionamento** | Auditoria e configuração automatizada do hotspot diretamente no MikroTik. |
 
 ---
 
-## Segurança do Cadastro — Anti-Fraude
+## 3. Templates Disponíveis no Sistema
 
-O sistema verifica o cliente ao se cadastrar:
+O sistema conta com templates profissionais prontos para uso em `hotspot/`:
+- **Default (Cyber Dark)** — Tema dark premium com cantos pill, fibra óptica e visual de alta tecnologia.
+- **FAP Campus** — Identidade acadêmica formal, contraste em dourado e azul marinho com foco em captação de leads.
+- **OLIMPORI (3D Natureza & Animais)** — Tema imersivo com canvas animado de animais em 3D para eventos campestres.
+- **Bubblegum Hardcore** — Visual neo-brutalist pop vibrante com alto contraste.
 
-1. **CPF/Telefone** já está na blacklist? → Cadastro rejeitado (HTTP 403)
-2. **MAC Address** já foi bloqueado por não pagamento? → Novo MAC adicionado à blacklist no MikroTik
-3. **Carência não paga** (cliente usou 15 min gratuitos sem pagar)? → Cadastro negado até regularização
-
-Isso impede que o cliente esqueça a rede Wi-Fi ou ative MAC aleatório para burlar o sistema.
+> Para detalhes de desenvolvimento ou criação de novos templates, consulte o [Guia de Criação de Templates de Hotspot](../GUIA_CRIACAO_TEMPLATES_HOTSPOT.md) e a [Arquitetura do Hotspot Visual CMS](../ARQUITETURA_HOTSPOT_VISUAL_CMS.md).
 
 ---
 
-## Templates de Portal (Temas Visuais)
+## 4. Termos de Uso e Aceite Obrigatório
 
-O sistema inclui múltiplos templates prontos:
-- **Default** — moderno, gradiente azul
-- **Dark** — tema escuro premium
-- **Neon** — estilo futurista para baladas/eventos
-- **Corporate** — minimalista para escritórios
+O cliente **não pode concluir o acesso** sem aceitar expressamente os termos:
+- ☐ Termos não aceitos → Botão desabilitado com aviso de bloqueio.
+- ☑ Termos aceitos → Botão habilitado com liberação imediata ou geração do PIX.
 
-Cada template pode ser totalmente personalizado com a paleta do estabelecimento.
+---
+
+## 5. Segurança Anti-Fraude e Anti-Burla
+
+O portal integra-se com as regras de firewall do MikroTik:
+1. **Verificação de Blacklist:** CPF ou Telefone com débitos ou bloqueados recebem HTTP 403 e têm o MAC bloqueado no MikroTik (`/ip/hotspot/ip-binding`).
+2. **Anti-Tethering:** Injeção de regra Mangle TTL=1 para impedir revenda e compartilhamento não autorizado de internet via Hotspot móvel.
+3. **Lockdown de 15 Minutos:** Carência temporária para pagamento PIX; se não houver pagamento, a conexão é encerrada categoricamente.
 
 ---
 
 ## Relacionado
 
 - [03 — Hotspot & Planos](./03-hotspot-planos.md)
+- [08 — VPN WireGuard](./08-vpn-wireguard.md)
 - [09 — Segurança & Anti-Burla](./09-seguranca.md)
 
 ---
