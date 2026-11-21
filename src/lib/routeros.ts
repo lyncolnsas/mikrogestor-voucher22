@@ -1834,6 +1834,50 @@ export class MikrotikAPI {
     return await this.client.menu('/ip/hotspot/user/profile').add(params);
   }
 
+  async removeHotspotProfile(nameOrId: string): Promise<boolean> {
+    if (!this.client) throw new Error('Not connected');
+    const menu = this.client.menu('/ip/hotspot/user/profile');
+    try {
+      const list = (await menu.get()) as any[];
+      const found = list.find((p: any) => p.name === nameOrId || p['.id'] === nameOrId || p.id === nameOrId);
+      if (found) {
+        const pid = found['.id'] || found.id;
+        if (pid && found.name !== 'default' && found.name !== 'default-encryption') {
+          await menu.remove(pid);
+          console.log(`[MikrotikAPI] Profile "${found.name}" removido do MikroTik.`);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('[MikrotikAPI] Erro ao remover profile:', err);
+    }
+    return false;
+  }
+
+  async ensureHotspotProfile(name: string, comment?: string): Promise<boolean> {
+    if (!this.client) throw new Error('Not connected');
+    if (!name || name === 'default') return true;
+    const menu = this.client.menu('/ip/hotspot/user/profile');
+    try {
+      const list = (await menu.get()) as any[];
+      const exists = list.some((p: any) => p.name === name);
+      if (!exists) {
+        await menu.add({
+          name,
+          'shared-users': '1',
+          'keepalive-timeout': '00:02:00',
+          'status-autorefresh': '00:01:00',
+          comment: comment || `MikroGestor: Profile ${name}`
+        });
+        console.log(`[MikrotikAPI] Profile "${name}" criado automaticamente no MikroTik.`);
+      }
+      return true;
+    } catch (err) {
+      console.warn(`[MikrotikAPI] Erro ao garantir profile "${name}":`, err);
+      return false;
+    }
+  }
+
   // --- SYSTEM PACKAGES --- //
 
   async getPackages() {

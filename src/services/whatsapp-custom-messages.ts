@@ -256,6 +256,24 @@ _Assim que pagar, sua conexão continuará ativa automaticamente!_`,
       { tag: '{rede_wifi}', label: 'Nome da Rede Wi-Fi', example: 'MikroGestor Wi-Fi' },
     ],
   },
+  {
+    id: 'plan_expiration_10m',
+    key: 'WA_MSG_PLAN_EXPIRATION_10M',
+    mode: 'paid',
+    category: 'hotspot',
+    categoryLabel: 'Portal Hotspot',
+    title: 'Aviso de Renovação (10 Minutos Antes de Expirar)',
+    triggerEvent: 'Disparado automaticamente 10 minutos antes do plano pago do cliente expirar no MikroTik.',
+    description: 'Envia link direto de renovação para que o cliente pague o PIX e continue conectado sem sofrer kick ou interrupção.',
+    defaultTemplate: `⏳ *Seu tempo de internet está acabando!*\n\nOlá, *{cliente}*! Restam aproximadamente *10 minutos* do seu plano (*{plano}*).\n\nPara continuar conectado sem interrupções e sem queda, renove agora mesmo via PIX pelo link abaixo:\n👉 {link_portal}\n\n_Ao confirmar o pagamento, seu tempo é estendido automaticamente sem desconectar!_ 🚀`,
+    availableTags: [
+      { tag: '{cliente}', label: 'Nome do Cliente', example: 'Lyncoln' },
+      { tag: '{plano}', label: 'Nome do Plano Atual', example: '1 Hora' },
+      { tag: '{tempo_restante}', label: 'Tempo Restante', example: '10 minutos' },
+      { tag: '{link_portal}', label: 'Link de Renovação no Portal', example: 'http://fap.mikrogestor.com/portal/planos?renew=lyncoln' },
+      { tag: '{rede_wifi}', label: 'Nome da Rede Wi-Fi', example: 'Wi-Fi Visitantes' },
+    ],
+  },
 ];
 
 export interface FlowStepConfig {
@@ -280,6 +298,7 @@ export interface SystemFlowMap {
   voucher_free: { enabled: boolean; key: string };
   chatbot_paid: { enabled: boolean; key: string };
   chatbot_free: { enabled: boolean; key: string };
+  plan_expiration_10m: { enabled: boolean; key: string };
 }
 
 export const DEFAULT_FLOW_MAP: SystemFlowMap = {
@@ -304,6 +323,7 @@ export const DEFAULT_FLOW_MAP: SystemFlowMap = {
   voucher_free: { enabled: true, key: 'WA_MSG_VOUCHER_DELIVERY_FREE' },
   chatbot_paid: { enabled: true, key: 'WA_MSG_CHATBOT_GREETING_PAID' },
   chatbot_free: { enabled: true, key: 'WA_MSG_CHATBOT_GREETING_FREE' },
+  plan_expiration_10m: { enabled: true, key: 'WA_MSG_PLAN_EXPIRATION_10M' },
 };
 
 /**

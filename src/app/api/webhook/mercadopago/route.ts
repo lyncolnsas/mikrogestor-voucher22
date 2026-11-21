@@ -144,13 +144,42 @@ export async function POST(request: Request) {
                            
                            if (found) {
                              const foundId = found['.id'] || found['id'];
+                             
+                             // Checar se o lead já possuía pagamento aprovado anterior (RENOVAÇÃO)
+                             const previousApproved = await prisma.payment.findFirst({
+                               where: {
+                                 leadId: payment.leadId,
+                                 status: 'approved',
+                                 id: { not: payment.id }
+                               }
+                             });
+
+                             let effectiveLimit = targetUptime;
+                             let isRenewal = false;
+
+                             if (previousApproved) {
+                               isRenewal = true;
+                               const currentLimit = found['limit-uptime'] || found['limitUptime'];
+                               const currentUptime = found['uptime'] || '0s';
+                               
+                               const { addRouterOSTimes, parseRouterOSTime } = await import('@/lib/routeros-time');
+                               const limitSec = parseRouterOSTime(currentLimit);
+                               const uptimeSec = parseRouterOSTime(currentUptime);
+                               const baseTime = limitSec > uptimeSec ? currentLimit : currentUptime;
+                               
+                               effectiveLimit = addRouterOSTimes(baseTime, targetUptime);
+                               console.log(`[Hot-Renewal] Usuário ${finalUsername} RENOVAÇÃO: anterior=${baseTime}, adicionado=+${targetUptime}, limite final=${effectiveLimit}`);
+                             }
+
                              // HOT-UPGRADE SEM QUEDA: Atualiza o usuário sem derrubar a sessão ativa (/ip/hotspot/active)
                              await mk.updateHotspotUser(foundId, { 
                                profile: profileName, 
-                               'limit-uptime': targetUptime,
-                               comment: `PIX Aprovado: ${payment.pixId} | ${planTitle}`
+                               'limit-uptime': effectiveLimit,
+                               comment: isRenewal
+                                 ? `Renovado PIX: ${payment.pixId} | ${planTitle}`
+                                 : `PIX Aprovado: ${payment.pixId} | ${planTitle}`
                              });
-                             console.log(`[Hot-Upgrade] Usuário ${finalUsername} atualizado para profile ${profileName} e uptime ${targetUptime} sem interrupções.`);
+                             console.log(`[Hot-Upgrade] Usuário ${finalUsername} atualizado para profile ${profileName} e uptime ${effectiveLimit} sem interrupções.`);
                            } else {
                              await mk.addHotspotUser({
                                name: finalUsername,

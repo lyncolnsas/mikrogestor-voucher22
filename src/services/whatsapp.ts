@@ -59,6 +59,11 @@ class WhatsappSpecialist {
       setInterval(() => this.cleanupExpiredStates(), 5 * 60 * 1000);
       networkSyncService.startAutoSync();
       waitingListService.startAutoCheck();
+      setTimeout(() => {
+        import('./plan-expiration-service')
+          .then((m) => m.planExpirationService.start())
+          .catch((err) => console.warn('[WhatsappHub] Erro ao carregar planExpirationService:', err));
+      }, 5000);
       this.initActiveMode();
     }
   }

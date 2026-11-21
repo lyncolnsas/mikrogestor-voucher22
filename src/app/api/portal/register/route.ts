@@ -781,7 +781,11 @@ export async function POST(request: Request) {
           server: 'all'
         };
         if (selectedPlan && !isFreeWifi) {
-          userPayload['limit-uptime'] = '00:15:00';
+          // ZERO-KICK: Cria o usuário já com o tempo total do plano contratado (ex: 1h, 2h).
+          // Dessa forma, ao efetuar o pagamento do Pix, a sessão ativa NÃO é interrompida.
+          // A janela de cortesia de 15 minutos é rigorosamente fiscalizada em background por
+          // /api/portal/check-expirations (derruba e bloqueia o MAC caso não pague nos 15m).
+          userPayload['limit-uptime'] = selectedPlan.uptimeLimit || '01:00:00';
         }
 
         const addResult = await mk.addHotspotUser(userPayload);

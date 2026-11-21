@@ -8,6 +8,7 @@ const PUBLIC_PORTAL_API_PREFIXES = [
   '/api/portal/customer/',
   '/api/portal/status',
   '/api/portal/payment-status',
+  '/api/portal/check-expirations',
   '/api/portal/safari-bypass',
   '/api/portal/whatsapp-flow/',
   '/api/portal/whatsapp-redirect',
