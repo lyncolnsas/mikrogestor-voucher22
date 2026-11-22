@@ -5,13 +5,27 @@ import { isVpsMode } from '@/lib/domain';
 
 export const dynamic = 'force-dynamic';
 
+function getPublicRedirectUrl(path: string, request: Request, isHttps: boolean) {
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const reqHost = request.headers.get('host') || '';
+  const host = forwardedHost || (reqHost && !reqHost.startsWith('0.0.0.0') && !reqHost.startsWith('127.0.0.1') ? reqHost : 'mikrogestor.com');
+  const cleanHost = host.replace(/:80$/, '').replace(/:443$/, '');
+  const protocol = isHttps || request.headers.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+  return new URL(path, `${protocol}://${cleanHost}`);
+}
+
 export async function GET(request: Request) {
+  const isHttps =
+    request.url.startsWith('https://') ||
+    request.headers.get('x-forwarded-proto') === 'https' ||
+    isVpsMode();
+
   const url = new URL(request.url);
   const user = url.searchParams.get('user')?.trim();
   const phone = url.searchParams.get('phone')?.trim();
 
   if (!user && !phone) {
-    return NextResponse.redirect(new URL('/portal/planos', request.url));
+    return NextResponse.redirect(getPublicRedirectUrl('/portal/planos', request, isHttps));
   }
 
   const orConditions: any[] = [];
@@ -30,7 +44,7 @@ export async function GET(request: Request) {
   });
 
   if (!lead) {
-    return NextResponse.redirect(new URL('/portal/planos', request.url));
+    return NextResponse.redirect(getPublicRedirectUrl('/portal/planos', request, isHttps));
   }
 
   const customerToken = await signCustomerJwt({
@@ -39,12 +53,7 @@ export async function GET(request: Request) {
     hotspotUser: lead.hotspotUser,
   });
 
-  const isHttps =
-    request.url.startsWith('https://') ||
-    request.headers.get('x-forwarded-proto') === 'https' ||
-    isVpsMode();
-
-  const redirectUrl = new URL('/portal/planos', request.url);
+  const redirectUrl = getPublicRedirectUrl('/portal/planos', request, isHttps);
   const response = NextResponse.redirect(redirectUrl);
 
   response.cookies.set('portal_session', customerToken, {

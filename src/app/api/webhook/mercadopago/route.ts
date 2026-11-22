@@ -245,8 +245,9 @@ export async function POST(request: Request) {
                             const portalDomain = getMaskedPortalDomain();
                             
                             // Monta URL de auto-login do MikroTik (ex: https://fap.mikrogestor.com/login?username=...&password=...)
-                            const routerDomain = activeRouter.subdomain 
-                              ? `${activeRouter.subdomain}.${process.env.ROOT_DOMAIN || 'mikrogestor.com'}`
+                            const rawSub = activeRouter.subdomain?.trim() || '';
+                            const routerDomain = rawSub
+                              ? (rawSub.includes('.') ? rawSub : `${rawSub}.${process.env.ROOT_DOMAIN || 'mikrogestor.com'}`)
                               : (process.env.DEPLOYMENT_MODE === 'vps' ? 'fap.mikrogestor.com' : '192.168.88.1');
                             const autoLoginProtocol = process.env.DEPLOYMENT_MODE === 'vps' ? 'https' : 'http';
                             const autoLoginLink = `${autoLoginProtocol}://${routerDomain}/login?username=${encodeURIComponent(finalUsername)}&password=${encodeURIComponent(finalPassword)}`;

@@ -179,7 +179,8 @@ export class PlanExpirationService {
               if (targetPhone) {
                 const lastApproved = lead?.payments?.[0];
                 const planTitle = lastApproved?.profile || 'Plano Hotspot';
-                const renewLink = `http://${portalDomain}/portal/renovar?user=${encodeURIComponent(username)}`;
+                const renewProto = isVpsMode() ? 'https' : 'http';
+                const renewLink = `${renewProto}://${portalDomain}/portal/renovar?user=${encodeURIComponent(username)}`;
                 const minutesLeftStr = `${Math.ceil(secondsLeft / 60)} minutos`;
 
                 const msgBody = applyTemplateTags(rawTemplate, {
