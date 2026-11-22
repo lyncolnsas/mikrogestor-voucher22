@@ -123,6 +123,8 @@ export async function POST(request: Request) {
         const response = NextResponse.json({
           success: true,
           name: user.name || user.username,
+          token,
+          role: user.role || 'ADMIN',
         });
 
         response.cookies.set('system_auth', token, {
