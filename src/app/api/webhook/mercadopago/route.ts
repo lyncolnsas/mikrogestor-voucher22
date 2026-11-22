@@ -83,9 +83,26 @@ export async function POST(request: Request) {
                          const finalUsername = payment.lead.hotspotUser;
                          const finalPassword = payment.lead.password || payment.lead.hotspotUser;
                          
-                         const clientMac = payment.macAddress ? payment.macAddress.trim().toUpperCase() : null;
+                         let clientMac = payment.macAddress ? payment.macAddress.trim().toUpperCase() : null;
 
-                         // 1. Desbloquear MAC no MikroTik e no banco caso estivesse bloqueado por expiração
+                         // 1. Se clientMac estiver nulo, busca na tabela BlockedClient pelo telefone ou CPF do lead
+                         if (!clientMac) {
+                           const contactPhone = payment.lead.phone || payment.lead.whatsappNumber;
+                           const blocked = await prisma.blockedClient.findFirst({
+                             where: {
+                               OR: [
+                                 ...(contactPhone ? [{ phone: contactPhone }] : []),
+                                 ...(payment.lead.cpf ? [{ cpf: payment.lead.cpf }] : [])
+                               ],
+                               active: true
+                             }
+                           });
+                           if (blocked?.mac) {
+                             clientMac = blocked.mac.trim().toUpperCase();
+                           }
+                         }
+
+                         // 1.1 Desbloquear MAC no MikroTik e no banco caso estivesse bloqueado por expiração
                          if (clientMac) {
                            try {
                              await mk.unblockHotspotMac(clientMac);
@@ -227,6 +244,13 @@ export async function POST(request: Request) {
                             const wifiName = await getEffectiveWifiName();
                             const portalDomain = getMaskedPortalDomain();
                             
+                            // Monta URL de auto-login do MikroTik (ex: https://fap.mikrogestor.com/login?username=...&password=...)
+                            const routerDomain = activeRouter.subdomain 
+                              ? `${activeRouter.subdomain}.${process.env.ROOT_DOMAIN || 'mikrogestor.com'}`
+                              : (process.env.DEPLOYMENT_MODE === 'vps' ? 'fap.mikrogestor.com' : '192.168.88.1');
+                            const autoLoginProtocol = process.env.DEPLOYMENT_MODE === 'vps' ? 'https' : 'http';
+                            const autoLoginLink = `${autoLoginProtocol}://${routerDomain}/login?username=${encodeURIComponent(finalUsername)}&password=${encodeURIComponent(finalPassword)}`;
+
                             const rawTemplate = await getCustomTemplate('WA_MSG_PAYMENT_APPROVED_HOTSPOT');
                             const msg = applyTemplateTags(rawTemplate, {
                                 cliente: payment.lead.name || finalUsername,
@@ -234,6 +258,7 @@ export async function POST(request: Request) {
                                 usuario: finalUsername,
                                 senha: finalPassword,
                                 link_portal: `http://${portalDomain}/portal/planos`,
+                                link_autologin: autoLoginLink,
                                 rede_wifi: wifiName,
                             });
                             const finalMsg = msg + `\n\n📄 Termos de Uso e Isenção de Responsabilidade: http://${portalDomain}/portal/termos/pago`;

@@ -76,10 +76,25 @@ export class PlanExpirationService {
       for (const payment of expiredPayments) {
         const lead = payment.lead;
         const username = lead?.hotspotUser;
-        const mac = payment.macAddress ? payment.macAddress.trim().toUpperCase() : null;
+        let mac = payment.macAddress ? payment.macAddress.trim().toUpperCase() : null;
 
         try {
           if (username) {
+            // Se o MAC não estiver gravado no Payment, busca na sessão ativa do MikroTik antes de expulsar
+            if (!mac) {
+              try {
+                const activeSessions = ((await mk.getHotspotActive()) as any[]) || [];
+                const sess = activeSessions.find(s => String(s.user) === String(username));
+                if (sess && (sess['mac-address'] || sess['macAddress'])) {
+                  mac = String(sess['mac-address'] || sess['macAddress']).trim().toUpperCase();
+                  await prisma.payment.update({
+                    where: { id: payment.id },
+                    data: { macAddress: mac }
+                  }).catch(() => null);
+                }
+              } catch (_) {}
+            }
+
             await mk.removeHotspotActiveByUser(username).catch(() => null);
             await mk.removeHotspotUserByName(username).catch(() => null);
           }
